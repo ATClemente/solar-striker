@@ -302,16 +302,18 @@ HeaderGlobalChecksum::
 
 Start:
     ld a, $01 ; $0150
-    ld [$2100], a
-    call Call_000_0866
+    ld [$2100], a ; Set ROM bank 1
+    call DisableLCD
     di
-    call Call_000_084e
-    call $495c
-    ld bc, $0010
-    ld hl, $cff0
+    call CopyDMARoutineToHRAMLoopSetup
+    call InitAudio ; Rom Bank 1
+    ; Clear memory, including high score bytes
+    ld bc, $0010 ; 16 bytes
+    ld hl, $cff0 ; Starting address to zero
     call ZeroMemory
+    ; Initialize High score
     ld a, $02
-    ld [$cff3], a
+    ld [wHighScore + 2], a ; Default high score to 20000
 
 Jump_000_016d:
     ld a, $02
@@ -370,7 +372,7 @@ jr_000_01e7:
 
 jr_000_01ed:
     ld hl, $9a4c
-    ld de, $cff1
+    ld de, wHighScore
     ld b, $07
 
 jr_000_01f5:
@@ -838,7 +840,7 @@ Call_000_048d:
 
     ld c, $0d
     ld hl, $9c06
-    ld de, $cf88
+    ld de, wPlayerScore
 
 Call_000_049c:
 jr_000_049c:
@@ -973,7 +975,7 @@ Jump_000_0525:
 
 
 Jump_000_054a:
-    call Call_000_0866
+    call DisableLCD
     di
     call Call_000_0877
     ld bc, $0020
@@ -1053,7 +1055,7 @@ Jump_000_05d8:
     ldh [rTMA], a
     ld [$cf9b], a
     ld [$ca18], a
-    call Call_000_0866
+    call DisableLCD
     ld a, [wCurrentStage]
     cp $08
     jr nz, jr_000_0605
@@ -1252,7 +1254,7 @@ Jump_000_0730:
     ldh [rTAC], a
     ldh [rTMA], a
     ld [$ca18], a
-    call Call_000_0866
+    call DisableLCD
     ld a, $02
     ld [$2100], a
     ld hl, $6230
@@ -1290,11 +1292,11 @@ Jump_000_0730:
     call Call_000_2c79
     ld c, $07
     ld hl, $9a30
-    ld de, $cff1
+    ld de, wHighScore
     call Call_000_049c
     ld c, $07
     ld hl, $9a90
-    ld de, $cf88
+    ld de, wPlayerScore
     call Call_000_049c
     ld hl, $9c00
     xor a
@@ -1362,34 +1364,37 @@ jr_000_07be:
 INCLUDE "engine/joypad.asm"
 
 
-Call_000_084e:
-    ld c, $80
-    ld b, $0a
-    ld hl, $085c
+CopyDMARoutineToHRAMLoopSetup:
+    ld c, $80 ; 128
+    ld b, $0a ; 10
+    ld hl, $085c 
 
-jr_000_0855:
+; Copy $085C–$0865 to $FF80–$FF89, opcodes
+; Copied routine starts OAM DMA and then waits
+; https://gbdev.io/pandocs/OAM_DMA_Transfer.html
+CopyDMARoutineToHRAM:
     ld a, [hl+]
     ldh [c], a
     inc c
     dec b
-    jr nz, jr_000_0855
+    jr nz, CopyDMARoutineToHRAM
 
     ret
 
-
+    ; $085c
     db $3e, $c0, $e0, $46, $3e, $28, $3d, $20, $fd, $c9
 
-Call_000_0866:
-jr_000_0866:
-    ldh a, [rLY]
+DisableLCD:
+    ldh a, [rLY] ; Read the current scanline into A
     cp $91
-    jr c, jr_000_0866
+    jr c, DisableLCD ; Jump if A (rLY) < 145
 
     cp $96
-    jr nc, jr_000_0866
+    jr nc, DisableLCD ; Jump if rLY >= 150
 
-    ldh a, [rLCDC]
-    and $7f
+    ; Wait for scanlines 145–149, safely within VBlank.
+    ldh a, [rLCDC] ; LCD Control
+    and $7f ; Clear highest bit, turning off if on basically
     ldh [rLCDC], a
     ret
 
@@ -7776,8 +7781,8 @@ jr_000_2c59:
 
 Call_000_2c79:
     ld c, $08
-    ld de, $cf88
-    ld hl, $cff1
+    ld de, wPlayerScore
+    ld hl, wHighScore
 
 jr_000_2c81:
     ld a, [de]
@@ -7796,8 +7801,8 @@ jr_000_2c81:
 
 jr_000_2c8c:
     ld c, $08
-    ld hl, $cf88
-    ld de, $cff1
+    ld hl, wPlayerScore
+    ld de, wHighScore
 
 jr_000_2c94:
     ld a, [hl+]
@@ -8193,7 +8198,7 @@ jr_000_2f45:
     jr nz, jr_000_2f45
 
     ld hl, $caf6
-    ld de, $cf88
+    ld de, wPlayerScore
     ld b, $07
 
 jr_000_2f53:

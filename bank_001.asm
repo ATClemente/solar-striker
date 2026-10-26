@@ -1656,42 +1656,45 @@ jr_001_482a:
     ld a, [hl-]
     ld l, l
 
-    call Call_001_497b
+InitAudio:
+    call ResetAudioChannels
     ld a, $80
     ldh [rNR52], a
     ld a, $77
     ldh [rNR50], a
     ld a, $ff
-    ldh [rNR51], a
+    ldh [rNR51], a ; AUDTERM all L/R output channels on
+    ; Clear $CC00–$CD86
+    ; Sets the first byte to 0 and then because dest is one in
+    ; front this propogates the 0 through the whole region
     ld hl, $cc00
     ld de, $cc01
     ld bc, $0186
     ld [hl], $00
-    call Call_001_552b
+    call AudioCopyMemorySetup
     ei
     ret
 
-
-Call_001_497b:
+ResetAudioChannels:
     di
-    ld a, $00
-    ldh [rNR50], a
+    ld a, $00 
+    ldh [rNR50], a ; Master vol min for L/R, VIN audio routing disable
     ld a, $80
-    ldh [rNR52], a
+    ldh [rNR52], a ; Enable Audio system
     ld a, $08
-    ldh [rNR12], a
-    ldh [rNR22], a
-    ldh [rNR42], a
-    ld a, $80
-    ldh [rNR14], a
-    ldh [rNR24], a
-    ldh [rNR44], a
+    ldh [rNR12], a ; CH1: initial volume 0, envelope up, pace 0
+    ldh [rNR22], a ; CH2: same
+    ldh [rNR42], a ; CH4: same
+    ld a, $80 
+    ldh [rNR14], a ; Trigger CH1; frequency high bits 0; length disabled
+    ldh [rNR24], a ; Trigger CH2; frequency high bits 0; length disabled
+    ldh [rNR44], a ; Trigger CH4; length disabled
     xor a
-    ldh [rNR32], a
+    ldh [rNR32], a ; Mute CH3 output
     ld a, $8f
-    ldh [rNR52], a
+    ldh [rNR52], a ; Keep audio enabled
     ld a, $77
-    ldh [rNR50], a
+    ldh [rNR50], a ; Maximum L/R master volume; VIN disconnected
     ret
 
 
@@ -1849,7 +1852,7 @@ Call_001_4a36:
     ld de, $cc39
     ld bc, $0002
     ld [hl], $00
-    call Call_001_552b
+    call AudioCopyMemorySetup
     ld a, [$cd7f]
     ld [$cc38], a
     ld a, [$cd81]
@@ -1920,7 +1923,7 @@ Call_001_4aa6:
     ld de, $cc48
     ld bc, $002a
     ld [hl], $00
-    call Call_001_552b
+    call AudioCopyMemorySetup
     pop hl
     ld a, l
     ld [$cc47], a
@@ -2075,7 +2078,7 @@ Call_001_4b87:
     ld [$cc03], a
     ld de, $cc38
     ld bc, $0003
-    jp Jump_001_552b
+    jp AudioCopyMemorySetup
 
 
 Call_001_4b9b:
@@ -2085,7 +2088,7 @@ Call_001_4b9b:
     ld a, [$cc03]
     ld d, a
     ld bc, $0003
-    jp Jump_001_552b
+    jp AudioCopyMemorySetup
 
 
 Call_001_4bac:
@@ -2096,7 +2099,7 @@ Call_001_4bac:
     ld [$cc0e], a
     ld de, $cc47
     ld bc, $002b
-    jp Jump_001_552b
+    jp AudioCopyMemorySetup
 
 
 Call_001_4bc0:
@@ -2106,7 +2109,7 @@ Call_001_4bc0:
     ld a, [$cc0e]
     ld d, a
     ld bc, $002b
-    jp Jump_001_552b
+    jp AudioCopyMemorySetup
 
 
     or a
@@ -2249,7 +2252,7 @@ jr_001_4c74:
     or c
     jr z, jr_001_4c81
 
-    call Call_001_552b
+    call AudioCopyMemorySetup
 
 jr_001_4c81:
     xor a
@@ -3181,7 +3184,7 @@ Call_001_510f:
     ld h, a
     ld de, $ff30
     ld bc, $0010
-    jp Jump_001_552b
+    jp AudioCopyMemorySetup
 
 
     ldh [rNR50], a
@@ -3598,7 +3601,7 @@ jr_001_5301:
     jr nz, jr_001_5306
 
 jr_001_5306:
-    call Call_001_552b
+    call AudioCopyMemorySetup
     ld a, $77
     ldh [rNR50], a
     pop af
@@ -3703,7 +3706,7 @@ Call_001_537a:
     ld de, $cc4d
     ld bc, $0025
     ld [hl], $00
-    call Call_001_552b
+    call AudioCopyMemorySetup
     ld a, $00
     ld [$cc50], a
     ld a, $02
@@ -3985,18 +3988,18 @@ jr_001_551e:
     db $11
     ld d, l
 
-Call_001_552b:
-Jump_001_552b:
+AudioCopyMemorySetup:
     push af
 
-jr_001_552c:
+; This routine appears to be often used to clear/zero memory
+AudioCopyMemory: 
     ld a, [hl+]
     ld [de], a
     inc de
     dec bc
     ld a, b
     or c
-    jr nz, jr_001_552c
+    jr nz, AudioCopyMemory
 
     pop af
     ret

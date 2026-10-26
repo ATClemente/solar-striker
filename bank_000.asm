@@ -4199,13 +4199,13 @@ Jump_000_15e8:
     call Call_000_0b38
     ld de, $169b
     call Call_000_0b03
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
     ld de, $168c
     add hl, de
     ld a, [hl]
-    ld [$ca21], a
+    ld [wWeaponPowerLevel], a
     ld [$ca2c], a
     ld a, [$cf95]
     or a
@@ -4486,7 +4486,7 @@ jr_000_17c0:
 jr_000_17f6:
     inc a
     ld [bc], a
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     ld de, $18f9
     jp Jump_000_0a53
 
@@ -4510,7 +4510,7 @@ jr_000_17f6:
 
 
 Call_000_1824:
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     or a
     jr z, jr_000_1835
 
@@ -4665,25 +4665,25 @@ jr_000_18c0:
     nop
     ld e, $00
 
-    ld bc, $ca51
+    ld bc, wWeaponShotSlots
     ld a, [bc]
     or a
-    jr z, jr_000_190c
+    jr z, QueuePlayerShot
 
     inc bc
     ld a, [bc]
     or a
-    jr z, jr_000_190c
+    jr z, QueuePlayerShot
 
     inc bc
     ld a, [bc]
     or a
-    jr z, jr_000_190c
+    jr z, QueuePlayerShot
 
     jr jr_000_1918
 
-jr_000_190c:
-    ld a, [$ca21]
+QueuePlayerShot:
+    ld a, [wWeaponPowerLevel]
     inc a
     ld [bc], a
     ld a, [$cfa0]
@@ -4697,11 +4697,11 @@ jr_000_1918:
 
 Call_000_191e:
     ld hl, $72d1
-    ld a, [$ca21]
-    cp $05
+    ld a, [wWeaponPowerLevel]
+    cp MAX_WEAPON_POWER_LEVEL
     jr nz, jr_000_192b
 
-    ld hl, $72ef
+    ld hl, $72ef ; reached if weapon is max power
 
 jr_000_192b:
     ld a, $01
@@ -4727,7 +4727,7 @@ jr_000_192b:
     ld c, l
     ld hl, $c781
     call Call_000_1824
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     add a
     ld l, a
     ld h, $00
@@ -4767,14 +4767,14 @@ jr_000_1984:
 
     ld a, [bc]
     call Call_000_0b4a
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
     ld de, $18d9
     add hl, de
     ld a, [hl]
     ld [$ca33], a
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     or a
     jr z, jr_000_19af
 
@@ -5624,9 +5624,9 @@ jr_000_1f3d:
     call Call_000_0b4a
     ld hl, $0013
     add hl, bc
-    ld bc, $ca21
+    ld bc, wWeaponPowerLevel
     ld a, [bc]
-    cp $05
+    cp MAX_WEAPON_POWER_LEVEL
     jr z, jr_000_1f71
 
     inc a
@@ -7515,7 +7515,7 @@ jr_000_292d:
 
     ld a, [$cf9a]
     call $4bd1
-    ld a, [$ca21]
+    ld a, [wWeaponPowerLevel]
     ld [$ca2c], a
     ld de, $2b22
     jp Jump_000_0a53

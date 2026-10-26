@@ -2394,7 +2394,7 @@ jr_000_0ca7:
     or a
     ret z
 
-    call Call_000_0cbe
+    call IncrementPlayerLives
     xor a
     ld [$cf96], a
     inc a
@@ -2403,8 +2403,7 @@ jr_000_0ca7:
     ld [$cfa0], a
     ret
 
-
-Call_000_0cbe:
+IncrementPlayerLives:
     ld hl, $cf95
     ld a, [hl]
     cp $99
@@ -2422,8 +2421,7 @@ Call_000_0cbe:
     ld [hl], a
     ret
 
-
-Call_000_0cd3:
+DecrementPlayerLives:
     ld hl, $cf95
     dec [hl]
     ld a, [hl]
@@ -4242,7 +4240,7 @@ Jump_000_15e8:
     or a
     jr z, jr_000_1658
 
-    call Call_000_0cd3
+    call DecrementPlayerLives
     ld de, $165e
     jp Jump_000_0a53
 
@@ -6640,7 +6638,7 @@ jr_000_2574:
     call Call_000_0a3e
     ld a, $24
     call Call_000_0c57
-    call Call_000_0cbe
+    call IncrementPlayerLives
     ld de, $2415
     jp Jump_000_0a53
 

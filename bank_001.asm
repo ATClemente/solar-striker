@@ -1158,7 +1158,7 @@ jr_001_46a2:
 
 
 Jump_001_46ea:
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $06
     jr nz, jr_001_46fa
 

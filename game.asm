@@ -8,6 +8,8 @@ INCLUDE "constants/buttons.asm"
 INCLUDE "ram/joypad.asm"
 INCLUDE "constants/player.asm"
 INCLUDE "ram/player.asm"
+INCLUDE "ram/game.asm"
+INCLUDE "constants/game.asm"
 
 INCLUDE "bank_000.asm"
 INCLUDE "bank_001.asm"

@@ -351,7 +351,7 @@ Jump_000_016d:
     ldh [rSB], a
     ldh [rSC], a
     ld [$cf86], a
-    ld [$ca19], a
+    ld [wCurrentStage], a
     ld a, $20
     ldh [rSCX], a
     ld a, $20
@@ -738,7 +738,7 @@ jr_000_03fc:
     jr jr_000_042d
 
 jr_000_041f:
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     add a
     ld l, a
     ld h, $00
@@ -832,7 +832,7 @@ Jump_000_047e:
 
 
 Call_000_048d:
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $07
     jr nc, jr_000_04b3
 
@@ -936,7 +936,7 @@ jr_000_04e9:
     ld a, $01
     ld [$ca1a], a
     ld a, $01
-    ld [$ca19], a
+    ld [wCurrentStage], a
     ld a, $0f
     ld [$ca22], a
     jp Jump_000_0a67
@@ -964,11 +964,11 @@ Jump_000_0525:
     ld a, $01
     ld [$ca1a], a
     ld a, $01
-    ld [$ca19], a
+    ld [wCurrentStage], a
     ld a, $0f
     ld [$ca22], a
     ld a, $01
-    ld [$ca2e], a
+    ld [wGameMode], a
     jp Jump_000_0a67
 
 
@@ -1054,7 +1054,7 @@ Jump_000_05d8:
     ld [$cf9b], a
     ld [$ca18], a
     call Call_000_0866
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $08
     jr nz, jr_000_0605
 
@@ -1096,7 +1096,7 @@ jr_000_0605:
     ld [$cad0], a
     ld [$ca1d], a
     ld [$ca1e], a
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $07
     jr nc, jr_000_067b
 
@@ -1125,7 +1125,7 @@ jr_000_067b:
     ld a, $60
     ldh [rSCY], a
     ld d, $88
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $07
     jr z, jr_000_0691
 
@@ -1142,7 +1142,7 @@ jr_000_0691:
     ldh [rBGP], a
     ld de, $0d1c
     call Call_000_0a3e
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $08
     jr z, jr_000_06b2
 
@@ -1174,7 +1174,7 @@ Jump_000_06cd:
 jr_000_06cd:
     ei
     ld b, $00
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $07
     jp z, Jump_000_0261
 
@@ -2604,7 +2604,7 @@ jr_000_0d60:
 Jump_000_0de6:
     ld a, $01
     ld [$cf9b], a
-    ld hl, $ca19
+    ld hl, wCurrentStage
     inc [hl]
     ld hl, $cc40
     ld bc, $0200
@@ -2615,7 +2615,7 @@ Jump_000_0de6:
 Call_000_0dfb:
     ld a, $02
     ld [$2100], a
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     add a
     add a
     ld l, a
@@ -2635,7 +2635,7 @@ Call_000_0dfb:
 Call_000_0e16:
     ld a, $03
     ld [$2100], a
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     add a
     add a
     ld l, a
@@ -2657,7 +2657,7 @@ Call_000_0e16:
     ld de, $d200
     ld bc, $0550
     call Call_000_088e
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     ld de, $0ea5
     add a
     ld l, a
@@ -3006,7 +3006,7 @@ jr_000_0fb6:
     ld [de], a
 
 jr_000_0fc0:
-    ld a, [$ca2e]
+    ld a, [wGameMode]
 
 jr_000_0fc3:
     or a
@@ -4401,7 +4401,7 @@ jr_000_1774:
     jp Jump_000_0a53
 
 
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $06
     jr z, jr_000_1792
 
@@ -6884,7 +6884,7 @@ jr_000_26fb:
 jr_000_2723:
     xor a
     ld b, a
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $05
     jr z, jr_000_272e
 
@@ -6904,7 +6904,7 @@ jr_000_272e:
 
     ld de, $278d
     ld bc, $0f58
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $05
     jr nz, jr_000_274d
 
@@ -7207,7 +7207,7 @@ jr_000_28ff:
     ld hl, $cac6
     ld [hl+], a
     ld [hl], a
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     cp $06
     jr z, jr_000_292d
 
@@ -7341,7 +7341,7 @@ jr_000_292d:
     ld bc, $2a34
     ld de, $3040
     call Call_000_0b38
-    ld a, [$ca19]
+    ld a, [wCurrentStage]
     dec a
     add a
     ld l, a
@@ -8221,7 +8221,7 @@ jr_000_2f53:
     ld [$cad8], a
     ld [$cffc], a
     ld [$cab9], a
-    ld a, [$ca2e]
+    ld a, [wGameMode]
     or a
     jp z, Jump_000_0a67
 

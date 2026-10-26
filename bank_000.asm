@@ -421,7 +421,7 @@ jr_000_0231:
     or a
     jp nz, Jump_000_054a
 
-    call Call_000_081a
+    call ReadJoypad
     call Call_000_0455
     call Call_000_14c4
     xor a
@@ -446,7 +446,7 @@ jr_000_0261:
     ldh [rIE], a
     ei
     call Call_000_137a
-    call Call_000_081a
+    call ReadJoypad
     call Call_000_0455
     call Call_000_14c4
     ld hl, $cf9b
@@ -482,7 +482,7 @@ jr_000_02a2:
     ld a, $07
     ldh [rIE], a
     ei
-    call Call_000_081a
+    call ReadJoypad
     call Call_000_0455
     ld a, $01
     ld [$ca18], a
@@ -588,7 +588,7 @@ jr_000_033c:
     or a
     jr z, jr_000_033c
 
-    call Call_000_081a
+    call ReadJoypad
     xor a
     ld [$cf86], a
     ld a, [$cf80]
@@ -620,7 +620,7 @@ jr_000_0366:
     or a
     jr z, jr_000_0366
 
-    call Call_000_081a
+    call ReadJoypad
     xor a
     ld [$cf86], a
     ld a, [$cf80]
@@ -653,7 +653,7 @@ jr_000_0399:
     xor a
     ld [$ca18], a
     call Call_000_048d
-    call Call_000_081a
+    call ReadJoypad
     call Call_000_14c4
     call $4c97
     call Call_000_0c04
@@ -1359,36 +1359,7 @@ jr_000_07be:
 
     db $d8, $b8, $d0, $d6, $bc, $bf
 
-Call_000_081a:
-    ld a, $20
-    ldh [rP1], a
-    ldh a, [rP1]
-    ldh a, [rP1]
-    cpl
-    and $0f
-    swap a
-    ld b, a
-    ld a, $10
-    ldh [rP1], a
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-    cpl
-    and $0f
-    or b
-    ld c, a
-    ld a, [$cf80]
-    xor c
-    and c
-    ld [$cf81], a
-    ld a, c
-    ld [$cf80], a
-    ld a, $30
-    ldh [rP1], a
-    ret
+INCLUDE "engine/joypad.asm"
 
 
 Call_000_084e:

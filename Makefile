@@ -4,6 +4,8 @@ IMAGE_DEPS = gfx/image_002_4000.2bpp gfx/image_002_5300.2bpp gfx/image_002_6230.
 
 SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
 
+ASM_DEPS = $(wildcard constants/*.asm ram/*.asm engine/*.asm)
+
 all: game.gb
 
 %.2bpp: %.png
@@ -12,7 +14,7 @@ all: game.gb
 %.1bpp: %.png
 	rgbgfx -d 1 -o $@ $<
 
-game.o: game.asm bank_*.asm $(IMAGE_DEPS)
+game.o: game.asm bank_*.asm $(ASM_DEPS) $(IMAGE_DEPS)
 	rgbasm -o game.o game.asm
 
 game.gb: game.o

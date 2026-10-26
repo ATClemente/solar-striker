@@ -309,7 +309,7 @@ Jump_000_0150:
     call $495c
     ld bc, $0010
     ld hl, $cff0
-    call Call_000_0a87
+    call ZeroMemory
     ld a, $02
     ld [$cff3], a
 
@@ -339,7 +339,7 @@ Jump_000_016d:
     call Call_000_0877
     ld bc, $0ff0
     ld hl, $c000
-    call Call_000_0a87
+    call ZeroMemory
     ld hl, $ca88
     ld a, $a2
     ld [hl+], a
@@ -978,7 +978,7 @@ Jump_000_054a:
     call Call_000_0877
     ld bc, $0020
     ld hl, $9c00
-    call Call_000_0a87
+    call ZeroMemory
     ld de, $0e81
     call Call_000_0dfb
     ld de, $0e5d
@@ -1274,7 +1274,7 @@ Jump_000_0730:
     call Call_000_0877
     ld hl, $c000
     ld bc, $0c00
-    call Call_000_0a87
+    call ZeroMemory
     ld hl, $ca88
     ld a, $82
     ld [hl+], a
@@ -1905,18 +1905,17 @@ Call_000_0a7b:
     ld h, [hl]
     ld l, a
     ld bc, $0020
-    jp Jump_000_0a87
+    jp ZeroMemory
 
-
-Call_000_0a87:
-Jump_000_0a87:
-jr_000_0a87:
+; Clear BC bytes starting at HL
+; Sets A to 0
+ZeroMemory:
     xor a
     ld [hl+], a
     dec bc
     ld a, b
     or c
-    jr nz, jr_000_0a87
+    jr nz, ZeroMemory
 
     ret
 
@@ -2640,7 +2639,7 @@ Jump_000_0de6:
     inc [hl]
     ld hl, $cc40
     ld bc, $0200
-    call Call_000_0a87
+    call ZeroMemory
     jp Jump_000_0a67
 
 

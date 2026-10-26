@@ -1031,7 +1031,7 @@ jr_000_05b2:
     jr nz, jr_000_05b2
 
     xor a
-    ld [$ca23], a
+    ld [wPlayerInput], a
     ld [$cf86], a
     ld [$ca54], a
     ld a, $e7
@@ -4145,7 +4145,7 @@ jr_000_15d9:
     res 5, b
 
 jr_000_15df:
-    ld hl, $ca23
+    ld hl, wPlayerInput
     ld a, [hl]
     and $0f
     or b
@@ -4291,7 +4291,7 @@ Jump_000_168a:
     ld a, [bc]
     call Call_000_0b4a
     ld a, [wJoypadHeld]
-    ld [$ca23], a
+    ld [wPlayerInput], a
     and $f0
     jp z, Jump_000_1717
 
@@ -4350,7 +4350,7 @@ jr_000_1717:
     jp nz, Jump_000_15e8
 
 jr_000_1734:
-    ld bc, $ca23
+    ld bc, wPlayerInput
     ld a, [bc]
     and $08
     ld [$cf9d], a

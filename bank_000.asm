@@ -570,7 +570,7 @@ Call_000_0325:
     or a
     jr nz, jr_000_0357
 
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $0f
     cp $0f
     jr z, jr_000_0336
@@ -591,7 +591,7 @@ jr_000_033c:
     call ReadJoypad
     xor a
     ld [$cf86], a
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $0f
     jr nz, jr_000_033c
 
@@ -603,7 +603,7 @@ jr_000_033c:
 
 
 jr_000_0357:
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr nz, jr_000_0360
 
@@ -623,7 +623,7 @@ jr_000_0366:
     call ReadJoypad
     xor a
     ld [$cf86], a
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr nz, jr_000_0366
 
@@ -677,14 +677,14 @@ jr_000_0399:
     or a
     jr z, jr_000_03ec
 
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr z, jr_000_03fc
 
     jr jr_000_03f6
 
 jr_000_03d5:
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr nz, jr_000_03f6
 
@@ -694,7 +694,7 @@ jr_000_03d5:
     jr jr_000_03f6
 
 jr_000_03e1:
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr z, jr_000_03f6
 
@@ -703,7 +703,7 @@ jr_000_03e1:
     jr jr_000_03f6
 
 jr_000_03ec:
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jr nz, jr_000_03f6
 
@@ -924,7 +924,7 @@ jr_000_04e9:
     ret
 
 
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     ld b, a
     and $08
     jr z, jr_000_0516
@@ -4290,7 +4290,7 @@ Jump_000_168a:
 
     ld a, [bc]
     call Call_000_0b4a
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     ld [$ca23], a
     and $f0
     jp z, Jump_000_1717
@@ -7763,7 +7763,7 @@ jr_000_2c59:
     jp Jump_000_0a53
 
 
-    ld a, [$cf80]
+    ld a, [wJoypadHeld]
     and $08
     jp z, Jump_000_047e
 

@@ -1,5 +1,9 @@
 IMAGE_DEPS = gfx/image_002_4000.2bpp gfx/image_002_5300.2bpp gfx/image_002_6230.2bpp gfx/image_002_6530.2bpp gfx/image_002_6730.2bpp gfx/image_002_6d30.2bpp
 
+.PHONY: all clean verify
+
+SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
+
 all: game.gb
 
 %.2bpp: %.png
@@ -20,3 +24,6 @@ game.gb: game.o
 clean:
 	rm -f game.o game.gb game.sym game.map
 	find . \( -iname '*.1bpp' -o -iname '*.2bpp' \) -exec rm {} +
+
+verify: all
+	@$(SHA1) solarstriker.sha1

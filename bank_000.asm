@@ -1039,7 +1039,7 @@ jr_000_05b2:
     ld a, $07
     ldh [rTAC], a
     ld a, $02
-    ld [$cf95], a
+    ld [wPlayerLives], a
     ei
     jp Jump_000_06cd
 
@@ -2331,7 +2331,7 @@ Call_000_0c75:
     ld [hl+], a
     dec a
     ld [hl+], a
-    ld a, [$cf95]
+    ld a, [wPlayerLives]
     ld b, a
     swap a
     and $0f
@@ -2375,7 +2375,7 @@ jr_000_0ca7:
     ret
 
 IncrementPlayerLives:
-    ld hl, $cf95
+    ld hl, wPlayerLives
     ld a, [hl]
     cp $99
     ret z
@@ -2393,7 +2393,7 @@ IncrementPlayerLives:
     ret
 
 DecrementPlayerLives:
-    ld hl, $cf95
+    ld hl, wPlayerLives
     dec [hl]
     ld a, [hl]
     and $0f
@@ -4207,7 +4207,7 @@ Jump_000_15e8:
     ld a, [hl]
     ld [wWeaponPowerLevel], a
     ld [$ca2c], a
-    ld a, [$cf95]
+    ld a, [wPlayerLives]
     or a
     jr z, jr_000_1658
 
@@ -7746,12 +7746,12 @@ jr_000_292d:
     nop
     nop
 
-    ld a, [$cf95]
+    ld a, [wPlayerLives]
     or a
     jr z, jr_000_2c59
 
     xor a
-    ld [$cf95], a
+    ld [wPlayerLives], a
     ld de, $165e
     jp Jump_000_0a53
 

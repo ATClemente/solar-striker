@@ -6,7 +6,7 @@
 SECTION "ROM Bank $000", ROM0[$0]
 
 RST_00::
-    jp Jump_000_0150
+    jp Start
 
 
     ei
@@ -259,7 +259,7 @@ Call_000_00f0:
 
 Boot::
     nop
-    jp Jump_000_0150
+    jp Start
 
 
 HeaderLogo::
@@ -300,8 +300,8 @@ HeaderComplementCheck::
 HeaderGlobalChecksum::
     db $26, $06
 
-Jump_000_0150:
-    ld a, $01
+Start:
+    ld a, $01 ; $0150
     ld [$2100], a
     call Call_000_0866
     di

@@ -317,37 +317,43 @@ Start:
 
 Jump_000_016d:
     ld a, $02
-    ld [$2100], a
+    ld [$2100], a ; Set ROM bank 2
+    ; Copy $1000 bytes of image_002_4000.2bpp into VRAM
     ld hl, $4000
     ld de, $8000
     ld bc, $1000
-    call Call_000_088e
+    call CopyMemory
+    ; Copy gfx/image_002_6730.2bpp and
+    ; gfx/image_002_6d30.2bpp into VRAM
     ld hl, $6730
     ld de, $9000
     ld bc, $0630
-    call Call_000_088e
+    call CopyMemory
     ld a, $03
-    ld [$2100], a
-    ld hl, $58b0
-    ld de, $d000
+    ld [$2100], a ; Set ROM bank 3
+    ld hl, Data_003_58b0
+    ld de, $d000 ; WRAM
     ld bc, $0080
-    call Call_000_088e
-    ld hl, $5930
-    ld de, $d200
+    call CopyMemory
+    ld hl, Data_003_5930
+    ld de, $d200 ; WRAM
     ld bc, $0090
-    call Call_000_088e
+    call CopyMemory
     ld a, $01
-    ld [$2100], a
-    call Call_000_0877
+    ld [$2100], a ; Set ROM bank 1
+    call ClearTileMap9800
+    ; Clear the first 4080 bytes of WRAM
     ld bc, $0ff0
     ld hl, $c000
     call ZeroMemory
+    ; Store $9AA2 to $CA88–$CA89,
+    ; $9AA2 is in the first tilemap
     ld hl, $ca88
     ld a, $a2
     ld [hl+], a
     ld a, $9a
     ld [hl], a
-    call Call_000_13d4
+    call DrawInitialBackground
     xor a
     ldh [rSCY], a
     ldh [rSB], a
@@ -536,7 +542,7 @@ Jump_000_02e5:
     ldh a, [rLCDC]
     or $02
     ldh [rLCDC], a
-    call Call_000_1447
+    call DrawMapBlock
     call Call_000_048d
     pop hl
     pop de
@@ -977,7 +983,7 @@ Jump_000_0525:
 Jump_000_054a:
     call DisableLCD
     di
-    call Call_000_0877
+    call ClearTileMap9800
     ld bc, $0020
     ld hl, $9c00
     call ZeroMemory
@@ -990,7 +996,7 @@ Jump_000_054a:
     ld a, e
     ld [hl+], a
     ld [hl], d
-    call Call_000_13d4
+    call DrawInitialBackground
     ld de, $3ef4
     call Call_000_08a1
     ld de, $cae0
@@ -1065,21 +1071,21 @@ Jump_000_05d8:
     ld hl, $7950
     ld de, $8000
     ld bc, $0800
-    call Call_000_088e
+    call CopyMemory
 
 jr_000_0605:
-    call Call_000_0877
+    call ClearTileMap9800
     ld de, $0e81
     call Call_000_0dfb
     ld de, $0e5d
     call Call_000_0e16
-    call Call_000_0877
+    call ClearTileMap9800
     ld hl, $ca88
     ld de, $9b82
     ld a, e
     ld [hl+], a
     ld [hl], d
-    call Call_000_13d4
+    call DrawInitialBackground
     ld hl, $ca82
     xor a
     ld [hl+], a
@@ -1131,7 +1137,7 @@ jr_000_067b:
     cp $07
     jr z, jr_000_0691
 
-    call Call_000_0886
+    call ClearTileMap9C00
     ld d, $68
 
 jr_000_0691:
@@ -1260,20 +1266,20 @@ Jump_000_0730:
     ld hl, $6230
     ld de, $9000
     ld bc, $0360
-    call Call_000_088e
+    call CopyMemory
     ld a, $03
     ld [$2100], a
     ld hl, $59c0
     ld de, $d000
     ld bc, $0200
-    call Call_000_088e
+    call CopyMemory
     ld hl, $5a20
     ld de, $d200
     ld bc, $0090
-    call Call_000_088e
+    call CopyMemory
     ld a, $01
     ld [$2100], a
-    call Call_000_0877
+    call ClearTileMap9800
     ld hl, $c000
     ld bc, $0c00
     call ZeroMemory
@@ -1282,7 +1288,7 @@ Jump_000_0730:
     ld [hl+], a
     ld a, $9b
     ld [hl], a
-    call Call_000_13d4
+    call DrawInitialBackground
     ld de, $2c9b
     call Call_000_08a1
     ld de, $2ca8
@@ -1399,36 +1405,34 @@ DisableLCD:
     ret
 
 
-Call_000_0877:
+ClearTileMap9800:
     ld hl, $9bff
     ld bc, $0400
 
-jr_000_087d:
+ClearSetTileMap:
     ld a, $00
     ld [hl-], a
     dec bc
     ld a, b
     or c
-    jr nz, jr_000_087d
+    jr nz, ClearSetTileMap
 
     ret
 
-
-Call_000_0886:
+ClearTileMap9C00:
     ld hl, $9fff
     ld bc, $0400
-    jr jr_000_087d
+    jr ClearSetTileMap
 
-Call_000_088e:
-Jump_000_088e:
-jr_000_088e:
+; copies BC bytes from HL to DE.
+CopyMemory:
     ld a, [hl+]
     ld [de], a
     inc de
     dec bc
     ld a, b
     or c
-    jr nz, jr_000_088e
+    jr nz, CopyMemory
 
     ret
 
@@ -2634,7 +2638,7 @@ Call_000_0dfb:
     ld h, [hl]
     ld l, a
     ld de, $9000
-    jp Jump_000_088e
+    jp CopyMemory
 
 
 Call_000_0e16:
@@ -2652,7 +2656,7 @@ Call_000_0e16:
     ld l, a
     ld de, $d000
     ld bc, $0200
-    call Call_000_088e
+    call CopyMemory
     pop hl
     inc hl
     inc hl
@@ -2661,7 +2665,7 @@ Call_000_0e16:
     ld l, a
     ld de, $d200
     ld bc, $0550
-    call Call_000_088e
+    call CopyMemory
     ld a, [wCurrentStage]
     ld de, $0ea5
     add a
@@ -2673,7 +2677,7 @@ Call_000_0e16:
     ld l, a
     ld de, $d800
     ld bc, $0400
-    call Call_000_088e
+    call CopyMemory
     ld a, $01
     ld [$2100], a
     ret
@@ -3726,7 +3730,7 @@ jr_000_13ba:
     or a
     ret z
 
-    call Call_000_141e
+    call ReadNextMapBlock
     ld hl, $ca85
     inc [hl]
     ld a, [hl+]
@@ -3737,10 +3741,12 @@ jr_000_13ba:
     ld [hl-], a
     xor a
     ld [hl], a
-    jp Jump_000_1472
+    jp MoveMapPositionUpOneBlockRow
 
 
-Call_000_13d4:
+; Copy $CA88–$CA89 to $CA8A–$CA8B
+; Write $D200 to $CA8E–$CA8F
+DrawInitialBackground:
     ld de, $ca88
     ld hl, $ca8a
     ld a, [de]
@@ -3753,9 +3759,9 @@ Call_000_13d4:
     ld [hl+], a
     ld a, $d2
     ld [hl], a
-    ld b, $0b
+    ld b, $0b ; 11
 
-jr_000_13e9:
+CopyBlockRow:
     ld hl, $ca8a
     ld de, $ca90
     ld a, [hl+]
@@ -3763,21 +3769,21 @@ jr_000_13e9:
     inc de
     ld a, [hl+]
     ld [de], a
-    ld c, $0e
+    ld c, $0e ; 14
 
-jr_000_13f6:
+ProcessBackgroundBlock:
     push bc
-    call Call_000_141e
-    call Call_000_1447
+    call ReadNextMapBlock ; Read next block ID; find its four tile bytes
+    call DrawMapBlock ; Draw the block; advance destination two tiles
     pop bc
     dec c
-    jr nz, jr_000_13f6
+    jr nz, ProcessBackgroundBlock ; Loop 14 times
 
     push bc
-    call Call_000_1472
+    call MoveMapPositionUpOneBlockRow
     pop bc
     dec b
-    jr nz, jr_000_13e9
+    jr nz, CopyBlockRow ; Loop 11 times
 
     ld hl, $ca8a
     ld de, $ca90
@@ -3792,8 +3798,7 @@ jr_000_13f6:
     ld [$ca85], a
     ret
 
-
-Call_000_141e:
+ReadNextMapBlock:
     ld hl, $ca8e
     ld a, [hl+]
     ld e, a
@@ -3825,8 +3830,7 @@ Call_000_141e:
     ld [$ca87], a
     ret
 
-
-Call_000_1447:
+DrawMapBlock:
     ld a, [$ca87]
     or a
     ret nz
@@ -3860,8 +3864,7 @@ Call_000_1447:
     ret
 
 
-Call_000_1472:
-Jump_000_1472:
+MoveMapPositionUpOneBlockRow:
     ld hl, $ca88
     ld d, h
     ld e, l
@@ -3875,11 +3878,11 @@ Jump_000_1472:
     ld [de], a
     ld a, h
     cp $97
-    jr nz, jr_000_1488
+    jr nz, StoreMapRowPosition
 
     ld a, $9b
 
-jr_000_1488:
+StoreMapRowPosition:
     ld hl, $ca8b
     inc de
     ld [de], a
@@ -3959,7 +3962,7 @@ Jump_000_14dc:
 
     ld de, $ca72
     ld bc, $0005
-    call Call_000_088e
+    call CopyMemory
     ld hl, $ca75
     ld a, [hl+]
     or [hl]
@@ -3968,7 +3971,7 @@ Jump_000_14dc:
     ld de, $ca77
     ld hl, $ca73
     ld bc, $0004
-    call Call_000_088e
+    call CopyMemory
     ld a, [$ca72]
     ld c, a
     and $0f

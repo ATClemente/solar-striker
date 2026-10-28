@@ -32,7 +32,7 @@ jr_001_4006:
     ld de, $40dd
     call Call_000_0b03
     ld de, $2630
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $403b
     jp Jump_000_0a53
 
@@ -93,7 +93,7 @@ Jump_001_4089:
     ld [$cac1], a
     ld [$ca69], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $40b5
     jp Jump_000_0a53
 
@@ -105,7 +105,7 @@ Jump_001_40a2:
     ld [hl+], a
     ld [hl], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
 
@@ -184,7 +184,7 @@ jr_001_4103:
     jp z, Jump_000_0a67
 
     ld de, $25d9
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $411d
     jp Jump_000_0a53
 
@@ -255,7 +255,7 @@ jr_001_417b:
     xor a
     ld [de], a
     ld de, $11a1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_001_4184:
     ld de, $41c0
@@ -285,7 +285,7 @@ Jump_001_41a7:
     ld [$cac1], a
     ld [$ca69], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
 
@@ -399,7 +399,7 @@ Jump_001_4225:
     xor a
     ld [de], a
     ld de, $11a1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_001_4259:
     ld de, $4295
@@ -428,7 +428,7 @@ Jump_001_427c:
     ld [$cac1], a
     ld [$ca69], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
 
@@ -445,7 +445,7 @@ Jump_001_427c:
 jr_001_42bd:
     push bc
     ld de, $42cb
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_001_42bd
@@ -638,7 +638,7 @@ jr_001_43a7:
 jr_001_43d7:
     push bc
     ld de, $43e5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_001_43d7
@@ -742,7 +742,7 @@ jr_001_4453:
     ld bc, $1c00
     call Call_000_0a2e
     ld de, $1141
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_001_4489:
     ld de, $44de
@@ -777,10 +777,10 @@ jr_001_44a6:
     ld a, [hl]
     ld [de], a
     ld de, $0ff5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld hl, $734c
     ld a, $01
-    call Call_001_49aa
+    call SetupAudioPlayback
     ld d, $33
     jp Jump_000_0bbb
 
@@ -818,7 +818,7 @@ jr_001_44e5:
 jr_001_44ee:
     push bc
     ld de, $44fc
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_001_44ee
@@ -936,7 +936,7 @@ jr_001_4582:
     xor a
     ld [de], a
     ld de, $11a1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_001_45b6:
     ld de, $45bc
@@ -1087,10 +1087,10 @@ Call_001_465d:
     add [hl]
     ld [de], a
     ld de, $0ff5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld hl, $734c
     ld a, $01
-    call Call_001_49aa
+    call SetupAudioPlayback
     ret
 
 
@@ -1163,13 +1163,13 @@ Jump_001_46ea:
     jr nz, jr_001_46fa
 
     ld de, $2cbe
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
 
 
 jr_001_46fa:
     ld de, $2af4
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
 
 
@@ -1707,39 +1707,39 @@ ResetAudioChannels:
     ret
 
 
-Call_001_49aa:
+SetupAudioPlayback:
     or a
-    jr nz, jr_001_49ae
+    jr nz, SaveAndCheckAudioInputs ; A is not zero
 
-    dec a
+    dec a ; a is zero, set to $FF
 
-jr_001_49ae:
-    ld [$cd7f], a
+SaveAndCheckAudioInputs:
+    ld [$cd7f], a ; original value or $FF
+    ; Store data pointer held in hl
     ld a, l
     ld [$cd81], a
     ld a, h
     ld [$cd82], a
     di
-    call Call_001_49cf
-    jr c, jr_001_49cb
+    call CheckAndReleaseAudioChannels
+    jr c, FinishAudioPlaybackSetup
 
-    call Call_001_4b5d
-    jr c, jr_001_49cb
+    call FindFreePlaybackSlot
+    jr c, FinishAudioPlaybackSetup
 
-    call Call_001_4a36
+    call InitAudioSlot
     ld a, [$cd83]
     or a
 
-jr_001_49cb:
+FinishAudioPlaybackSetup:
     push af
     ei
     pop af
     ret
 
 
-Call_001_49cf:
-jr_001_49cf:
-    call Call_001_4a05
+CheckAndReleaseAudioChannels:
+    call CheckAudioChannelAvailability
     ret c
 
     ld e, $00
@@ -1751,7 +1751,7 @@ jr_001_49cf:
     inc hl
     inc hl
 
-jr_001_49e1:
+CheckAndReleaseAudioChannelsLoop:
     ld a, [hl]
     inc hl
     ld b, [hl]
@@ -1759,7 +1759,7 @@ jr_001_49e1:
     ld c, [hl]
     inc hl
     or b
-    jr z, jr_001_49fc
+    jr z, CheckAndReleaseAudioChannelsNext
 
     inc e
     push hl
@@ -1769,14 +1769,14 @@ jr_001_49e1:
     ld a, [hl]
     pop hl
     or a
-    jr z, jr_001_49fc
+    jr z, CheckAndReleaseAudioChannelsNext
 
-    call Call_001_4be5
-    jr jr_001_49cf
+    call ReleasePlaybackSlot
+    jr CheckAndReleaseAudioChannels
 
-jr_001_49fc:
+CheckAndReleaseAudioChannelsNext:
     dec d
-    jr nz, jr_001_49e1
+    jr nz, CheckAndReleaseAudioChannelsLoop
 
     ld a, e
     or a
@@ -1786,21 +1786,26 @@ jr_001_49fc:
     or a
     ret
 
-
-Call_001_4a05:
+CheckAudioChannelAvailability:
+    ; Read back data pointer
     ld a, [$cd81]
     ld l, a
     ld a, [$cd82]
     ld h, a
+    ; advance HL to next data byte
     inc hl
+
+    ; Save next data byte in cd80
     ld e, [hl]
     ld a, e
     ld [$cd80], a
     inc e
-    inc hl
-    ld d, $04
+    inc hl ; move to next data byte
+    ld d, $04 ; Check 4 entries
 
-jr_001_4a17:
+; 3 bytes make up a record
+; first two are data pointer, 3rd is channel index
+CheckAudioChannelAvailabilityLoop:
     ld a, [hl]
     inc hl
     ld b, [hl]
@@ -1808,8 +1813,10 @@ jr_001_4a17:
     ld c, [hl]
     inc hl
     or b
-    jr z, jr_001_4a31
+    jr z, CheckAudioChannelAvailabilityNext ; if both a and b is zero (no data pointer) skip and go to another loop
 
+    ; $CC0F + channel index → owning playback slot
+    ; $CC07 + owning slot   → comparison value
     push hl
     ld hl, $cc0f
     ld b, $00
@@ -1819,19 +1826,19 @@ jr_001_4a17:
     add hl, bc
     ld a, [hl]
     pop hl
+    ;Return if A >= E
     cp e
     ccf
     ret c
 
-jr_001_4a31:
+CheckAudioChannelAvailabilityNext:
     dec d
-    jr nz, jr_001_4a17
+    jr nz, CheckAudioChannelAvailabilityLoop
 
     or a
     ret
 
-
-Call_001_4a36:
+InitAudioSlot:
     ld a, [$cd83]
     ld e, a
     ld d, $00
@@ -1843,7 +1850,7 @@ Call_001_4a36:
     ld a, [$cd80]
     ld [hl], a
     ld a, e
-    call Call_001_4b21
+    call GetAudioSlotRecord
     ld a, l
     ld [$cc02], a
     ld a, h
@@ -1865,17 +1872,16 @@ Call_001_4a36:
     ld a, $01
     ld [$cc3a], a
     inc hl
-    call Call_001_4a84
-    call Call_001_4b9b
+    call InitializeAudioEntries
+    call CopyPlaybackRecord
     ret
 
-
-Call_001_4a84:
+InitializeAudioEntries:
     ld b, $04
     push hl
     pop de
 
-jr_001_4a88:
+InitializeAudioEntriesLoop:
     ld a, [de]
     inc de
     ld l, a
@@ -1887,34 +1893,34 @@ jr_001_4a88:
     ld c, a
     ld a, h
     or l
-    jr z, jr_001_4aa1
+    jr z, InitializeAudioEntriesMoveNext
 
     ld a, $05
     sub b
     push de
     push bc
-    call Call_001_4aa6
+    call InitializeAudioChannel
     pop bc
     pop de
-    jr c, jr_001_4aa5
+    jr c, InitializeAudioEntriesEnd
 
-jr_001_4aa1:
+InitializeAudioEntriesMoveNext:
     dec b
-    jr nz, jr_001_4a88
+    jr nz, InitializeAudioEntriesLoop
 
     or a
 
-jr_001_4aa5:
+InitializeAudioEntriesEnd:
     ret
 
 
-Call_001_4aa6:
+InitializeAudioChannel:
     ld [$cd7e], a
     ld a, c
     inc a
     ld [$cd84], a
     push hl
-    call Call_001_4b3f
+    call GetAudioChannelRecord
     ld a, l
     ld [$cc0d], a
     ld a, h
@@ -1941,27 +1947,25 @@ Call_001_4aa6:
     ld hl, $cc14
     add hl, de
     ld [hl], $00
-    call Call_001_4af6
-    call Call_001_4bc0
+    call PrependChannelToList
+    call CopyToAudioChannelWram
     ld a, [$cd84]
     or a
     ret
 
-
-Call_001_4af6:
-    call Call_001_4b08
+PrependChannelToList:
+    call GetChannelListAddress
     ld bc, $0003
     add hl, bc
     push hl
     pop de
     dec hl
-    call Call_001_5536
+    call CopyMemoryBackward
     ld a, [$cd84]
     ld [de], a
     ret
 
-
-Call_001_4b08:
+GetChannelListAddress:
     ld a, [$cc4b]
     add a
     ld hl, $4b17
@@ -1978,7 +1982,7 @@ Call_001_4b08:
 
     db $27, $cc, $2b, $cc, $2f, $cc, $33, $cc
 
-Call_001_4b21:
+GetAudioSlotRecord:
     add a
     ld hl, $4b2d
     add l
@@ -2001,7 +2005,7 @@ Call_001_4b21:
     ld d, b
     db $cc
 
-Call_001_4b3f:
+GetAudioChannelRecord:
     add a
     ld hl, $4b4b
     add l
@@ -2025,23 +2029,22 @@ Call_001_4b3f:
     ld [hl], h
     call $cd9f
 
-Call_001_4b5d:
+FindFreePlaybackSlot:
     ld b, $04
     ld hl, $cc04
 
-jr_001_4b62:
+FindFreePlaybackSlotLoop:
     ld a, [hl+]
     or a
-    jr z, jr_001_4b6b
+    jr z, StoreFreePlaybackSlotIndex
 
     dec b
-    jr nz, jr_001_4b62
+    jr nz, FindFreePlaybackSlotLoop
 
     scf
     ret
 
-
-jr_001_4b6b:
+StoreFreePlaybackSlotIndex:
     ld a, $05
     sub b
     ld [$cd83], a
@@ -2051,27 +2054,25 @@ jr_001_4b6b:
     ld b, $06
     ld hl, $cc0f
 
-jr_001_4b77:
+FindFreeAudioChannelLoop:
     ld a, [hl+]
     or a
-    jr z, jr_001_4b80
+    jr z, StoreFreeAudioChannelIndex
 
     dec b
-    jr nz, jr_001_4b77
+    jr nz, FindFreeAudioChannelLoop
 
     scf
     ret
 
-
-jr_001_4b80:
+StoreFreeAudioChannelIndex:
     ld a, $07
     sub b
     ld [$cd84], a
     ret
 
-
-Call_001_4b87:
-    call Call_001_4b21
+LoadPlaybackRecord:
+    call GetAudioSlotRecord
     ld a, l
     ld [$cc02], a
     ld a, h
@@ -2080,8 +2081,7 @@ Call_001_4b87:
     ld bc, $0003
     jp AudioCopyMemorySetup
 
-
-Call_001_4b9b:
+CopyPlaybackRecord:
     ld hl, $cc38
     ld a, [$cc02]
     ld e, a
@@ -2090,9 +2090,8 @@ Call_001_4b9b:
     ld bc, $0003
     jp AudioCopyMemorySetup
 
-
-Call_001_4bac:
-    call Call_001_4b3f
+LoadAudioChannelRecord:
+    call GetAudioChannelRecord
     ld a, l
     ld [$cc0d], a
     ld a, h
@@ -2101,8 +2100,7 @@ Call_001_4bac:
     ld bc, $002b
     jp AudioCopyMemorySetup
 
-
-Call_001_4bc0:
+CopyToAudioChannelWram:
     ld hl, $cc47
     ld a, [$cc0d]
     ld e, a
@@ -2113,27 +2111,25 @@ Call_001_4bc0:
 
 
     or a
-    jr nz, jr_001_4bdf
+    jr nz, ReleasePlaybackSlotWithInterruptsDisabled
 
-jr_001_4bd4:
+ReleaseAllPlaybackSlotsLoop:
     inc a
     cp $05
     ret nc
 
     push af
-    call Call_001_4bdf
+    call ReleasePlaybackSlotWithInterruptsDisabled
     pop af
-    jr jr_001_4bd4
+    jr ReleaseAllPlaybackSlotsLoop
 
-Call_001_4bdf:
-jr_001_4bdf:
+ReleasePlaybackSlotWithInterruptsDisabled:
     di
-    call Call_001_4be5
+    call ReleasePlaybackSlot
     ei
     ret
 
-
-Call_001_4be5:
+ReleasePlaybackSlot:
     or a
     ret z
 
@@ -2152,10 +2148,10 @@ Call_001_4be5:
     ld hl, $cc0f
     ld de, $cc15
 
-jr_001_4c01:
+ReleasePlaybackSlotChannelsLoop:
     ld a, [hl]
     cp c
-    jr nz, jr_001_4c14
+    jr nz, ReleasePlaybackSlotChannelsNext
 
     xor a
     ld [hl], a
@@ -2170,11 +2166,11 @@ jr_001_4c01:
     pop de
     pop hl
 
-jr_001_4c14:
+ReleasePlaybackSlotChannelsNext:
     inc hl
     inc de
     dec b
-    jr nz, jr_001_4c01
+    jr nz, ReleasePlaybackSlotChannelsLoop
 
     ret
 
@@ -2209,7 +2205,7 @@ Call_001_4c1a:
     ret z
 
     push af
-    call Call_001_4b3f
+    call GetAudioChannelRecord
     ld de, $0006
     add hl, de
     ld a, [hl]
@@ -2324,9 +2320,9 @@ jr_001_4cc0:
     ld [$cc01], a
     push bc
     push hl
-    call Call_001_4b87
+    call LoadPlaybackRecord
     call Call_001_4cdb
-    call Call_001_4b9b
+    call CopyPlaybackRecord
     pop hl
     pop bc
 
@@ -2368,7 +2364,7 @@ jr_001_4cf4:
     ld a, $07
     sub b
     ld [$cc0c], a
-    call Call_001_4b3f
+    call GetAudioChannelRecord
     ld c, l
     ld b, h
     ld a, l
@@ -3522,7 +3518,7 @@ jr_001_5281:
     ld [hl], $00
     push bc
     ld a, b
-    call Call_001_4b3f
+    call GetAudioChannelRecord
     push hl
     ld de, $0026
     add hl, de
@@ -3663,7 +3659,7 @@ Call_001_5354:
 
 jr_001_5356:
     ld a, [$cc01]
-    call Call_001_4be5
+    call ReleasePlaybackSlot
     scf
     ret
 
@@ -3697,7 +3693,7 @@ jr_001_5375:
 
 Call_001_537a:
     ld [$cc0c], a
-    call Call_001_4bac
+    call LoadAudioChannelRecord
     ld a, [$cc47]
     ld [$cc49], a
     ld a, [$cc48]
@@ -3762,7 +3758,7 @@ jr_001_53dd:
     adc h
     ld h, a
     ld [hl], $ff
-    call Call_001_4bc0
+    call CopyToAudioChannelWram
     ret
 
 
@@ -4004,18 +4000,17 @@ AudioCopyMemory:
     pop af
     ret
 
-
-Call_001_5536:
+CopyMemoryBackward:
     push af
 
-jr_001_5537:
+CopyMemoryBackwardLoop:
     ld a, [hl-]
     ld [de], a
     dec de
     dec bc
     ld a, b
     or c
-    jr nz, jr_001_5537
+    jr nz, CopyMemoryBackwardLoop
 
     pop af
     ret

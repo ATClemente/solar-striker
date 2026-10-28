@@ -315,7 +315,7 @@ Start:
     ld a, $02
     ld [wHighScore + 2], a ; Default high score to 20000
 
-Jump_000_016d:
+InitTitleScreen:
     ld a, $02
     ld [$2100], a ; Set ROM bank 2
     ; Copy $1000 bytes of image_002_4000.2bpp into VRAM
@@ -371,25 +371,28 @@ Jump_000_016d:
     ; Draw Push Start Button
     ld de, $3e9b
     call DrawBackgroundTilePackets
-    jr jr_000_01ed
+    jr DrawHighScoreSetup
 
 DrawPushSelectButton:
     ld de, $3ec7
     call DrawBackgroundTilePackets
 
-jr_000_01ed:
-    ld hl, $9a4c
+DrawHighScoreSetup:
+    ld hl, $9a4c ; High Score Display Start
     ld de, wHighScore
-    ld b, $07
+    ld b, $07 ; digits in High Score
 
-jr_000_01f5:
+DrawHighScore:
     ld a, [de]
-    or $f0
+    or $f0 ; convert to tile id
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_01f5
+    jr nz, DrawHighScore
 
+FinishTitleScreenSetup:
+    ; Set up palettes and scanline interrupt at 136
+    ; Also set timer reload and clear all pending interrupts
     ld a, $e4
     ldh [rBGP], a
     ldh [rOBP0], a
@@ -403,10 +406,10 @@ jr_000_01f5:
     ldh [rTMA], a
     ldh [rIF], a
     ld de, $04f5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld hl, $5ddb
     xor a
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     ld a, $07
     ldh [rTAC], a
@@ -523,7 +526,7 @@ jr_000_02ce:
     ldh [rLCDC], a
     ld hl, $ffff
     ld sp, hl
-    jp Jump_000_016d
+    jp InitTitleScreen
 
 
 Jump_000_02e5:
@@ -648,7 +651,7 @@ Jump_000_0381:
     call $4bd1
     ld a, $01
     ld hl, $5d8a
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     xor a
     ld [$cf9d], a
@@ -759,7 +762,7 @@ jr_000_041f:
 
 jr_000_042d:
     xor a
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     jp Jump_000_0261
 
@@ -1022,19 +1025,19 @@ jr_000_0580:
     ld [hl+], a
     ld [hl], e
     ld de, $16b3
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $17e3
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $0c19
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $0d1c
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld b, $03
 
 jr_000_05b2:
     push bc
     ld de, $1801
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_000_05b2
@@ -1121,7 +1124,7 @@ jr_000_0605:
     ld a, $e4
     ldh [rBGP], a
     ld de, $0d1c
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, $07
     ldh [rTAC], a
     ld a, $e7
@@ -1150,13 +1153,13 @@ jr_000_0691:
     ld a, $e4
     ldh [rBGP], a
     ld de, $0d1c
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, [wCurrentStage]
     cp $08
     jr z, jr_000_06b2
 
     ld de, $2d09
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jr jr_000_06c2
 
 jr_000_06b2:
@@ -1170,7 +1173,7 @@ jr_000_06b8:
     jr nz, jr_000_06b8
 
     ld de, $2ec9
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_06c2:
     ld a, $07
@@ -1201,7 +1204,7 @@ jr_000_06db:
     ld h, [hl]
     ld l, a
     ld a, b
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     ei
     jp Jump_000_0261
@@ -1323,12 +1326,12 @@ jr_000_07be:
     ldh [rOBP0], a
     ldh [rOBP1], a
     ld de, $2c63
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     xor a
     ld [$cf98], a
     ld [$cf86], a
     ld hl, $5541
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     ld a, $07
     ldh [rTAC], a
@@ -1713,7 +1716,7 @@ Call_000_099d:
     ld bc, $0804
     call Call_000_0a2e
     ld de, $1083
-    jp Jump_000_0a3e
+    jp StoreAddressInFreeWramSlot
 
 
 Call_000_09b8:
@@ -1808,7 +1811,7 @@ Call_000_0a0c:
 
     ld hl, $7311
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
     ld a, $01
     ret
 
@@ -1830,23 +1833,23 @@ Call_000_0a2e:
     ret
 
 
-Call_000_0a3e:
-Jump_000_0a3e:
-    ld b, $00
-    ld hl, $c700
+StoreAddressInFreeWramSlot:
+    ld b, $00 ; start b at 0
+    ld hl, $c700 ; wRAM address
 
-jr_000_0a43:
+FindFreeTwoByteSlotInWram:
     inc b
     ld a, $1f
     cp b
-    ret c
+    ret c ; ret if b is > 31
 
     ld a, [hl+]
     ld c, a
     ld a, [hl+]
     or c
-    jr nz, jr_000_0a43
+    jr nz, FindFreeTwoByteSlotInWram
 
+    ; Store the address in DE in the WRAM slots we found
     dec hl
     ld a, d
     ld [hl-], a
@@ -2220,7 +2223,7 @@ Jump_000_0bbb:
     ld h, [hl]
     ld l, a
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
 
 jr_000_0bed:
     ld de, $1019
@@ -2384,7 +2387,7 @@ jr_000_0ca7:
     ld [$cf96], a
     inc a
     ld hl, $5d41
-    call $49aa
+    call SetupAudioPlayback
     ld [$cfa0], a
     ret
 
@@ -2525,7 +2528,7 @@ jr_000_0d0b:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     ld hl, $cab5
     inc bc
@@ -2596,14 +2599,14 @@ jr_000_0d60:
     inc [hl]
     ld hl, $5f23
     xor a
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     jp Jump_000_0a67
 
 
     ld hl, $5eb0
     xor a
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
     ld a, $01
     ld [$cfa1], a
@@ -3316,7 +3319,7 @@ Jump_000_1138:
 
     ld [hl], a
     ld de, $11cd
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, [$ca65]
     ld e, a
     ld d, $00
@@ -4169,7 +4172,7 @@ jr_000_15df:
 Jump_000_15e8:
     ld hl, $739b
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
     xor a
     ld [$ca24], a
     ld de, $15fa
@@ -4188,7 +4191,7 @@ Jump_000_15e8:
     inc hl
     ld [hl], c
     ld de, $0ff5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $1616
     jp Jump_000_0a53
 
@@ -4420,7 +4423,7 @@ jr_000_1774:
 
     ld hl, $600e
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
     ld [$cf9a], a
 
 jr_000_1792:
@@ -4718,7 +4721,7 @@ Call_000_191e:
 
 jr_000_192b:
     ld a, $01
-    jp $49aa
+    jp SetupAudioPlayback
 
 
     ld a, [bc]
@@ -5275,7 +5278,7 @@ jr_000_1cd6:
     ld bc, $0806
     call Call_000_0a2e
     ld de, $1141
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_1d15:
     ld de, $1d1b
@@ -5509,12 +5512,12 @@ jr_000_1e64:
     add hl, de
     inc [hl]
     ld de, $0ff5
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, $22
     call Call_000_0c57
     ld hl, $732d
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
     ld de, $1f9a
     call Call_000_0b03
     ld de, $1ea4
@@ -5627,7 +5630,7 @@ jr_000_1f3d:
     call Call_000_0c57
     ld hl, $5e5b
     ld a, $01
-    call $49aa
+    call SetupAudioPlayback
     ld [$cfa0], a
     ld hl, $ca12
     ld a, [hl+]
@@ -5819,7 +5822,7 @@ jr_000_2070:
     ld bc, $0804
     call Call_000_0a2e
     ld de, $1083
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_2099:
     ld de, $209f
@@ -6079,7 +6082,7 @@ jr_000_2211:
     xor a
     ld [de], a
     ld de, $11a1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_2226:
     ld de, $222c
@@ -6150,7 +6153,7 @@ jr_000_2272:
 
     adc a
     ld [hl+], a
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ret
 
 
@@ -6256,13 +6259,13 @@ jr_000_2328:
     jr nz, jr_000_2328
 
     ld de, $2352
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld b, $02
 
 jr_000_2334:
     push bc
     ld de, $235e
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_000_2334
@@ -6272,7 +6275,7 @@ jr_000_2334:
 jr_000_2341:
     push bc
     ld de, $236a
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     pop bc
     dec b
     jr nz, jr_000_2341
@@ -6376,7 +6379,7 @@ jr_000_23e4:
     ld [$cac1], a
     ld [$ca69], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, $14
     call Call_000_0c57
     ld de, $2415
@@ -6459,9 +6462,9 @@ jr_000_245d:
     jr nz, jr_000_245d
 
     ld de, $2473
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $2700
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $27ad
     jp Jump_000_0a53
 
@@ -6559,9 +6562,9 @@ jr_000_2505:
 
     ld [$cf99], a
     ld de, $251b
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $281c
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a67
 
 
@@ -6619,7 +6622,7 @@ jr_000_2574:
     ld [$cac1], a
     ld [$ca69], a
     ld de, $46d7
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, $24
     call Call_000_0c57
     call IncrementPlayerLives
@@ -6656,7 +6659,7 @@ jr_000_259e:
     xor a
     ld [de], a
     ld de, $11a1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_25c3:
     ld de, $255c
@@ -6732,7 +6735,7 @@ jr_000_2618:
 
     call Call_000_0a2e
     ld de, $1141
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_262a:
     ld de, $25d9
@@ -6752,7 +6755,7 @@ jr_000_262a:
     jp nz, Jump_000_047e
 
     ld de, $264c
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_047e
 
 
@@ -6926,7 +6929,7 @@ jr_000_272e:
 jr_000_274d:
     call Call_000_2769
     ld de, $1083
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_2756:
     ld de, $275c
@@ -7043,7 +7046,7 @@ jr_000_27d3:
     ld [hl+], a
     ld [hl], e
     ld de, $1141
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_2805:
     ld de, $280b
@@ -7099,7 +7102,7 @@ jr_000_2843:
     ld bc, $0fa2
     call Call_000_2769
     ld de, $1083
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
 
 jr_000_285f:
     ld de, $2865
@@ -7336,7 +7339,7 @@ jr_000_292d:
     jp nc, Jump_000_047e
 
     ld de, $3207
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
 
 
@@ -7570,7 +7573,7 @@ jr_000_292d:
     ld a, [bc]
     call Call_000_0b4a
     ld de, $0de6
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
 
 
@@ -7864,7 +7867,7 @@ jr_000_2c94:
     ld a, [bc]
     call Call_000_0b4a
     ld de, $0de6
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a67
 
 
@@ -7923,7 +7926,7 @@ jr_000_2c94:
     jp nz, Jump_000_047e
 
     ld de, $2d71
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_047e
 
 
@@ -8128,7 +8131,7 @@ jr_000_2de7:
 
 
     ld de, $3019
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $2ed5
     jp Jump_000_0a53
 
@@ -8351,9 +8354,9 @@ jr_000_2f53:
     sub $bc
     cp a
     ld de, $3040
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld de, $30d9
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     ld a, $01
     ld [$ca2d], a
     ld de, $3030
@@ -8608,7 +8611,7 @@ Jump_000_31ad:
     ld a, [bc]
     call Call_000_0b4a
     ld de, $2ef1
-    call Call_000_0a3e
+    call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
 
 

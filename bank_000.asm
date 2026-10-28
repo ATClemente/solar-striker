@@ -366,15 +366,16 @@ Jump_000_016d:
     ldh [rSCY], a
     ld a, [$cffc]
     or a
-    jr nz, jr_000_01e7
+    jr nz, DrawPushSelectButton
 
+    ; Draw Push Start Button
     ld de, $3e9b
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
     jr jr_000_01ed
 
-jr_000_01e7:
+DrawPushSelectButton:
     ld de, $3ec7
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
 
 jr_000_01ed:
     ld hl, $9a4c
@@ -998,7 +999,7 @@ Jump_000_054a:
     ld [hl], d
     call DrawInitialBackground
     ld de, $3ef4
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
     ld de, $cae0
     ld hl, $0814
     ld b, $05
@@ -1290,11 +1291,11 @@ Jump_000_0730:
     ld [hl], a
     call DrawInitialBackground
     ld de, $2c9b
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
     ld de, $2ca8
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
     ld de, $2cb5
-    call Call_000_08a1
+    call DrawBackgroundTilePackets
     call Call_000_2c79
     ld c, $07
     ld hl, $9a30
@@ -1436,8 +1437,7 @@ CopyMemory:
 
     ret
 
-
-jr_000_0897:
+GetPacketDestinationAndMode:
     inc de
     ld h, a
     ld a, [de]
@@ -1445,17 +1445,21 @@ jr_000_0897:
     inc de
     ld a, [de]
     inc de
-    call Call_000_08a7
+    call WriteTilePacket
 
-Call_000_08a1:
+DrawBackgroundTilePackets:
     ld a, [de]
     cp $00
-    jr nz, jr_000_0897
+    jr nz, GetPacketDestinationAndMode
 
     ret
 
-
-Call_000_08a7:
+;Mode	Behavior
+;00	    Copy successive bytes across the tile map
+;01	    Repeat one byte across the tile map
+;10	    Copy successive bytes down the tile map
+;11	    Repeat one byte down the tile map
+WriteTilePacket:
     push af
     and $3f
     ld b, a
@@ -1463,39 +1467,40 @@ Call_000_08a7:
     rlca
     rlca
     and $03
-    jr z, jr_000_08ba
+    jr z, CopyBytesAcross
 
     dec a
-    jr z, jr_000_08c1
+    jr z, CopyOneByteAcrossSetup
 
     dec a
-    jr z, jr_000_08c8
+    jr z, CopyBytesDown
 
-    jr jr_000_08d5
+    jr CopyOneByteDown
 
-jr_000_08ba:
+; Mode 0
+CopyBytesAcross:
     ld a, [de]
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_08ba
+    jr nz, CopyBytesAcross
 
     ret
 
-
-jr_000_08c1:
+; Mode 1
+CopyOneByteAcrossSetup:
     ld a, [de]
     inc de
 
-jr_000_08c3:
+CopyOneByteAcross:
     ld [hl+], a
     dec b
-    jr nz, jr_000_08c3
+    jr nz, CopyOneByteAcross
 
     ret
 
-
-jr_000_08c8:
+; Mode 2
+CopyBytesDown:
     ld a, [de]
     ld [hl], a
     inc de
@@ -1504,12 +1509,12 @@ jr_000_08c8:
     add hl, bc
     ld b, a
     dec b
-    jr nz, jr_000_08c8
+    jr nz, CopyBytesDown
 
     ret
 
-
-jr_000_08d5:
+; Mode 3
+CopyOneByteDown:
     ld a, [de]
     ld [hl], a
     ld a, b
@@ -1517,7 +1522,7 @@ jr_000_08d5:
     add hl, bc
     ld b, a
     dec b
-    jr nz, jr_000_08d5
+    jr nz, CopyOneByteDown
 
     inc de
     ret
@@ -11221,46 +11226,30 @@ jr_000_3e90:
 
     jr nz, @+$2a
 
-    db $99, $eb, $04, $d2, $dc, $d8, $c2, $9a, $08, $0c, $d8, $da, $b4, $d6, $da, $ff
-    db $b6, $dc, $da, $da, $d0, $ce, $9a, $48, $03, $da, $d0, $d2, $9a, $88, $0c, $fc
-    db $a2, $b2, $b0, $b2, $ff, $ea, $eb, $ec, $ed, $ee, $ef, $00
+    ; Packet format: destination high byte, destination low byte, control, data.
+    ; These destinations are in VRAM (the background tile map).
+    ; All controls below have mode 0: copy the following bytes to the destination.
+    ; $CFFC = 0 selects the sequence at ROM $3E9B.
+    ; ROM $3E9B: HL = $99EB, copy 4 bytes to $99EB-$99EE.
+    db $99, $eb, $04, $d2, $dc, $d8, $c2
+    ; ROM $3EA2: HL = $9A08, copy 12 bytes to $9A08-$9A13.
+    db $9a, $08, $0c, $d8, $da, $b4, $d6, $da, $ff, $b6, $dc, $da, $da, $d0, $ce
+    ; ROM $3EB1: HL = $9A48, copy 3 bytes to $9A48-$9A4A.
+    db $9a, $48, $03, $da, $d0, $d2
+    ; ROM $3EB7: HL = $9A88, copy 12 bytes to $9A88-$9A93.
+    db $9a, $88, $0c, $fc, $a2, $b2, $b0, $b2, $ff, $ea, $eb, $ec, $ed, $ee, $ef
+    db $00 ; ROM $3EC6: end of sequence.
 
-    sbc c
-    db $eb
-    inc b
-    jp nc, $d8dc
-
-    jp nz, $079a
-
-    dec c
-    ret c
-
-    cp h
-    jp z, $b8bc
-
-    jp c, $b6bf
-
-    call c, $dada
-    ret nc
-
-    adc $9a
-    ld c, b
-    inc bc
-    jp c, $d2d0
-
-    sbc d
-    adc b
-    inc c
-    db $fc
-    and d
-    or d
-    or b
-    or d
-    rst $38
-    ld [$eceb], a
-    db $ed
-    xor $ef
-    nop
+    ; $CFFC != 0 selects the sequence at ROM $3EC7.
+    ; ROM $3EC7: HL = $99EB, copy 4 bytes to $99EB-$99EE.
+    db $99, $eb, $04, $d2, $dc, $d8, $c2
+    ; ROM $3ECE: HL = $9A07, copy 13 bytes to $9A07-$9A13.
+    db $9a, $07, $0d, $d8, $bc, $ca, $bc, $b8, $da, $bf, $b6, $dc, $da, $da, $d0, $ce
+    ; ROM $3EDE: HL = $9A48, copy 3 bytes to $9A48-$9A4A.
+    db $9a, $48, $03, $da, $d0, $d2
+    ; ROM $3EE4: HL = $9A88, copy 12 bytes to $9A88-$9A93.
+    db $9a, $88, $0c, $fc, $a2, $b2, $b0, $b2, $ff, $ea, $eb, $ec, $ed, $ee, $ef
+    db $00 ; ROM $3EF3: end of sequence.
 
     db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00, $f0, $f0, $f0, $f0, $f0, $f0, $f0
     db $f0, $00, $00, $fa, $f0, $f3, $00

@@ -7,3 +7,6 @@ DEF D_PAD_UP      EQU $40
 DEF D_PAD_DOWN    EQU $80
 DEF D_PAD_LEFT    EQU $20
 DEF D_PAD_RIGHT   EQU $10
+
+DEF wStartAlreadyHeld  EQU $CFFA
+DEF wSelectAlreadyHeld EQU $CFFB

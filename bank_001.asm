@@ -17,7 +17,7 @@ jr_001_4006:
     ld bc, $40d5
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
     ld a, $05
     ld [$ca2c], a
@@ -117,7 +117,7 @@ Jump_001_40a2:
     ld a, [hl]
     and $07
     ld [hl+], a
-    jp nz, Jump_000_047e
+    jp nz, AdvanceToNextHandler
 
     ld a, [hl]
     inc [hl]
@@ -126,7 +126,7 @@ Jump_001_40a2:
 
     ld hl, $4686
     call Call_001_465d
-    jp Jump_000_047e
+    jp AdvanceToNextHandler
 
 
     inc h
@@ -181,7 +181,7 @@ jr_001_4103:
     ld bc, $41b8
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
     ld de, $25d9
     call StoreAddressInFreeWramSlot
@@ -343,7 +343,7 @@ jr_001_41e6:
     ld bc, $428d
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
     ld de, $41fd
     jp Jump_000_0a53
@@ -450,15 +450,15 @@ jr_001_42bd:
     dec b
     jr nz, jr_001_42bd
 
-    jp Jump_000_0a67
+    jp RemoveCurrentHandler
 
 
     ld bc, $43b7
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -523,7 +523,7 @@ jr_001_4321:
 
 
 jr_001_433d:
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -540,7 +540,7 @@ jr_001_433d:
 
 
     call Call_000_09ec
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -576,7 +576,7 @@ jr_001_437f:
     or a
     jr z, jr_001_43a7
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -643,7 +643,7 @@ jr_001_43d7:
     dec b
     jr nz, jr_001_43d7
 
-    jp Jump_000_0a67
+    jp RemoveCurrentHandler
 
 
     ld de, $cac0
@@ -654,9 +654,9 @@ jr_001_43d7:
     ld bc, $44d6
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -823,7 +823,7 @@ jr_001_44ee:
     dec b
     jr nz, jr_001_44ee
 
-    jp Jump_000_0a67
+    jp RemoveCurrentHandler
 
 
     ld de, $cac0
@@ -833,9 +833,9 @@ jr_001_44ee:
     ld bc, $45ff
     call Call_000_0947
     or a
-    jp z, Jump_000_0a67
+    jp z, RemoveCurrentHandler
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -895,7 +895,7 @@ jr_001_4559:
 
 
 jr_001_456e:
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -944,7 +944,7 @@ jr_001_45b6:
 
 
     call Call_000_09ec
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -967,7 +967,7 @@ jr_001_45d3:
     or a
     jr z, jr_001_45f9
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1052,7 +1052,7 @@ Call_001_4627:
     ld a, [hl]
     and $07
     ld [hl+], a
-    jp nz, Jump_000_047e
+    jp nz, AdvanceToNextHandler
 
     ld a, [hl]
     inc [hl]
@@ -1061,7 +1061,7 @@ Call_001_4627:
 
     ld hl, $4686
     call Call_001_465d
-    jp Jump_000_047e
+    jp AdvanceToNextHandler
 
 
 Call_001_465d:
@@ -1096,7 +1096,7 @@ Call_001_465d:
 
     db $08, $08, $10, $10, $10, $00, $00, $10, $00, $00
 
-    ld hl, $ca12
+    ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1149,12 +1149,12 @@ jr_001_46a2:
     inc [hl]
     ld a, [hl+]
     cp $20
-    jp c, Jump_000_047e
+    jp c, AdvanceToNextHandler
 
     ldh a, [rLCDC]
     and $fe
     ldh [rLCDC], a
-    jp Jump_000_0a67
+    jp RemoveCurrentHandler
 
 
 Jump_001_46ea:

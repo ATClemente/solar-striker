@@ -358,7 +358,7 @@ InitTitleScreen:
     ldh [rSCY], a
     ldh [rSB], a
     ldh [rSC], a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld [wCurrentStage], a
     ld a, $20
     ldh [rSCX], a
@@ -420,7 +420,7 @@ FinishTitleScreenSetup:
     ei
 
 TitleScreenLoop:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     and a
     jr z, TitleScreenLoop
 
@@ -437,7 +437,7 @@ TitleScreenLoop:
     call RunWramHandlers
     call BuildShadowOAM
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     inc a
     ld [wOAMReady], a
     call CheckForSoftReset
@@ -448,7 +448,7 @@ TitleScreenLoop:
 
 Jump_000_0261:
 jr_000_0261:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     or a
     jr z, jr_000_0261
 
@@ -482,12 +482,12 @@ jr_000_0261:
     or a
     call nz, Call_000_04d3
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     jr jr_000_0261
 
 Jump_000_02a2:
 jr_000_02a2:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     or a
     jr z, jr_000_02a2
 
@@ -499,7 +499,7 @@ jr_000_02a2:
     ld a, $01
     ld [wOAMReady], a
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld hl, $cf98
     ld a, [hl]
     or a
@@ -541,7 +541,7 @@ Jump_000_02e5:
     and a
     call nz, $ff80
     ld a, $01
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ldh a, [rLCDC]
     or $02
     ldh [rLCDC], a
@@ -593,13 +593,13 @@ StopAudioForSoftReset:
     call StopAudioPlayback
 
 WaitForSRButtonsRelease:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     or a
     jr z, WaitForSRButtonsRelease
 
     call ReadJoypad
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld a, [wJoypadHeld]
     and $0f
     jr nz, WaitForSRButtonsRelease
@@ -623,13 +623,13 @@ StopAudioForQuickSoftReset:
     call StopAudioPlayback
 
 WaitForStartButtonRelease:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     or a
     jr z, WaitForStartButtonRelease
 
     call ReadJoypad
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld a, [wJoypadHeld]
     and $08
     jr nz, WaitForStartButtonRelease
@@ -653,7 +653,7 @@ Jump_000_0381:
     call Call_000_0437
 
 jr_000_0399:
-    ld a, [$cf86]
+    ld a, [wVBlankOccurred]
     or a
     jr z, jr_000_0399
 
@@ -721,7 +721,7 @@ jr_000_03ec:
 Jump_000_03f6:
 jr_000_03f6:
     xor a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     jr jr_000_0399
 
 jr_000_03fc:
@@ -729,7 +729,7 @@ jr_000_03fc:
     ld [hl+], a
     ld [hl+], a
     ld [hl], a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld [$cfa2], a
     call Call_000_0446
     ld a, [$cfa1]
@@ -1036,7 +1036,7 @@ RegisterPlayerShotInitHandlers:
 
     xor a
     ld [wPlayerInput], a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld [$ca54], a
     ld a, $e7
     ldh [rLCDC], a
@@ -1092,7 +1092,7 @@ jr_000_0605:
     ld [$cf9c], a
     ld [$ca20], a
     ld [$ca81], a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld [$cac5], a
     ld [$ca80], a
     ld [$cfa1], a
@@ -1321,7 +1321,7 @@ jr_000_07be:
     call StoreAddressInFreeWramSlot
     xor a
     ld [$cf98], a
-    ld [$cf86], a
+    ld [wVBlankOccurred], a
     ld hl, $5541
     call SetupAudioPlayback
     ld [$cf9a], a

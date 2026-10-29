@@ -6,6 +6,8 @@ DEF wCurrentStage EQU $CA19
 DEF wGameStartRequested EQU $CA1A
 DEF wGameMode     EQU $CA2E
 
+DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop
+
 DEF wPlayerScore EQU $CF88
 DEF wHighScore   EQU $CFF1
 

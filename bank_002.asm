@@ -7305,7 +7305,7 @@ jr_002_7c41:
     ld b, $01
     inc bc
     nop
-    ld bc, $c000
+    ld bc, wShadowOAM
     nop
     ldh a, [rP1]
     jr jr_002_7c36

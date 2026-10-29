@@ -239,7 +239,7 @@ jr_001_415f:
 
 jr_001_416c:
     ld [de], a
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1034,7 +1034,7 @@ Call_001_4627:
     call Call_000_0b4a
     call Call_000_0ce4
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1070,7 +1070,7 @@ Call_001_465d:
     ld b, $00
     add hl, bc
     push hl
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a

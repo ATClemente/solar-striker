@@ -344,7 +344,7 @@ InitTitleScreen:
     call ClearTileMap9800
     ; Clear the first 4080 bytes of WRAM
     ld bc, $0ff0
-    ld hl, $c000
+    ld hl, wShadowOAM
     call ZeroMemory
     ; Store $9AA2 to $CA88–$CA89,
     ; $9AA2 is in the first tilemap
@@ -428,18 +428,18 @@ TitleScreenLoop:
     ldh [rIE], a
     ei
     xor a
-    ld [$ca18], a
+    ld [wOAMReady], a
     ld a, [wGameStartRequested]
     or a
     jp nz, Jump_000_054a
 
     call ReadJoypad
     call RunWramHandlers
-    call Call_000_14c4
+    call BuildShadowOAM
     xor a
     ld [$cf86], a
     inc a
-    ld [$ca18], a
+    ld [wOAMReady], a
     call CheckForSoftReset
     or a
     jp nz, ReturnToTitleScreen
@@ -453,14 +453,14 @@ jr_000_0261:
     jr z, jr_000_0261
 
     xor a
-    ld [$ca18], a
+    ld [wOAMReady], a
     ld a, $07
     ldh [rIE], a
     ei
     call Call_000_137a
     call ReadJoypad
     call RunWramHandlers
-    call Call_000_14c4
+    call BuildShadowOAM
     ld hl, $cf9b
     ld a, [hl+]
     or a
@@ -497,7 +497,7 @@ jr_000_02a2:
     call ReadJoypad
     call RunWramHandlers
     ld a, $01
-    ld [$ca18], a
+    ld [wOAMReady], a
     xor a
     ld [$cf86], a
     ld hl, $cf98
@@ -537,7 +537,7 @@ Jump_000_02e5:
     di
     ld a, $03
     ldh [rIE], a
-    ld a, [$ca18]
+    ld a, [wOAMReady]
     and a
     call nz, $ff80
     ld a, $01
@@ -658,10 +658,10 @@ jr_000_0399:
     jr z, jr_000_0399
 
     xor a
-    ld [$ca18], a
+    ld [wOAMReady], a
     call Call_000_048d
     call ReadJoypad
-    call Call_000_14c4
+    call BuildShadowOAM
     call $4c97
     call Call_000_0c04
     or a
@@ -1056,7 +1056,7 @@ Jump_000_05d8:
     ldh [rTAC], a
     ldh [rTMA], a
     ld [$cf9b], a
-    ld [$ca18], a
+    ld [wOAMReady], a
     call DisableLCD
     ld a, [wCurrentStage]
     cp $08
@@ -1255,7 +1255,7 @@ Jump_000_0730:
     xor a
     ldh [rTAC], a
     ldh [rTMA], a
-    ld [$ca18], a
+    ld [wOAMReady], a
     call DisableLCD
     ld a, $02
     ld [$2100], a
@@ -1276,7 +1276,7 @@ Jump_000_0730:
     ld a, $01
     ld [$2100], a
     call ClearTileMap9800
-    ld hl, $c000
+    ld hl, wShadowOAM
     ld bc, $0c00
     call ZeroMemory
     ld hl, $ca88
@@ -1683,7 +1683,7 @@ Call_000_097d:
     add d
     ld d, a
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1809,7 +1809,7 @@ Call_000_0a0c:
 
 
 Call_000_0a2e:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -1907,7 +1907,7 @@ Call_000_0a8f:
     swap a
     ld l, a
     ld h, $00
-    ld de, $c780
+    ld de, wObjectTable
     add hl, de
     ld a, [hl+]
     or [hl]
@@ -2011,7 +2011,7 @@ Call_000_0afa:
 
 
 Call_000_0b03:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -2025,7 +2025,7 @@ Call_000_0b03:
 
 
 Call_000_0b10:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -2042,7 +2042,7 @@ jr_000_0b19:
 
 Call_000_0b1e:
 Jump_000_0b1e:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -2066,7 +2066,7 @@ Call_000_0b31:
 
 Call_000_0b38:
 Jump_000_0b38:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -2090,9 +2090,9 @@ Call_000_0b4a:
     ld a, l
     and $f0
     ld l, a
-    ld de, $c780
+    ld de, wObjectTable
     add hl, de
-    ld de, $ca14
+    ld de, wSelectedObjectPointer
     ld a, l
     ld [de], a
     inc de
@@ -2186,7 +2186,7 @@ Call_000_0ba4:
 Jump_000_0bbb:
     ld a, d
     call Call_000_0c57
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -3937,9 +3937,9 @@ jr_000_14b8:
     ld [$ca28], a
     ret
 
-
-Call_000_14c4:
-    ld a, [$ca7b]
+BuildShadowOAM:
+    ; Choose starting object, each is 16 bytes
+    ld a, [wFirstObjectIndex]
     swap a
     ld l, a
     and $0f
@@ -3947,31 +3947,35 @@ Call_000_14c4:
     ld a, l
     and $f0
     ld l, a
-    ld de, $c780
+    ld de, wObjectTable 
     add hl, de
+    ; Reset the output offset and object counter
     xor a
-    ld [$ca70], a
-    ld [$ca71], a
+    ld [wOAMWriteOffset], a
+    ld [wObjectsProcessed], a
 
-Jump_000_14dc:
+.nextObject
+    ; if first byte is zero skip,
+    ; otherwise copy first five bytes into a workspace
+    ; starting at wSpriteGridDimensions
     push hl
     ld a, [hl]
     or a
-    jp z, Jump_000_154c
+    jp z, .advanceObject
 
-    ld de, $ca72
+    ld de, wSpriteGridDimensions
     ld bc, $0005
     call CopyMemory
-    ld hl, $ca75
+    ld hl, wSpriteDataPointer
     ld a, [hl+]
     or [hl]
-    jp z, Jump_000_154c
+    jp z, .advanceObject
 
-    ld de, $ca77
-    ld hl, $ca73
+    ld de, wSpriteDrawY
+    ld hl, wSpriteBaseY
     ld bc, $0004
     call CopyMemory
-    ld a, [$ca72]
+    ld a, [wSpriteGridDimensions]
     ld c, a
     and $0f
     ld b, a
@@ -3979,13 +3983,14 @@ Jump_000_14dc:
     ld a, c
     and $0f
     ld c, a
-    ld a, [$ca70]
+    ld a, [wOAMWriteOffset]
     ld e, a
-    ld d, $c0
+    ld d, HIGH(wShadowOAM)
 
-Jump_000_1512:
+.writeSprite
+    ; Write sprites 4 bytes to buffer at DE
     push bc
-    ld hl, $ca77
+    ld hl, wSpriteDrawY
     ld a, [hl+]
     ld [de], a
     inc de
@@ -4006,73 +4011,77 @@ Jump_000_1512:
     ld a, b
     ld [hl-], a
     ld [hl], c
-    ld hl, $ca78
+    ld hl, wSpriteDrawX
     ld a, [hl]
-    add $08
+    add $08 ; add 8 to the x pos
     ld [hl-], a
     pop bc
-    dec b
-    jp nz, Jump_000_1512
+    dec b ; controls whether we repeat for another sprite in the row
+    jp nz, .writeSprite
 
+    ; Advance y and check c for another row
     ld a, [hl]
     add $10
     ld [hl+], a
-    ld a, [$ca74]
+    ld a, [wSpriteBaseX]
     ld [hl], a
-    ld a, [$ca72]
+    ld a, [wSpriteGridDimensions]
     and $0f
     ld b, a
     dec c
-    jp nz, Jump_000_1512
+    jp nz, .writeSprite
 
     ld a, e
-    ld [$ca70], a
+    ld [wOAMWriteOffset], a
 
-Jump_000_154c:
-    ld hl, $ca71
+;Increment wObjectsProcessed, advance the object pointer by 16,
+; and wrap from $CA00 back to wObjectTable. Stop after 40 object entries.
+.advanceObject
+    ld hl, wObjectsProcessed
     ld a, [hl]
     inc a
     ld [hl], a
     cp $28
-    jr z, jr_000_1567
+    jr z, .finishObjects
 
     pop hl
     ld de, $0010
     add hl, de
     ld a, h
     cp $ca
-    jp nz, Jump_000_14dc
+    jp nz, .nextObject
 
-    ld hl, $c780
-    jp Jump_000_14dc
+    ld hl, wObjectTable
+    jp .nextObject
 
-
-jr_000_1567:
+.finishObjects
     pop hl
-    ld a, [$ca70]
+    ld a, [wOAMWriteOffset]
     ld l, a
-    ld h, $c0
+    ld h, HIGH(wShadowOAM)
 
-jr_000_156e:
+; Zero remaining buffer bytes up to C0EF increment wFirstObjectIndex,
+; reset when it reaches $27
+.clearUnusedBuffer
     xor a
     ld [hl+], a
     ld a, l
     cp $f0
-    jr c, jr_000_156e
+    jr c, .clearUnusedBuffer
 
-    ld hl, $ca7b
+    ld hl, wFirstObjectIndex
     ld a, [hl]
     inc a
     ld [hl], a
     cp $27
-    jr nz, jr_000_1581
+    jr nz, .setOAMFlag
 
     xor a
     ld [hl], a
 
-jr_000_1581:
+.setOAMFlag
     ld a, $01
-    ld [$ca18], a
+    ld [wOAMReady], a
     ret
 
 
@@ -4564,7 +4573,7 @@ jr_000_1854:
 
 
 Call_000_1857:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -4579,7 +4588,7 @@ Call_000_1857:
     jr jr_000_1895
 
 Call_000_186b:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -4595,7 +4604,7 @@ Call_000_186b:
     jr jr_000_1895
 
 Call_000_1881:
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -4932,7 +4941,7 @@ jr_000_1aa4:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5181,7 +5190,7 @@ jr_000_1c67:
     ld d, a
     ld e, $00
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5242,7 +5251,7 @@ jr_000_1cd6:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5336,7 +5345,7 @@ jr_000_1d5b:
     ld e, $00
     call Call_000_0b1e
     ld de, $c781
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5397,7 +5406,7 @@ jr_000_1dc0:
 
 
     call Call_000_099d
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5537,7 +5546,7 @@ jr_000_1e64:
     inc de
     ld a, [hl]
     ld [de], a
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -5695,7 +5704,7 @@ jr_000_1fd3:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -6040,7 +6049,7 @@ jr_000_21df:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -6798,7 +6807,7 @@ jr_000_262a:
     call Call_000_0b38
     ld de, $26fc
     call Call_000_0b03
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -6826,7 +6835,7 @@ jr_000_262a:
     or a
     jp nz, Jump_000_0a64
 
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -7201,7 +7210,7 @@ jr_000_28ff:
     ld d, [hl]
     ld e, $00
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -7259,7 +7268,7 @@ jr_000_292d:
     call Call_000_0b4a
     ld de, $ff00
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -7319,7 +7328,7 @@ jr_000_292d:
     ld e, a
     ld d, $00
     call Call_000_0b1e
-    ld hl, $ca14
+    ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a

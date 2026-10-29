@@ -2109,7 +2109,7 @@ CopyToAudioChannelWram:
     ld bc, $002b
     jp AudioCopyMemorySetup
 
-
+StopAudioPlayback:
     or a
     jr nz, ReleasePlaybackSlotWithInterruptsDisabled
 

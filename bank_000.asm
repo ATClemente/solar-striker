@@ -440,9 +440,9 @@ TitleScreenLoop:
     ld [$cf86], a
     inc a
     ld [$ca18], a
-    call Call_000_0325
+    call CheckForSoftReset
     or a
-    jp nz, Jump_000_02ce
+    jp nz, ReturnToTitleScreen
 
     jr TitleScreenLoop
 
@@ -474,9 +474,9 @@ jr_000_0261:
     or a
     jp nz, Jump_000_0381
 
-    call Call_000_0325
+    call CheckForSoftReset
     or a
-    jp nz, Jump_000_02ce
+    jp nz, ReturnToTitleScreen
 
     ld a, [$ca1d]
     or a
@@ -510,16 +510,15 @@ jr_000_02a2:
     jr c, jr_000_02a2
 
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
 
-Jump_000_02ce:
-jr_000_02ce:
+ReturnToTitleScreen:
     ldh a, [rLY]
     cp $90
-    jr c, jr_000_02ce
+    jr c, ReturnToTitleScreen
 
     cp $96
-    jr nc, jr_000_02ce
+    jr nc, ReturnToTitleScreen
 
     ldh a, [rLCDC]
     and $7f
@@ -576,36 +575,34 @@ Jump_000_0315:
     pop af
     reti
 
-
-Call_000_0325:
+CheckForSoftReset:
     ld a, [$cab9]
     or a
-    jr nz, jr_000_0357
+    jr nz, CheckQuickSoftReset
 
     ld a, [wJoypadHeld]
     and $0f
     cp $0f
-    jr z, jr_000_0336
+    jr z, StopAudioForSoftReset
 
     xor a
     ret
 
-
-jr_000_0336:
+StopAudioForSoftReset:
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
 
-jr_000_033c:
+WaitForSRButtonsRelease:
     ld a, [$cf86]
     or a
-    jr z, jr_000_033c
+    jr z, WaitForSRButtonsRelease
 
     call ReadJoypad
     xor a
     ld [$cf86], a
     ld a, [wJoypadHeld]
     and $0f
-    jr nz, jr_000_033c
+    jr nz, WaitForSRButtonsRelease
 
     xor a
     ldh [rTAC], a
@@ -613,31 +610,29 @@ jr_000_033c:
     inc a
     ret
 
-
-jr_000_0357:
+CheckQuickSoftReset:
     ld a, [wJoypadHeld]
     and $08
-    jr nz, jr_000_0360
+    jr nz, StopAudioForQuickSoftReset
 
     xor a
     ret
 
-
-jr_000_0360:
+StopAudioForQuickSoftReset:
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
 
-jr_000_0366:
+WaitForStartButtonRelease:
     ld a, [$cf86]
     or a
-    jr z, jr_000_0366
+    jr z, WaitForStartButtonRelease
 
     call ReadJoypad
     xor a
     ld [$cf86], a
     ld a, [wJoypadHeld]
     and $08
-    jr nz, jr_000_0366
+    jr nz, WaitForStartButtonRelease
 
     xor a
     ldh [rTAC], a
@@ -648,7 +643,7 @@ jr_000_0366:
 
 Jump_000_0381:
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     ld a, $01
     ld hl, $5d8a
     call SetupAudioPlayback
@@ -672,9 +667,9 @@ jr_000_0399:
     or a
     jp nz, Jump_000_03f6
 
-    call Call_000_0325
+    call CheckForSoftReset
     or a
-    jp nz, Jump_000_02ce
+    jp nz, ReturnToTitleScreen
 
     ld hl, $cf9d
     ld a, [hl+]
@@ -1055,7 +1050,7 @@ jr_000_05b2:
 
 Jump_000_05d8:
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     di
     xor a
     ldh [rTAC], a
@@ -1255,7 +1250,7 @@ jr_000_0722:
 
 Jump_000_0730:
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     di
     xor a
     ldh [rTAC], a
@@ -2610,7 +2605,7 @@ jr_000_0d60:
 
 
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     jp RemoveCurrentHandler
 
 
@@ -7526,7 +7521,7 @@ jr_000_292d:
     jp z, RemoveCurrentHandler
 
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     ld a, [wWeaponPowerLevel]
     ld [$ca2c], a
     ld de, $2b22
@@ -7837,7 +7832,7 @@ jr_000_2c94:
     ld a, $01
     ld [$cac5], a
     ld a, [$cf9a]
-    call $4bd1
+    call StopAudioPlayback
     call Call_000_2c79
     ld de, $2cdf
     jp Jump_000_0a53

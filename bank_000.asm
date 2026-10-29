@@ -749,7 +749,7 @@ jr_000_041f:
     add a
     ld l, a
     ld h, $00
-    ld de, $07f8
+    ld de, StageMusicPointerTable
     add hl, de
     ld a, [hl+]
     ld h, [hl]
@@ -1045,7 +1045,7 @@ RegisterPlayerShotInitHandlers:
     ld a, $02
     ld [wPlayerLives], a
     ei
-    jp Jump_000_06cd
+    jp StartStageMusic
 
 
 Jump_000_05d8:
@@ -1121,7 +1121,7 @@ jr_000_0605:
     ldh [rTAC], a
     ld a, $e7
     ldh [rLCDC], a
-    jr jr_000_06cd
+    jr StartStageMusic
 
 jr_000_067b:
     ld a, $50
@@ -1174,23 +1174,23 @@ jr_000_06c2:
     ld a, $e7
     ldh [rLCDC], a
 
-Jump_000_06cd:
-jr_000_06cd:
+StartStageMusic:
     ei
     ld b, $00
     ld a, [wCurrentStage]
     cp $07
-    jp z, Jump_000_0261
+    jp z, Jump_000_0261 ; current stage is 7
 
-    jr c, jr_000_06db
+    jr c, GetMusicIndexAndSetupAudio ; current stage is less than 7
 
+    ; Stage is greater than 7
     inc b
 
-jr_000_06db:
+GetMusicIndexAndSetupAudio:
     add a
     ld l, a
     ld h, $00
-    ld de, $07f8
+    ld de, StageMusicPointerTable
     add hl, de
     ld a, [hl+]
     ld h, [hl]
@@ -1335,22 +1335,18 @@ jr_000_07be:
     jp Jump_000_02a2
 
 
-    db $10
-    ld h, d
+StageMusicPointerTable: ; $07F8-$0809
+    ; Audio definition pointers in ROM bank 1, indexed by stage.
+    dw $6210 ; Stage 0
+    dw $6210 ; Stage 1
+    dw $6210 ; Stage 2
+    dw $6B60 ; Stage 3
+    dw $651D ; Stage 4
+    dw $6FCF ; Stage 5
+    dw $70F8 ; Stage 6
+    dw $5603 ; Stage 7 (skipped by StartStageMusic)
+    dw $5603 ; Stage 8
 
-    db $10, $62, $10, $62
-
-    ld h, b
-    ld l, e
-    dec e
-    ld h, l
-    rst $08
-    ld l, a
-    ld hl, sp+$70
-    inc bc
-    ld d, [hl]
-    inc bc
-    ld d, [hl]
     ld b, c
     ld d, l
     or b

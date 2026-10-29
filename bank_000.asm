@@ -431,7 +431,7 @@ TitleScreenLoop:
     ld [wOAMReady], a
     ld a, [wGameStartRequested]
     or a
-    jp nz, Jump_000_054a
+    jp nz, InitializeNewGame
 
     call ReadJoypad
     call RunWramHandlers
@@ -897,7 +897,7 @@ jr_000_04c8:
 
 
 Call_000_04d3:
-    ld hl, $ff42
+    ld hl, rSCY
     ld de, $ca1e
     ld a, [de]
     or a
@@ -975,18 +975,17 @@ HandleSelectButtonHeld:
     ld [wGameMode], a
     jp RemoveCurrentHandler
 
-
-Jump_000_054a:
+InitializeNewGame:
     call DisableLCD
     di
     call ClearTileMap9800
     ld bc, $0020
     ld hl, $9c00
     call ZeroMemory
-    ld de, $0e81
-    call Call_000_0dfb
-    ld de, $0e5d
-    call Call_000_0e16
+    ld de, StageTileGraphicsTable
+    call CopyStageTileGraphicsToVram
+    ld de, StageBackgroundDataTable
+    call LoadStageDataToWram
     ld hl, $ca88
     ld de, $9b82
     ld a, e
@@ -999,23 +998,24 @@ Jump_000_054a:
     ld hl, $0814
     ld b, $05
 
-jr_000_0580:
+CopyScoreLabelLoop:
     ld a, [hl+]
     ld [de], a
     inc de
     dec b
-    jr nz, jr_000_0580
+    jr nz, CopyScoreLabelLoop
 
     ld de, $8807
-    ld hl, $ff4a
+    ld hl, rWY
     ld a, d
     ld [hl+], a
     ld [hl], e
     ld de, $6030
-    ld hl, $ff42
+    ld hl, rSCY
     ld a, d
     ld [hl+], a
-    ld [hl], e
+    ld [hl], e ; rSCX
+RegisterNewGameHandlers:
     ld de, $16b3
     call StoreAddressInFreeWramSlot
     ld de, $17e3
@@ -1026,13 +1026,13 @@ jr_000_0580:
     call StoreAddressInFreeWramSlot
     ld b, $03
 
-jr_000_05b2:
+RegisterPlayerShotInitHandlers:
     push bc
-    ld de, $1801
+    ld de, InitializePlayerShot
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_000_05b2
+    jr nz, RegisterPlayerShotInitHandlers
 
     xor a
     ld [wPlayerInput], a
@@ -1071,10 +1071,10 @@ Jump_000_05d8:
 
 jr_000_0605:
     call ClearTileMap9800
-    ld de, $0e81
-    call Call_000_0dfb
-    ld de, $0e5d
-    call Call_000_0e16
+    ld de, StageTileGraphicsTable
+    call CopyStageTileGraphicsToVram
+    ld de, StageBackgroundDataTable
+    call LoadStageDataToWram
     call ClearTileMap9800
     ld hl, $ca88
     ld de, $9b82
@@ -1109,7 +1109,7 @@ jr_000_0605:
     ld a, $60
     ldh [rSCY], a
     ld de, $8807
-    ld hl, $ff4a
+    ld hl, rWY
     ld a, d
     ld [hl+], a
     ld [hl], e
@@ -1137,7 +1137,7 @@ jr_000_067b:
     ld d, $68
 
 jr_000_0691:
-    ld hl, $ff4a
+    ld hl, rWY
     ld a, d
     ld [hl+], a
     ld a, $07
@@ -1898,8 +1898,7 @@ ZeroMemory:
 
     ret
 
-
-Call_000_0a8f:
+TryInitializeObjectAtIndex:
     ld [$ca11], a
     push de
     push bc
@@ -1911,7 +1910,7 @@ Call_000_0a8f:
     add hl, de
     ld a, [hl+]
     or [hl]
-    jp z, Jump_000_0add
+    jp z, InitializeObjectHeader
 
     pop bc
     pop de
@@ -1972,7 +1971,7 @@ jr_000_0ad9:
     ld a, c
     ld [$ca11], a
 
-Jump_000_0add:
+InitializeObjectHeader:
     dec hl
     pop bc
     ld a, [bc]
@@ -1988,17 +1987,16 @@ Jump_000_0add:
     ld a, [$caa4]
     ld [hl+], a
 
-Jump_000_0aed:
-    call Call_000_0afa
-    call Call_000_0afa
-    call Call_000_0afa
+InitializeObjectAttributes:
+    call CopyCoordinatePairWithOffset
+    call CopyCoordinatePairWithOffset
+    call CopyCoordinatePairWithOffset
     ld a, [bc]
     ld [hl], a
     xor a
     ret
 
-
-Call_000_0afa:
+CopyCoordinatePairWithOffset:
     ld a, [bc]
     add d
     ld [hl+], a
@@ -2079,7 +2077,7 @@ Jump_000_0b38:
     inc hl
     inc hl
     inc bc
-    jp Jump_000_0aed
+    jp InitializeObjectAttributes
 
 
 Call_000_0b4a:
@@ -2554,7 +2552,7 @@ jr_000_0d60:
     or a
     jp nz, RemoveCurrentHandler
 
-    ld hl, $ff42
+    ld hl, rSCY
     dec [hl]
     jp AdvanceToNextHandler
 
@@ -2619,10 +2617,17 @@ Jump_000_0de6:
     call ZeroMemory
     jp RemoveCurrentHandler
 
-
-Call_000_0dfb:
+CopyStageTileGraphicsToVram:
+    ; DE points to the table at $0E81: each stage has two little-endian
+    ; words, a byte count (BC) followed by a source address (HL) in bank 2.
+    ; Stage 0/1/2: $5000-$534F, $0350 bytes (53 tiles).
+    ; Stage 3/4:   $5400-$5A3F, $0640 bytes (100 tiles).
+    ; Stage 5/6:   $5A40-$60EF, $06B0 bytes (107 tiles).
+    ; Stage 7:     $6D70-$727F, $0510 bytes (81 tiles).
+    ; Stage 8:     $6590-$672F, $01A0 bytes (26 tiles).
+    ; All copies start at VRAM $9000;
     ld a, $02
-    ld [$2100], a
+    ld [$2100], a ; switch to rom bank 2
     ld a, [wCurrentStage]
     add a
     add a
@@ -2637,10 +2642,10 @@ Call_000_0dfb:
     ld h, [hl]
     ld l, a
     ld de, $9000
+    ; For stages 0/1/2, $5000 is offset $1000 in image_002_4000.2bpp.
     jp CopyMemory
 
-
-Call_000_0e16:
+LoadStageDataToWram:
     ld a, $03
     ld [$2100], a
     ld a, [wCurrentStage]
@@ -2681,63 +2686,41 @@ Call_000_0e16:
     ld [$2100], a
     ret
 
+StageBackgroundDataTable:
+    ; ROM bank 3 source pointers: block definitions, background map.
+    ; Copied to $D000 ($0200 bytes) and $D200 ($0550 bytes), respectively.
+    dw $4000, $41B0 ; Stage 0
+    dw $4000, $42A0 ; Stage 1
+    dw $4000, $4390 ; Stage 2
+    dw $4480, $4530 ; Stage 3
+    dw $4480, $4620 ; Stage 4
+    dw $4B70, $4D50 ; Stage 5
+    dw $4B70, $52A0 ; Stage 6
+    dw $5AD0, $5B50 ; Stage 7
+    dw $57F0, $5820 ; Stage 8
 
-    nop
-    ld b, b
-    or b
-    ld b, c
+StageTileGraphicsTable:
+    ; Bytes to copy, source address
+    ; Stage 0
+    dw $0350, $5000
+    ; Stage 1
+    dw $0350, $5000 
+    ; Stage 2
+    dw $0350, $5000
+    ; Stage 3
+    dw $0640, $5400
+    ; Stage 4
+    dw $0640, $5400
+    ; Stage 5
+    dw $06B0, $5A40
+    ; Stage 6
+    dw $06B0, $5A40
+    ; Stage 7
+    dw $0510, $6D70
+    ; Stage 8
+    dw $01A0, $6590
 
-    db $00, $40, $a0, $42, $00, $40, $90, $43
 
-    add b
-    ld b, h
-    jr nc, @+$47
-
-    add b
-    ld b, h
-    jr nz, jr_000_0eb7
-
-    ld [hl], b
-    ld c, e
-    ld d, b
-    ld c, l
-    ld [hl], b
-    ld c, e
-    and b
-    ld d, d
-    ret nc
-
-    ld e, d
-    ld d, b
-    ld e, e
-    ldh a, [$ff57]
-    jr nz, jr_000_0ed9
-
-    ld d, b
-    inc bc
-    nop
-    ld d, b
-
-    db $50, $03, $00, $50, $50, $03, $00, $50
-
-    ld b, b
-    ld b, $00
-    ld d, h
-    ld b, b
-    ld b, $00
-    ld d, h
-    or b
-    ld b, $40
-    ld e, d
-    or b
-    ld b, $40
-    ld e, d
-    db $10
-    dec b
-    ld [hl], b
-    ld l, l
-    and b
-    ld bc, $6590
     nop
     ld h, b
 
@@ -3694,7 +3677,7 @@ jr_000_138d:
     or a
     ret nz
 
-    ld hl, $ff42
+    ld hl, rSCY
     dec [hl]
     ld de, $ca84
     ld a, [de]
@@ -3743,8 +3726,9 @@ jr_000_13ba:
     jp MoveMapPositionUpOneBlockRow
 
 
-; Copy $CA88–$CA89 to $CA8A–$CA8B
-; Write $D200 to $CA8E–$CA8F
+; Draw the initial background as 14 columns by 11 rows of 2x2 tile blocks.
+; Initialize the drawing position ($CA8A–$CA8B) from $CA88–$CA89.
+; Set the map read pointer ($CA8E–$CA8F) to the block IDs at $D200.
 DrawInitialBackground:
     ld de, $ca88
     ld hl, $ca8a
@@ -4291,7 +4275,7 @@ Jump_000_168a:
     ld bc, $1694
     ld de, $603a
     xor a
-    call Call_000_0a8f
+    call TryInitializeObjectAtIndex
     jp c, RemoveCurrentHandler
 
     ld hl, wCurrentHandlerDataPointer
@@ -4506,13 +4490,13 @@ jr_000_17f6:
     ld de, $18f9
     jp Jump_000_0a53
 
-
+InitializePlayerShot:
     ld bc, $18cb
     ld de, $0000
     ld a, [$ca54]
     inc a
     ld [$ca54], a
-    call Call_000_0a8f
+    call TryInitializeObjectAtIndex
     jp c, RemoveCurrentHandler
 
     ld hl, wCurrentHandlerDataPointer
@@ -4664,7 +4648,7 @@ jr_000_18c0:
     ld a, b
     ret
 
-
+; 18cb
     db $11, $08, $04, $00, $01, $10, $07, $12, $08, $08, $00, $fe, $10, $12, $01, $02
     db $02, $03, $03
 

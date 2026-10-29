@@ -3,8 +3,15 @@
 ; mgbdis v3.0 - Game Boy ROM disassembler by Matt Currie and contributors.
 ; https://github.com/mattcurrie/mgbdis
 
+; Stage data loaded by LoadStageDataToWram (formerly Call_000_0e16).
+; Background sources come from StageBackgroundDataTable ($0E5D); event sources from $0EA5.
+; Sizes below are fixed copy lengths, not boundaries of the individual data sets.
+; Some copied ranges overlap neighboring data; many bytes remain disassembled as instructions.
+;
 SECTION "ROM Bank $003", ROMX[$4000], BANK[$3]
 
+    ; $4000: stages 0/1/2 background block definitions (four tile IDs per 2x2 block).
+    ; StageBackgroundDataTable selects this source; copy $0200 bytes to WRAM $D000.
     db $00, $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $02, $00, $00, $02, $00
     db $00, $03, $00, $00, $00, $04, $00, $05, $04, $00, $06, $00, $07, $08, $0b, $0c
     db $09, $0a, $0d, $0e, $0f, $10, $11, $12, $00, $00, $00, $13, $04, $00, $14, $00
@@ -32,6 +39,7 @@ SECTION "ROM Bank $003", ROMX[$4000], BANK[$3]
     db $fa, $dd, $e4, $bf, $bf, $fd, $be, $de, $fb, $ff, $b7, $fd, $bb, $ff, $eb, $eb
     db $9f, $ff, $bc, $ff, $1d, $fc, $9f, $f7, $be, $eb, $bf, $fb, $be, $df, $fe, $ff
     db $ba, $bb, $ea, $f7, $3f, $f7, $b2, $17, $ae, $f5, $bf, $ff, $fe, $bb, $c7, $76
+    ; $41B0: stage 0 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01
     db $00, $01, $00, $01, $01, $09, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00
     db $01, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $04
@@ -151,6 +159,7 @@ jr_003_4251:
     xor [hl]
     rst $38
 
+    ; $42A0: stage 1 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01
     db $00, $01, $00, $01, $01, $09, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00
     db $01, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $04
@@ -166,6 +175,7 @@ jr_003_4251:
     db $01, $00, $00, $00, $01, $00, $01, $00, $01, $04, $00, $00, $01, $00, $00, $00
     db $00, $01, $00, $00, $00, $01, $01, $00, $00, $01, $00, $00, $00, $00, $01, $01
     db $ff, $bd, $ae, $7c, $e8, $ff, $8a, $bf, $6c, $ff, $4f, $fd, $ca, $ff, $ae, $db
+    ; $4390: stage 2 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $1e, $1f, $00, $00, $00, $00, $1e, $1f, $00, $00, $00, $00, $1e, $00, $00
     db $00, $00, $00, $1f, $00, $00, $00, $20, $21, $22, $00, $00, $20, $21, $22, $00
     db $00, $00, $00, $1f, $00, $00, $00, $00, $00, $1f, $00, $00, $00, $00, $1f, $00
@@ -181,6 +191,7 @@ jr_003_4251:
     db $00, $1f, $00, $00, $00, $00, $20, $21, $22, $00, $23, $1f, $00, $00, $00, $00
     db $1e, $1f, $1e, $00, $00, $00, $00, $1f, $00, $00, $00, $1e, $00, $00, $00, $00
     db $ff, $74, $75, $51, $5b, $d7, $fb, $fd, $ff, $9e, $73, $65, $ad, $d5, $ff, $ed
+    ; $4480: stages 3/4 background block definitions; copy $0200 bytes to WRAM $D000.
     db $00, $00, $00, $00, $01, $02, $03, $04, $03, $04, $0d, $0e, $05, $06, $05, $06
     db $07, $08, $0f, $10, $09, $0a, $11, $12, $0b, $0c, $09, $0a, $00, $13, $00, $18
     db $14, $00, $19, $00, $00, $15, $00, $00, $00, $16, $00, $1a, $17, $00, $1b, $00
@@ -192,6 +203,7 @@ jr_003_4251:
     db $35, $36, $3b, $3c, $3d, $3e, $4b, $4c, $3f, $40, $4d, $4e, $41, $42, $4f, $50
     db $43, $44, $51, $52, $45, $46, $53, $54, $47, $48, $55, $56, $49, $4a, $57, $58
     db $59, $5a, $5f, $60, $5b, $5c, $61, $61, $5d, $5e, $62, $63, $2b, $1d, $aa, $55
+    ; $4530: stage 3 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $03, $03, $00, $03, $03, $00, $03, $03, $00, $00, $00, $02, $00, $00, $03
     db $03, $00, $03, $03, $00, $03, $03, $00, $00, $05, $01, $02, $00, $03, $03, $00
@@ -207,6 +219,7 @@ jr_003_4251:
     db $03, $00, $06, $00, $02, $00, $00, $03, $03, $00, $03, $03, $00, $03, $03, $00
     db $00, $05, $01, $00, $00, $03, $03, $04, $03, $03, $04, $03, $03, $00, $00, $06
     db $00, $00, $00, $03, $03, $00, $03, $03, $00, $03, $03, $00, $00, $00, $ff, $43
+    ; $4620: stage 4 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0c
     db $0d, $16, $17, $15, $11, $12, $00, $00, $00, $07, $08, $11, $0c, $0d, $11, $12
     db $13, $14, $0f, $10, $00, $00, $00, $07, $08, $0f, $08, $15, $0a, $0b, $00, $13
@@ -850,6 +863,7 @@ jr_003_4b6a:
 
     add b
     ld h, [hl]
+    ; $4B70: stages 5/6 background block definitions; copy $0200 bytes to WRAM $D000.
     nop
     nop
     nop
@@ -1269,6 +1283,8 @@ jr_003_4ceb:
     nop
     nop
     db $10
+    ; $4D50: stage 5 background map (block IDs); copy $0550 bytes to WRAM $D200.
+    ; Source begins at byte offset +1 in the following instruction encoding.
     ld bc, $0000
     nop
     nop
@@ -2535,6 +2551,7 @@ jr_003_5286:
     cp l
     db $fc
     ld sp, hl
+    ; $52A0: stage 6 background map (block IDs); copy $0550 bytes to WRAM $D200.
     nop
     nop
     nop
@@ -3894,6 +3911,8 @@ jr_003_52bf:
     ld b, l
     cp c
     dec l
+    ; $57F0: stage 8 background block definitions; copy $0200 bytes to WRAM $D000.
+    ; Source begins at byte offset +2 in the following instruction encoding.
     ld [$007e], a
     nop
     nop
@@ -3935,6 +3954,8 @@ Jump_003_5811:
     ld [bc], a
     ld h, d
     db $10
+    ; $5820: stage 8 background map (block IDs); copy $0550 bytes to WRAM $D200.
+    ; Source begins at byte offset +1 in the following instruction encoding.
     ld bc, $0000
     nop
     nop
@@ -4106,6 +4127,7 @@ Data_003_5930:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff, $80, $20, $90
     db $a1, $60, $08, $04, $02, $14, $80, $00, $20, $a1, $00, $06, $a0, $00, $00, $01
     db $00, $88, $8a, $02, $00, $02, $02, $00, $80, $10, $20, $28, $00, $00, $00, $12
+    ; $5AD0: stage 7 background block definitions; copy $0200 bytes to WRAM $D000.
     db $00, $00, $00, $00, $00, $00, $05, $06, $01, $02, $07, $08, $03, $04, $00, $00
     db $00, $09, $0a, $0b, $00, $00, $10, $11, $0c, $0d, $12, $13, $0e, $0f, $14, $15
     db $00, $00, $00, $1d, $00, $00, $1e, $1f, $00, $00, $20, $21, $01, $16, $22, $23
@@ -4114,6 +4136,7 @@ Data_003_5930:
     db $33, $34, $47, $48, $35, $36, $49, $4a, $37, $38, $4b, $4c, $39, $3a, $4d, $4e
     db $3b, $3c, $4f, $50, $00, $18, $00, $80, $00, $90, $00, $00, $28, $00, $00, $2d
     db $00, $07, $00, $0c, $20, $08, $00, $00, $00, $00, $00, $88, $00, $08, $00, $20
+    ; $5B50: stage 7 background map (block IDs); copy $0550 bytes to WRAM $D200.
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $0f, $10, $11, $12, $13, $14, $15, $16, $17, $18, $00, $00, $00, $00
     db $00, $00, $00, $08, $09, $0a, $0b, $0c, $0d, $0e, $00, $00, $00, $00, $00, $00
@@ -5075,6 +5098,8 @@ jr_003_5fec:
     nop
     nop
     nop
+    ; $6000: stage 0 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     or [hl]
     add l
     ld h, $e6
@@ -5108,6 +5133,8 @@ Jump_003_6012:
     xor d
     rst $38
 
+    ; $6020: stage 1 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     db $04, $00, $04, $00, $00, $20, $00, $13, $00, $00, $40, $00, $07, $60, $00, $48
     db $00, $07, $70, $00, $50, $00, $07, $80, $00, $58, $00, $07, $90, $00, $60, $00
     db $07, $a0, $00, $68, $00, $07, $b0, $00, $70, $00, $07, $c0, $00, $78, $00, $07
@@ -5172,6 +5199,8 @@ Jump_003_6012:
     db $2b, $fe, $e3, $ff, $ce, $fb, $be, $ff, $8a, $fb, $fe, $fe, $bb, $ff, $f7, $7b
     db $7f, $56, $d3, $75, $bd, $5f, $d8, $54, $ed, $7f, $df, $46, $94, $7f, $ae, $d5
     db $ee, $78, $d2, $fd, $c7, $50, $cf, $34, $98, $11, $da, $84, $3f, $15, $f5, $57
+    ; $6420: stage 2 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     db $04, $00, $04, $00, $00, $20, $00, $13, $00, $00, $30, $00, $07, $70, $00, $34
     db $00, $07, $90, $00, $38, $00, $07, $b0, $00, $3c, $00, $07, $d0, $00, $40, $00
     db $07, $70, $10, $44, $00, $07, $50, $10, $48, $00, $07, $30, $10, $4c, $00, $07
@@ -5237,6 +5266,8 @@ Jump_003_6012:
     db $00, $90, $00, $20, $0a, $00, $00, $04, $08, $00, $20, $00, $08, $04, $80, $00
     db $00, $01, $20, $08, $0a, $80, $02, $18, $02, $c0, $08, $20, $00, $01, $00, $0c
 
+    ; $6820: stage 3 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     inc b
     nop
     inc b
@@ -6067,6 +6098,9 @@ jr_003_6c10:
     ld bc, $0044
     nop
     nop
+    ; $6C20: stage 4 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
+    ; Source begins at byte offset +1 in the following instruction encoding.
     ld bc, $0004
     inc b
     nop
@@ -6902,6 +6936,8 @@ jr_003_6f78:
     rst $38
     or d
     cp a
+    ; $7020: stage 5 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     inc b
     nop
     inc b
@@ -7881,6 +7917,8 @@ jr_003_7354:
     inc hl
     xor c
     ld d, a
+    ; $7420: stage 6 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     inc b
     nop
     inc b
@@ -8806,6 +8844,8 @@ jr_003_77cc:
     jr nz, jr_003_7820
 
 jr_003_7820:
+    ; $7820: stage 7 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     nop
     nop
     ld [bc], a
@@ -8835,6 +8875,8 @@ jr_003_782c:
     ld c, b
     nop
     add b
+    ; $7840: stage 8 event stream; table at $0EA5 selects this source.
+    ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     nop
     nop
     ld [bc], a

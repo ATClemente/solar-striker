@@ -5,10 +5,17 @@
 
 SECTION "ROM Bank $002", ROMX[$4000], BANK[$2]
 
+    ; $4000-$52FF: 2bpp tile graphics (16 bytes per tile).
+    ; Stages 0/1/2 copy from $5000, offset $1000 (tile 256) in this file,
+    ; through $52FF, then continue with the following $50 bytes at $5300.
     INCBIN "gfx/image_002_4000.2bpp"
 
+    ; $5300-$534F: the last five tiles of the stages 0/1/2 copy to $9000.
     INCBIN "gfx/image_002_5300.2bpp"
 
+    ; Further stage tile graphics are still disassembled as instructions below.
+    ; Stages 3/4 copy $0640 bytes from $5400 (ROM file offset $9400).
+    ; Stages 5/6 copy $06B0 bytes from $5A40 (ROM file offset $9A40).
     ld a, [$abfe]
     db $db
     adc d
@@ -3415,6 +3422,7 @@ jr_002_61c3:
 
     INCBIN "gfx/image_002_6530.2bpp"
 
+    ; $6590: stage 8 copy starts here, $01A0 bytes through $672F to $9000.
     nop
     nop
     nop
@@ -3816,6 +3824,8 @@ jr_002_66c1:
 
     INCBIN "gfx/image_002_6d30.2bpp"
 
+    ; Stage 7 copy starts at $6D70, $10 bytes after this INCBIN ends ($6D60).
+    ; Copies $0510 bytes through $727F to VRAM $9000.
     nop
     nop
     inc b

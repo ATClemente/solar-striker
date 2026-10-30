@@ -457,22 +457,24 @@ jr_000_0261:
     ld a, $07
     ldh [rIE], a
     ei
-    call Call_000_137a
+    call ScrollBackground
     call ReadJoypad
     call RunWramHandlers
     call BuildShadowOAM
-    ld hl, $cf9b
+    ; check three bytes in a row. 
+    ; If any are non zero jump to the corresponding address
+    ld hl, wNextStageRequested
     ld a, [hl+]
     or a
-    jp nz, Jump_000_05d8
+    jp nz, RunStageTransition
 
     ld a, [hl+]
     or a
-    jp nz, Jump_000_0730
+    jp nz, SetupGameOverScreen
 
     ld a, [hl+]
     or a
-    jp nz, Jump_000_0381
+    jp nz, SetupPauseScreen
 
     call CheckForSoftReset
     or a
@@ -641,7 +643,7 @@ WaitForStartButtonRelease:
     ret
 
 
-Jump_000_0381:
+SetupPauseScreen:
     ld a, [$cf9a]
     call StopAudioPlayback
     ld a, $01
@@ -649,8 +651,8 @@ Jump_000_0381:
     call SetupAudioPlayback
     ld [$cf9a], a
     xor a
-    ld [$cf9d], a
-    call Call_000_0437
+    ld [wPauseRequested], a
+    call CopyPauseTilesToBuffer
 
 jr_000_0399:
     ld a, [wVBlankOccurred]
@@ -671,7 +673,7 @@ jr_000_0399:
     or a
     jp nz, ReturnToTitleScreen
 
-    ld hl, $cf9d
+    ld hl, wPauseRequested
     ld a, [hl+]
     or a
     jr z, jr_000_03d5
@@ -725,7 +727,7 @@ jr_000_03f6:
     jr jr_000_0399
 
 jr_000_03fc:
-    ld hl, $cf9d
+    ld hl, wPauseRequested
     ld [hl+], a
     ld [hl+], a
     ld [hl], a
@@ -762,7 +764,8 @@ jr_000_042d:
     jp Jump_000_0261
 
 
-Call_000_0437:
+; Only copy P A U S, E from SCORE remains on screen
+CopyPauseTilesToBuffer:
     ld de, $080e
     ld hl, $cae0
     ld b, $04
@@ -1047,20 +1050,20 @@ RegisterPlayerShotInitHandlers:
     ei
     jp StartStageMusic
 
-
-Jump_000_05d8:
+; seems to be called when moving to the next stage
+RunStageTransition:
     ld a, [$cf9a]
     call StopAudioPlayback
     di
     xor a
     ldh [rTAC], a
     ldh [rTMA], a
-    ld [$cf9b], a
+    ld [wNextStageRequested], a
     ld [wOAMReady], a
     call DisableLCD
     ld a, [wCurrentStage]
     cp $08
-    jr nz, jr_000_0605
+    jr nz, SetupNextStage
 
     ld a, $02
     ld [$2100], a
@@ -1069,7 +1072,7 @@ Jump_000_05d8:
     ld bc, $0800
     call CopyMemory
 
-jr_000_0605:
+SetupNextStage:
     call ClearTileMap9800
     ld de, StageTileGraphicsTable
     call CopyStageTileGraphicsToVram
@@ -1089,12 +1092,12 @@ jr_000_0605:
     ld hl, $ca28
     ld [hl+], a
     ld [hl], a
-    ld [$cf9c], a
+    ld [wGameOverRequested], a
     ld [$ca20], a
     ld [$ca81], a
     ld [wVBlankOccurred], a
     ld [$cac5], a
-    ld [$ca80], a
+    ld [wBackgroundScrollTimer], a
     ld [$cfa1], a
     ld [$cad8], a
     ld [$cad0], a
@@ -1244,11 +1247,10 @@ jr_000_0722:
     ldh [rOBP0], a
     ldh [rOBP1], a
     ld a, $01
-    ld [$cf9c], a
+    ld [wGameOverRequested], a
     jp RemoveCurrentHandler
 
-
-Jump_000_0730:
+SetupGameOverScreen:
     ld a, [$cf9a]
     call StopAudioPlayback
     di
@@ -2605,7 +2607,7 @@ jr_000_0d60:
 
 Jump_000_0de6:
     ld a, $01
-    ld [$cf9b], a
+    ld [wNextStageRequested], a
     ld hl, wCurrentStage
     inc [hl]
     ld hl, $cc40
@@ -3649,76 +3651,77 @@ jr_000_133d:
     nop
     and b
 
-Call_000_137a:
-    ld hl, $ca80
+ScrollBackground:
+    ld hl, wBackgroundScrollTimer
     inc [hl]
     ld a, [hl]
-    cp $06
+    cp wBackgroundScrollDelay
     ret nz
 
     xor a
-    ld [hl], a
-    ld hl, $ca82
-    inc [hl]
-    ld a, [hl+]
+    ld [hl], a ; reset counter to 0
+    ld hl, $ca82 
+    inc [hl] ; increment value at ca82
+    ld a, [hl+] ; store in a and move hl to ca83
     or a
-    jr nz, jr_000_138d
+    jr nz, jr_000_138d ; if a not zero
 
-    inc [hl]
+    inc [hl] ; inc ca83 byte by 1
 
 jr_000_138d:
     ld a, $01
-    ld [$ca87], a
-    ld a, [$ca81]
+    ld [$ca87], a ; set ca87 to 1
+    ld a, [$ca81] ; check if ca81 is 0
     or a
-    ret nz
+    ret nz ; return if not zero
 
     ld hl, rSCY
-    dec [hl]
-    ld de, $ca84
+    dec [hl] ; move rSCY down (Y scroll)
+    ld de, $ca84 
     ld a, [de]
     cp $ff
-    ret z
+    ret z ; return if ca84 is equal to FF
 
-    inc de
-    inc de
-    ld a, [hl]
-    and $0f
-    jr nz, jr_000_13ba
+    inc de 
+    inc de ; move de to ca86
+    ld a, [hl] 
+    and $0f 
+    jr nz, jr_000_13ba ; jump if bottom 4 bits are not zero, or when scy is not a multiple of 16
 
-    ld [de], a
+    ; scy was a multiple of 16
+    ld [de], a ; store 0 in ca86 
     ld hl, $ca8a
     ld bc, $ca90
-    ld a, [hl+]
-    and $f0
-    or $02
-    ld [bc], a
-    inc bc
-    ld a, [hl+]
-    ld [bc], a
+    ld a, [hl+] ; story ca8a byte in a, move hl to ca8b
+    and $f0 
+    or $02 ; keep top four bits and set second bit
+    ld [bc], a ; store at ca90
+    inc bc ; move bc to ca91
+    ld a, [hl+] ; store ca8b byte in a
+    ld [bc], a ; put that byte at ca91
     ret
 
-
+; scy was not a multiple of 16
 jr_000_13ba:
     ld a, [de]
     or a
-    ret nz
+    ret nz ; check if ca86 is 0, return if NOT zero
 
     ld a, [$ca87]
     or a
-    ret z
+    ret z ; return if ca87 is 0
 
     call ReadNextMapBlock
-    ld hl, $ca85
+    ld hl, $ca85 
     inc [hl]
     ld a, [hl+]
     cp $0e
-    ret nz
+    ret nz ; increment the value at ca85 and compare to 14, return if NOT 14
 
     inc a
-    ld [hl-], a
+    ld [hl-], a ; inc a and store in ca86
     xor a
-    ld [hl], a
+    ld [hl], a ; zero out ca85
     jp MoveMapPositionUpOneBlockRow
 
 
@@ -4349,7 +4352,7 @@ jr_000_1734:
     ld bc, wPlayerInput
     ld a, [bc]
     and $08
-    ld [$cf9d], a
+    ld [wPauseRequested], a
     ld hl, $ca24
     ld a, [bc]
     and $03
@@ -4373,7 +4376,7 @@ jr_000_174b:
     ld [hl], a
     jr nz, jr_000_1768
 
-    ld a, [$cf9d]
+    ld a, [wPauseRequested]
     or a
     jr nz, jr_000_1768
 
@@ -8120,7 +8123,7 @@ jr_000_2de7:
     or a
     jp z, AdvanceToNextHandler
 
-    ld hl, $ca80
+    ld hl, wBackgroundScrollTimer
     ld a, [hl]
     or a
     jp nz, AdvanceToNextHandler
@@ -8383,7 +8386,7 @@ jr_000_2f53:
     jp Jump_000_0a53
 
 
-    ld hl, $ca80
+    ld hl, wBackgroundScrollTimer
     ld a, [hl]
     or a
     jp nz, AdvanceToNextHandler

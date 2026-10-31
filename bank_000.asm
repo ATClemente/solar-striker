@@ -1022,7 +1022,7 @@ RegisterNewGameHandlers:
     call StoreAddressInFreeWramSlot
     ld de, $0d1c
     call StoreAddressInFreeWramSlot
-    ld b, $03
+    ld b, PLAYER_SHOT_SLOT_COUNT
 
 RegisterPlayerShotInitHandlers:
     push bc
@@ -1842,7 +1842,7 @@ FindFreeTwoByteSlotInWram:
     ret
 
 
-Jump_000_0a53:
+SetCurrentHandlerAddress:
     ld a, [wCurrentHandlerIndex]
     rlca
     ld h, $00
@@ -2209,7 +2209,7 @@ Jump_000_0bbb:
 
 jr_000_0bed:
     ld de, $1019
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Call_000_0bf3:
@@ -2474,7 +2474,7 @@ jr_000_0d0b:
     ld a, $d8
     ld [hl], a
     ld de, $0d2a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $cab2
@@ -3046,7 +3046,7 @@ jr_000_0ff8:
     ld a, [$ca11]
     ld [hl], a
     ld de, $1019
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3063,7 +3063,7 @@ jr_000_0ff8:
     ld e, $00
     call Call_000_0b1e
     ld de, $103b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3093,11 +3093,11 @@ jr_000_0ff8:
 
 jr_000_105e:
     ld de, $1064
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld de, $1026
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $77, $10, $7b, $10, $7f, $10, $77, $10, $12, $00, $00, $00, $00, $22, $00, $24
@@ -3118,7 +3118,7 @@ jr_000_105e:
     ld a, [$ca11]
     ld [hl], a
     ld de, $10a2
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     push bc
@@ -3133,7 +3133,7 @@ jr_000_105e:
     ld [hl+], a
     ld [hl+], a
     ld de, $10bb
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3180,12 +3180,12 @@ jr_000_10de:
     jr z, jr_000_1102
 
     ld de, $1108
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1102:
     ld de, $1128
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3203,7 +3203,7 @@ jr_000_1102:
     ld d, a
     call Call_000_0b1e
     ld de, $1128
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_1841
@@ -3212,7 +3212,7 @@ jr_000_1102:
 
     call Call_000_09cd
     ld de, $1108
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Jump_000_1138:
@@ -3242,7 +3242,7 @@ Jump_000_1138:
     ld [hl+], a
     ld [hl+], a
     ld de, $1166
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3250,7 +3250,7 @@ Jump_000_1138:
     ld de, $1254
     call Call_000_0b03
     ld de, $1176
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3259,7 +3259,7 @@ Jump_000_1138:
     ld e, $00
     call Call_000_0b1e
     ld de, $1187
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3270,12 +3270,12 @@ Jump_000_1138:
     jp nc, Jump_000_0a64
 
     ld de, $1198
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1176
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $ca6a
@@ -3319,7 +3319,7 @@ Jump_000_1138:
     ld a, [$ca11]
     ld [hl], a
     ld de, $11ec
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -3349,7 +3349,7 @@ Jump_000_1138:
     and $0f
     ld [bc], a
     ld de, $1217
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4154,7 +4154,7 @@ Jump_000_15e8:
     xor a
     ld [$ca24], a
     ld de, $15fa
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4171,7 +4171,7 @@ Jump_000_15e8:
     ld de, $0ff5
     call StoreAddressInFreeWramSlot
     ld de, $1616
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $000e
@@ -4207,12 +4207,12 @@ Jump_000_15e8:
 
     call DecrementPlayerLives
     ld de, $165e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1658:
     ld de, $2c49
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4231,7 +4231,7 @@ Jump_000_1672:
     xor a
     ld [$ca20], a
     ld de, $16ce
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $ff, $02, $06
@@ -4266,6 +4266,7 @@ Jump_000_168a:
     db $12, $08, $08, $02, $02, $0e, $0e, $02, $00, $02, $20, $00, $00, $00, $00, $d0
     db $00, $de, $22, $00, $30, $22, $22, $30, $00, $22, $de, $00, $d0, $de, $de
 
+    ; 16b3
     ld bc, $1694
     ld de, $603a
     xor a
@@ -4279,7 +4280,7 @@ Jump_000_168a:
     xor a
     ld [de], a
     ld de, $293a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4326,7 +4327,7 @@ Jump_000_168a:
 Jump_000_1717:
 jr_000_1717:
     ld de, $171d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4385,14 +4386,14 @@ jr_000_1768:
 
 jr_000_176e:
     ld de, $16ce
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1774:
     ld de, $169b
     call Call_000_0b03
     ld de, $1780
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [wCurrentStage]
@@ -4406,7 +4407,7 @@ jr_000_1774:
 
 jr_000_1792:
     ld de, $1798
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4445,7 +4446,7 @@ jr_000_17c0:
     ld a, $01
     ld [$cac7], a
     ld de, $17cb
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cacb]
@@ -4460,7 +4461,7 @@ jr_000_17c0:
     ld [hl], a
     ld [$ca69], a
     ld de, $28f0
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $ca24
@@ -4482,7 +4483,7 @@ jr_000_17f6:
     ld [bc], a
     ld a, [wWeaponPowerLevel]
     ld de, $18f9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 InitializePlayerShot:
     ld bc, $18cb
@@ -4500,7 +4501,7 @@ InitializePlayerShot:
     ld a, [$ca11]
     ld [hl], a
     ld de, $1930
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Call_000_1824:
@@ -4686,7 +4687,7 @@ QueuePlayerShot:
 
 jr_000_1918:
     ld de, $17e3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Call_000_191e:
@@ -4712,7 +4713,7 @@ jr_000_192b:
     jp z, AdvanceToNextHandler
 
     ld de, $1943
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4732,7 +4733,7 @@ jr_000_192b:
     ld e, a
     call Call_000_0b03
     ld de, $1966
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4751,12 +4752,12 @@ jr_000_192b:
     ld e, $00
     call Call_000_0b1e
     ld de, $198a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1984:
     ld de, $19c1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4788,12 +4789,12 @@ jr_000_19af:
 
 jr_000_19b5:
     ld de, $19c1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_19bb:
     ld de, $1966
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4811,7 +4812,7 @@ jr_000_19bb:
     xor a
     ld [hl], a
     ld de, $1930
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $1a3b
@@ -4820,7 +4821,7 @@ jr_000_19bb:
     jp z, RemoveCurrentHandler
 
     ld de, $19eb
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4836,10 +4837,10 @@ Jump_000_19fb:
     ld de, $1a0f
     ld a, [wCurrentHandlerIndex]
     and $01
-    jp nz, Jump_000_0a53
+    jp nz, SetCurrentHandlerAddress
 
     ld de, $1a2e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_1841
@@ -4852,17 +4853,17 @@ Jump_000_19fb:
     jp c, Jump_000_0bbb
 
     ld de, $1a25
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_099d
     ld de, $1a2e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1a0f
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $31, $35, $29, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $2e, $00, $2e, $20
@@ -4873,7 +4874,7 @@ Jump_000_19fb:
     jp z, RemoveCurrentHandler
 
     ld de, $1a57
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4892,7 +4893,7 @@ Jump_000_19fb:
     jp z, RemoveCurrentHandler
 
     ld de, $1a87
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4906,12 +4907,12 @@ Jump_000_19fb:
     jr z, jr_000_1aa4
 
     ld de, $1acf
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1aa4:
     ld de, $1aaa
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_097d
@@ -4929,12 +4930,12 @@ jr_000_1aa4:
     jp nc, Jump_000_0a64
 
     ld de, $1ac6
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_099d
     ld de, $1acf
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
@@ -4957,7 +4958,7 @@ jr_000_1aa4:
     ld e, a
     call Call_000_0b03
     ld de, $1aaa
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $73, $35, $7f, $35, $08, $1b, $10, $1b, $0c, $1b, $14, $1b, $12, $08, $08, $00
@@ -4970,7 +4971,7 @@ jr_000_1aa4:
     jp z, RemoveCurrentHandler
 
     ld de, $1b28
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -4999,7 +5000,7 @@ jr_000_1aa4:
     jp z, RemoveCurrentHandler
 
     ld de, $1b58
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5018,7 +5019,7 @@ jr_000_1aa4:
     jp z, RemoveCurrentHandler
 
     ld de, $1b88
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5052,7 +5053,7 @@ jr_000_1baa:
     jp z, RemoveCurrentHandler
 
     ld de, $1bb8
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5069,12 +5070,12 @@ jr_000_1baa:
     jr z, jr_000_1bdb
 
     ld de, $1c04
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1bdb:
     ld de, $1be1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5095,7 +5096,7 @@ jr_000_1bdb:
     ld e, $00
     call Call_000_0b1e
     ld de, $1c04
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     push bc
@@ -5103,7 +5104,7 @@ jr_000_1bdb:
     pop bc
     call Call_000_09cd
     ld de, $1be1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld [de], a
@@ -5122,7 +5123,7 @@ jr_000_1bdb:
     jp z, RemoveCurrentHandler
 
     ld de, $1c2e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5138,12 +5139,12 @@ jr_000_1bdb:
     jr z, jr_000_1c4c
 
     ld de, $1c94
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1c4c:
     ld de, $1c52
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5180,17 +5181,17 @@ jr_000_1c67:
     jp c, Jump_000_0bbb
 
     ld de, $1c8b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_099d
     ld de, $1c94
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1c52
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $12, $08, $08, $00, $fe, $14, $12, $00, $3a, $00, $3a, $20
@@ -5201,7 +5202,7 @@ jr_000_1c67:
     jp z, RemoveCurrentHandler
 
     ld de, $1cb9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5215,13 +5216,13 @@ jr_000_1c67:
     jr z, jr_000_1cd6
 
     ld de, $1d1b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Jump_000_1cd6:
 jr_000_1cd6:
     ld de, $1cdc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_097d
@@ -5239,7 +5240,7 @@ jr_000_1cd6:
     jp nc, Jump_000_0a64
 
     ld de, $1cf8
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5260,12 +5261,12 @@ jr_000_1cd6:
 
 jr_000_1d15:
     ld de, $1d1b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1cdc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $fd
@@ -5287,7 +5288,7 @@ jr_000_1d15:
     jp z, RemoveCurrentHandler
 
     ld de, $1d44
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5299,12 +5300,12 @@ jr_000_1d15:
     jr z, jr_000_1d5b
 
     ld de, $1df1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1d5b:
     ld de, $1d61
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5351,7 +5352,7 @@ jr_000_1d95:
 
 jr_000_1d9f:
     ld de, $1dd3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5380,7 +5381,7 @@ jr_000_1dc0:
     ld d, $00
     call Call_000_0b1e
     ld de, $1dd3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_099d
@@ -5399,7 +5400,7 @@ jr_000_1dc0:
     jp nc, Jump_000_0a64
 
     ld de, $1df1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
@@ -5414,12 +5415,12 @@ jr_000_1dc0:
     jr z, jr_000_1e08
 
     ld de, $1da5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1e08:
     ld de, $1d61
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $12, $08, $08, $00, $fe, $10, $12, $00, $3c, $00, $3c, $20
@@ -5430,7 +5431,7 @@ jr_000_1e08:
     jp z, RemoveCurrentHandler
 
     ld de, $1e2a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5438,7 +5439,7 @@ jr_000_1e08:
     ld de, $1f96
     call Call_000_0b03
     ld de, $1e3a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5447,7 +5448,7 @@ jr_000_1e08:
     ld e, $00
     call Call_000_0b1e
     ld de, $1e4b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5464,17 +5465,17 @@ jr_000_1e08:
     jr nz, jr_000_1e64
 
     ld de, $1e6a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1e64:
     ld de, $1e73
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1e3a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5499,7 +5500,7 @@ jr_000_1e64:
     ld de, $1f9a
     call Call_000_0b03
     ld de, $1ea4
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5512,7 +5513,7 @@ jr_000_1e64:
     ld de, $1f9a
     call Call_000_0b03
     ld de, $1ebb
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5536,12 +5537,12 @@ jr_000_1e64:
     jr nz, jr_000_1ee1
 
     ld de, $1ee7
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1ee1:
     ld de, $1f43
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5569,7 +5570,7 @@ jr_000_1ee1:
 
 jr_000_1f08:
     ld de, $1f0e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5601,7 +5602,7 @@ jr_000_1f37:
 
 jr_000_1f3d:
     ld de, $1ebb
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, $22
@@ -5655,7 +5656,7 @@ jr_000_1f71:
     jp z, RemoveCurrentHandler
 
     ld de, $1fb6
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5669,12 +5670,12 @@ jr_000_1f71:
     jr z, jr_000_1fd3
 
     ld de, $2015
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_1fd3:
     ld de, $1fd9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_097d
@@ -5692,7 +5693,7 @@ jr_000_1fd3:
     jp nc, Jump_000_0a64
 
     ld de, $1ff5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5715,12 +5716,12 @@ Call_000_2003:
 
 jr_000_200f:
     ld de, $2015
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $1fd9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     add hl, hl
@@ -5744,7 +5745,7 @@ jr_000_2030:
     jp z, RemoveCurrentHandler
 
     ld de, $203e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5756,12 +5757,12 @@ jr_000_2030:
     jr z, jr_000_2055
 
     ld de, $209f
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2055:
     ld de, $205b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5783,7 +5784,7 @@ jr_000_2070:
     ld e, $00
     call Call_000_0b1e
     ld de, $207c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5804,7 +5805,7 @@ jr_000_2070:
 
 jr_000_2099:
     ld de, $209f
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5822,7 +5823,7 @@ jr_000_2099:
     jp c, Jump_000_0bbb
 
     ld de, $205b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld [de], a
@@ -5846,7 +5847,7 @@ jr_000_20c9:
     jp z, RemoveCurrentHandler
 
     ld de, $20d7
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5876,7 +5877,7 @@ jr_000_20f9:
     jp z, RemoveCurrentHandler
 
     ld de, $2107
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5906,7 +5907,7 @@ jr_000_2125:
     jp z, RemoveCurrentHandler
 
     ld de, $2133
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5934,7 +5935,7 @@ jr_000_2151:
     jp z, RemoveCurrentHandler
 
     ld de, $215f
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -5964,7 +5965,7 @@ jr_000_2181:
     jp z, RemoveCurrentHandler
 
     ld de, $218f
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6000,7 +6001,7 @@ jr_000_21b4:
     jp z, RemoveCurrentHandler
 
     ld de, $21c2
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6014,12 +6015,12 @@ jr_000_21b4:
     jr z, jr_000_21df
 
     ld de, $222c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_21df:
     ld de, $21e5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_097d
@@ -6037,7 +6038,7 @@ jr_000_21df:
     jp nc, Jump_000_0a64
 
     ld de, $2201
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6064,12 +6065,12 @@ jr_000_2211:
 
 jr_000_2226:
     ld de, $222c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $21e5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $ed
@@ -6093,7 +6094,7 @@ jr_000_2247:
     jp z, RemoveCurrentHandler
 
     ld de, $2255
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6107,12 +6108,12 @@ jr_000_2247:
     jr z, jr_000_2272
 
     ld de, $1d1b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2272:
     ld de, $1cdc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     dec c
@@ -6156,7 +6157,7 @@ jr_000_2272:
     ld [hl+], a
     ld [hl+], a
     ld de, $22b8
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6168,14 +6169,14 @@ jr_000_2272:
     jr z, jr_000_22cf
 
     ld de, $230d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_22cf:
     ld de, $22d5
 
 jr_000_22d2:
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6193,7 +6194,7 @@ jr_000_22d2:
     jp c, Jump_000_0bbb
 
     ld de, $22f3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_1841
@@ -6201,7 +6202,7 @@ jr_000_22d2:
     jp nz, Jump_000_0a64
 
     ld de, $2300
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_099d
@@ -6209,12 +6210,12 @@ jr_000_22d2:
     jp z, Jump_000_0a64
 
     ld de, $230d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $22d5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld [de], a
@@ -6259,7 +6260,7 @@ jr_000_2341:
     jr nz, jr_000_2341
 
     ld de, $2700
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $2431
@@ -6284,7 +6285,7 @@ jr_000_2341:
 jr_000_2374:
     call $4690
     ld de, $237d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6309,7 +6310,7 @@ jr_000_2374:
 jr_000_239e:
     call Call_000_0b38
     ld de, $23a7
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$caca]
@@ -6329,12 +6330,12 @@ jr_000_239e:
     jr nz, jr_000_23c6
 
     ld de, $23cc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_23c6:
     ld de, $46ad
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6348,7 +6349,7 @@ jr_000_23c6:
     ld de, $0000
     call Call_000_0b1e
     ld de, $23fd
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Jump_000_23e4:
@@ -6361,12 +6362,12 @@ jr_000_23e4:
     ld a, $14
     call Call_000_0c57
     ld de, $2415
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09ec
     ld de, $2406
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_0a0c
@@ -6377,7 +6378,7 @@ jr_000_23e4:
 
 jr_000_240f:
     ld de, $23cc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0018
@@ -6444,7 +6445,7 @@ jr_000_245d:
     ld de, $2700
     call StoreAddressInFreeWramSlot
     ld de, $27ad
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $24f7
@@ -6454,7 +6455,7 @@ jr_000_245d:
 
     call $4690
     ld de, $2486
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6465,7 +6466,7 @@ jr_000_245d:
     ld bc, $24f7
     call Call_000_0b38
     ld de, $249d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$caca]
@@ -6479,7 +6480,7 @@ jr_000_245d:
     xor a
     ld [hl], a
     ld de, $24b4
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6495,12 +6496,12 @@ jr_000_245d:
     ld a, $05
     ld [$ca2c], a
     ld de, $24d2
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09ec
     ld de, $24db
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_0a0c
@@ -6520,7 +6521,7 @@ jr_000_24e4:
 
 jr_000_24f1:
     ld de, $24b4
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld [de], a
@@ -6553,7 +6554,7 @@ jr_000_2505:
 
     call $4690
     ld de, $252e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6564,7 +6565,7 @@ jr_000_2505:
     ld bc, $25c9
     call Call_000_0b38
     ld de, $2545
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$caca]
@@ -6578,7 +6579,7 @@ jr_000_2505:
     xor a
     ld [hl], a
     ld de, $255c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6592,7 +6593,7 @@ jr_000_2505:
     ld de, $0000
     call Call_000_0b1e
     ld de, $2590
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2574:
@@ -6605,7 +6606,7 @@ jr_000_2574:
     call Call_000_0c57
     call IncrementPlayerLives
     ld de, $2415
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     push bc
@@ -6619,7 +6620,7 @@ jr_000_2574:
 
 jr_000_259e:
     ld de, $25a4
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6641,7 +6642,7 @@ jr_000_259e:
 
 jr_000_25c3:
     ld de, $255c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld [de], a
@@ -6675,7 +6676,7 @@ jr_000_25c3:
     ld de, $25f3
 
 jr_000_25f0:
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cf99]
@@ -6717,7 +6718,7 @@ jr_000_2618:
 
 jr_000_262a:
     ld de, $25d9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac1]
@@ -6752,7 +6753,7 @@ jr_000_262a:
     ld a, [$ca11]
     ld [hl], a
     ld de, $266b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6794,7 +6795,7 @@ jr_000_262a:
     xor a
     ld [hl], a
     ld de, $26b1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -6806,7 +6807,7 @@ jr_000_262a:
     ld d, a
     call Call_000_0b1e
     ld de, $26c5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_1841
@@ -6825,12 +6826,12 @@ jr_000_262a:
     jp c, Jump_000_0bbb
 
     ld de, $26e3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_09cd
     ld de, $26b1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     db $fc
@@ -6861,7 +6862,7 @@ jr_000_26fb:
     xor a
     ld [hl], a
     ld de, $2713
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0016
@@ -6872,7 +6873,7 @@ jr_000_26fb:
     jr z, jr_000_2723
 
     ld de, $275c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2723:
@@ -6888,7 +6889,7 @@ jr_000_272e:
     ld a, b
     ld [hl], a
     ld de, $2736
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld de, $ca60
@@ -6911,7 +6912,7 @@ jr_000_274d:
 
 jr_000_2756:
     ld de, $275c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac1]
@@ -6919,7 +6920,7 @@ jr_000_2756:
     jp nz, RemoveCurrentHandler
 
     ld de, $2713
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Call_000_2769:
@@ -6981,7 +6982,7 @@ Call_000_2769:
     ld [hl], a
     ld [$cfa4], a
     ld de, $27c3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0016
@@ -6992,14 +6993,14 @@ Call_000_2769:
     jr z, jr_000_27d3
 
     ld de, $280b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_27d3:
     xor a
     ld [hl], a
     ld de, $27db
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld de, $ca60
@@ -7028,7 +7029,7 @@ jr_000_27d3:
 
 jr_000_2805:
     ld de, $280b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac1]
@@ -7036,7 +7037,7 @@ jr_000_2805:
     jp nz, RemoveCurrentHandler
 
     ld de, $27c3
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $0102
@@ -7051,7 +7052,7 @@ jr_000_2805:
     ld [hl], a
     ld [$cf99], a
     ld de, $2832
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0016
@@ -7063,12 +7064,12 @@ jr_000_2805:
     jr z, jr_000_2843
 
     ld de, $2865
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2843:
     ld de, $2849
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld de, $ca60
@@ -7084,7 +7085,7 @@ jr_000_2843:
 
 jr_000_285f:
     ld de, $2865
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac1]
@@ -7092,7 +7093,7 @@ jr_000_285f:
     jp nz, RemoveCurrentHandler
 
     ld de, $2832
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     inc bc
@@ -7124,7 +7125,7 @@ jr_000_285f:
     ld de, $169b
     call Call_000_0b03
     ld de, $28a9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7145,7 +7146,7 @@ jr_000_285f:
     xor a
     ld [hl], a
     ld de, $28cc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7167,7 +7168,7 @@ jr_000_285f:
     ld [hl+], a
     ld [hl+], a
     ld de, $28f0
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7207,7 +7208,7 @@ jr_000_28ff:
 
 jr_000_2927:
     ld de, $293a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_292d:
@@ -7216,7 +7217,7 @@ jr_000_292d:
     jr nz, jr_000_2927
 
     ld de, $2983
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac9]
@@ -7224,7 +7225,7 @@ jr_000_292d:
     jp z, AdvanceToNextHandler
 
     ld de, $2947
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7239,7 +7240,7 @@ jr_000_292d:
     ld de, $169b
     call Call_000_0b03
     ld de, $2966
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7256,7 +7257,7 @@ jr_000_292d:
     jp nz, AdvanceToNextHandler
 
     ld de, $16ce
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$ca2d]
@@ -7264,7 +7265,7 @@ jr_000_292d:
     jp z, AdvanceToNextHandler
 
     ld de, $2990
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7279,7 +7280,7 @@ jr_000_292d:
     ld de, $2af0
     call Call_000_0b03
     ld de, $29af
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac9]
@@ -7287,7 +7288,7 @@ jr_000_292d:
     jp z, AdvanceToNextHandler
 
     ld de, $29bc
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ldh a, [rSCX]
@@ -7295,7 +7296,7 @@ jr_000_292d:
     jp nc, AdvanceToNextHandler
 
     ld de, $29c9
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7327,7 +7328,7 @@ jr_000_292d:
     jp z, RemoveCurrentHandler
 
     ld de, $2a02
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7347,7 +7348,7 @@ jr_000_292d:
     ld e, a
     call Call_000_0b03
     ld de, $2a27
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac9]
@@ -7512,7 +7513,7 @@ jr_000_292d:
     ld a, [wWeaponPowerLevel]
     ld [$ca2c], a
     ld de, $2b22
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7523,7 +7524,7 @@ jr_000_292d:
     ld de, $2b75
     call Call_000_0b03
     ld de, $2b3b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac7]
@@ -7537,7 +7538,7 @@ jr_000_292d:
     inc a
     ld [$cacb], a
     ld de, $2b53
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac6]
@@ -7747,14 +7748,14 @@ jr_000_292d:
     xor a
     ld [wPlayerLives], a
     ld de, $165e
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2c59:
     xor a
     ld [$cf97], a
     ld de, $06f1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [wJoypadHeld]
@@ -7822,7 +7823,7 @@ jr_000_2c94:
     call StopAudioPlayback
     call Call_000_2c79
     ld de, $2cdf
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac7]
@@ -7831,7 +7832,7 @@ jr_000_2c94:
 
     ld [$cacb], a
     ld de, $2cef
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac6]
@@ -7855,7 +7856,7 @@ jr_000_2c94:
     jp z, RemoveCurrentHandler
 
     ld de, $2d19
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7866,7 +7867,7 @@ jr_000_2c94:
     ld de, $2fa3
     call Call_000_0b03
     ld de, $2d32
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0010
@@ -7877,7 +7878,7 @@ jr_000_2c94:
     jp nz, AdvanceToNextHandler
 
     ld de, $2d43
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7914,7 +7915,7 @@ jr_000_2c94:
     jp z, RemoveCurrentHandler
 
     ld de, $2d81
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7932,7 +7933,7 @@ jr_000_2c94:
     ld de, $2fb7
     call Call_000_0b03
     ld de, $2da5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7949,7 +7950,7 @@ jr_000_2c94:
     ld d, a
     call Call_000_0bf3
     ld de, $2dd5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2dbf:
@@ -7959,12 +7960,12 @@ jr_000_2dbf:
     jr nz, jr_000_2dcf
 
     ld de, $2ded
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 jr_000_2dcf:
     ld de, $2e5b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -7983,7 +7984,7 @@ jr_000_2dcf:
 
 jr_000_2de7:
     ld de, $2da5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0018
@@ -8006,7 +8007,7 @@ jr_000_2de7:
     ld [$cad0], a
     ld [$cad8], a
     ld de, $2e18
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8029,7 +8030,7 @@ jr_000_2de7:
     ld [$cad0], a
     ld [$cad8], a
     ld de, $2e44
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8044,7 +8045,7 @@ jr_000_2de7:
     jp nz, AdvanceToNextHandler
 
     ld de, $0de6
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $0018
@@ -8067,7 +8068,7 @@ jr_000_2de7:
     ld [$cad0], a
     ld [$cad8], a
     ld de, $2e86
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8090,7 +8091,7 @@ jr_000_2de7:
     ld [$cad0], a
     ld [$cad8], a
     ld de, $2eb2
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8105,13 +8106,13 @@ jr_000_2de7:
     jp nz, AdvanceToNextHandler
 
     ld de, $0de6
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld de, $3019
     call StoreAddressInFreeWramSlot
     ld de, $2ed5
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cac9]
@@ -8138,7 +8139,7 @@ jr_000_2de7:
     jp z, RemoveCurrentHandler
 
     ld de, $2f01
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8149,7 +8150,7 @@ jr_000_2de7:
     ld de, $2f95
     call Call_000_0b03
     ld de, $2f1a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8172,7 +8173,7 @@ jr_000_2de7:
 
 jr_000_2f37:
     ld de, $2f3d
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $caf0
@@ -8338,7 +8339,7 @@ jr_000_2f53:
     ld a, $01
     ld [$ca2d], a
     ld de, $3030
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $31ba
@@ -8347,7 +8348,7 @@ jr_000_2f53:
     jp z, RemoveCurrentHandler
 
     ld de, $3050
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld bc, $31bb
@@ -8356,7 +8357,7 @@ jr_000_2f53:
     jp z, RemoveCurrentHandler
 
     ld de, $3069
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8367,7 +8368,7 @@ jr_000_2f53:
     ld de, $31bc
     call Call_000_0b03
     ld de, $3082
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8378,7 +8379,7 @@ jr_000_2f53:
     ld de, $31d4
     call Call_000_0b03
     ld de, $3082
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, wBackgroundScrollTimer
@@ -8399,7 +8400,7 @@ jr_000_2f53:
 
 Jump_000_309e:
     ld de, $30a4
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$ca1c]
@@ -8407,7 +8408,7 @@ Jump_000_309e:
     jp z, AdvanceToNextHandler
 
     ld de, $30b1
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8448,7 +8449,7 @@ jr_000_30c9:
     jp z, RemoveCurrentHandler
 
     ld de, $30f0
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8457,7 +8458,7 @@ jr_000_30c9:
     ld de, $4012
     call Call_000_0b38
     ld de, $3103
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8494,7 +8495,7 @@ jr_000_312c:
     xor a
     ld [bc], a
     ld de, $3134
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8532,7 +8533,7 @@ jr_000_315b:
     inc a
     ld [$ca1c], a
     ld de, $3167
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
@@ -8669,14 +8670,14 @@ jr_000_3207:
     xor a
     ld [$cad8], a
     ld de, $321b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     call Call_000_32ab
     ld a, $90
     ldh [rWX], a
     ld de, $3228
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8723,7 +8724,7 @@ jr_000_3207:
 
 jr_000_3264:
     ld de, $326a
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld a, [$cad0]
@@ -8744,7 +8745,7 @@ jr_000_3264:
     jp nc, AdvanceToNextHandler
 
     ld de, $328c
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
     ld hl, $cad8
@@ -8766,7 +8767,7 @@ jr_000_329c:
     xor a
     ld [hl], a
     ld de, $321b
-    jp Jump_000_0a53
+    jp SetCurrentHandlerAddress
 
 
 Call_000_32ab:

@@ -4,6 +4,9 @@ DEF wCurrentHandlerDataPointer EQU $CA12
 
 DEF wCurrentStage EQU $CA19
 DEF wGameStartRequested EQU $CA1A
+DEF wScreenShakeRequested EQU $CA1D
+DEF wScreenShakeOffset EQU $CA1E
+
 DEF wGameMode     EQU $CA2E
 
 DEF wBackgroundScrollTimer EQU $CA80

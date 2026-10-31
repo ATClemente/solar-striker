@@ -446,11 +446,10 @@ TitleScreenLoop:
 
     jr TitleScreenLoop
 
-Jump_000_0261:
-jr_000_0261:
+GameLoop:
     ld a, [wVBlankOccurred]
     or a
-    jr z, jr_000_0261
+    jr z, GameLoop
 
     xor a
     ld [wOAMReady], a
@@ -461,8 +460,6 @@ jr_000_0261:
     call ReadJoypad
     call RunWramHandlers
     call BuildShadowOAM
-    ; check three bytes in a row. 
-    ; If any are non zero jump to the corresponding address
     ld hl, wNextStageRequested
     ld a, [hl+]
     or a
@@ -480,12 +477,12 @@ jr_000_0261:
     or a
     jp nz, ReturnToTitleScreen
 
-    ld a, [$ca1d]
+    ld a, [wScreenShakeRequested]
     or a
-    call nz, Call_000_04d3
+    call nz, ShakeScreen
     xor a
     ld [wVBlankOccurred], a
-    jr jr_000_0261
+    jr GameLoop
 
 Jump_000_02a2:
 jr_000_02a2:
@@ -761,7 +758,7 @@ jr_000_042d:
     xor a
     call SetupAudioPlayback
     ld [$cf9a], a
-    jp Jump_000_0261
+    jp GameLoop
 
 
 ; Only copy P A U S, E from SCORE remains on screen
@@ -898,13 +895,12 @@ jr_000_04c8:
     ld [$cad0], a
     ret
 
-
-Call_000_04d3:
+ShakeScreen:
     ld hl, rSCY
-    ld de, $ca1e
+    ld de, wScreenShakeOffset
     ld a, [de]
     or a
-    jr nz, jr_000_04e9
+    jr nz, UndoScreenShakeOffset
 
     ldh a, [rDIV]
     and $07
@@ -916,8 +912,7 @@ Call_000_04d3:
     ld [hl], a
     ret
 
-
-jr_000_04e9:
+UndoScreenShakeOffset:
     dec [hl]
     inc hl
     ld b, a
@@ -1101,8 +1096,8 @@ SetupNextStage:
     ld [$cfa1], a
     ld [$cad8], a
     ld [$cad0], a
-    ld [$ca1d], a
-    ld [$ca1e], a
+    ld [wScreenShakeRequested], a
+    ld [wScreenShakeOffset], a
     ld a, [wCurrentStage]
     cp $07
     jr nc, jr_000_067b
@@ -1182,7 +1177,7 @@ StartStageMusic:
     ld b, $00
     ld a, [wCurrentStage]
     cp $07
-    jp z, Jump_000_0261 ; current stage is 7
+    jp z, GameLoop ; current stage is 7
 
     jr c, GetMusicIndexAndSetupAudio ; current stage is less than 7
 
@@ -1202,7 +1197,7 @@ GetMusicIndexAndSetupAudio:
     call SetupAudioPlayback
     ld [$cf9a], a
     ei
-    jp Jump_000_0261
+    jp GameLoop
 
 
     ld hl, $cf97
@@ -6378,7 +6373,7 @@ jr_000_23e4:
     or a
     jr z, jr_000_240f
 
-    ld [$ca1d], a
+    ld [wScreenShakeRequested], a
 
 jr_000_240f:
     ld de, $23cc
@@ -6512,7 +6507,7 @@ jr_000_245d:
     or a
     jr z, jr_000_24e4
 
-    ld [$ca1d], a
+    ld [wScreenShakeRequested], a
 
 jr_000_24e4:
     ld hl, $c781
@@ -6620,7 +6615,7 @@ jr_000_2574:
     or a
     jr z, jr_000_259e
 
-    ld [$ca1d], a
+    ld [wScreenShakeRequested], a
 
 jr_000_259e:
     ld de, $25a4

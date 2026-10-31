@@ -1668,14 +1668,14 @@ Jump_000_097b:
 
 Call_000_097d:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $04
     call Call_000_0b61
     call Call_000_0ce4
     ld a, [$ca16]
     add d
     ld d, a
-    call Call_000_0b1e
+    call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -1688,7 +1688,7 @@ Call_000_097d:
 
 Call_000_099d:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     ret nz
@@ -1733,7 +1733,7 @@ jr_000_09cb:
 
 Call_000_09cd:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $0006
     add hl, de
     ld de, $ca30
@@ -1755,7 +1755,7 @@ Call_000_09cd:
 
 Call_000_09ec:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $c786
     ld de, $ca30
     ld a, [bc]
@@ -1778,7 +1778,7 @@ Call_000_09ec:
 
 Call_000_0a0c:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000d
     add hl, de
     ld d, [hl]
@@ -1891,6 +1891,13 @@ ZeroMemory:
 
     ret
 
+; A = object slot index in object table
+; BC = Pointer to init template
+; DE = Starting coordinate pair
+; [$CAA4] = initial value for object field $05
+; return: C set = init failed
+; C clear and A = 0, init succeeded
+; ca11 contains requested object index
 TryInitializeObjectAtIndex:
     ld [$ca11], a
     push de
@@ -2001,7 +2008,7 @@ CopyCoordinatePairWithOffset:
     ret
 
 
-Call_000_0b03:
+SetObjectGraphicsPointer:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -2031,49 +2038,47 @@ jr_000_0b19:
     ret
 
 
-Call_000_0b1e:
-Jump_000_0b1e:
+MoveObject:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
+    inc hl ; get y coord of selected object
+    call ApplyMovementOffsets ; update main position
     inc hl
-    call Call_000_0b31
     inc hl
     inc hl
-    inc hl
-    call Call_000_0b31
-    call Call_000_0b31
+    call ApplyMovementOffsets ; update collision center
+    call ApplyMovementOffsets ; update hitbox minimum
 
-Call_000_0b31:
+ApplyMovementOffsets: ; fall through and update hitbox maximum
     ld a, d
     add [hl]
-    ld [hl+], a
+    ld [hl+], a ; add offset to y coord
     ld a, e
     add [hl]
-    ld [hl+], a
+    ld [hl+], a ; add offset to x coord
     ret
 
 
-Call_000_0b38:
-Jump_000_0b38:
+ResetObjectAttributes:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    inc hl
+    inc hl ; point to Y coordinate
     ld a, d
-    ld [hl+], a
+    ld [hl+], a ; set y coordinate
     ld a, e
-    ld [hl+], a
+    ld [hl+], a ; set x coordinate
     inc hl
     inc hl
-    inc hl
-    inc bc
+    inc hl ; move HL to object attributes (past the empty three bytes)
+    inc bc ; move bc to next address
     jp InitializeObjectAttributes
 
 
-Call_000_0b4a:
+SetObjectPointer:
     swap a
     ld l, a
     and $0f
@@ -2221,7 +2226,7 @@ Call_000_0bf3:
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    jp Jump_000_0b1e
+    jp MoveObject
 
 
 Call_000_0c04:
@@ -3050,24 +3055,24 @@ jr_000_0ff8:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $12
     ld [hl], a
     ld de, $1077
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $08
     call Call_000_0b61
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $103b
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc bc
     ld a, [bc]
     xor $01
@@ -3084,7 +3089,7 @@ jr_000_0ff8:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [bc]
     inc a
     and $03
@@ -3137,7 +3142,7 @@ jr_000_105e:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $133e
     ld a, [$ca2f]
     or a
@@ -3174,7 +3179,7 @@ jr_000_10de:
     ld [hl+], a
     ld [hl], e
     ld de, $124b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     or a
     jr z, jr_000_1102
@@ -3189,7 +3194,7 @@ jr_000_1102:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0008
     add hl, bc
     ld a, [hl+]
@@ -3201,7 +3206,7 @@ jr_000_1102:
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0b1e
+    call MoveObject
     ld de, $1128
     jp SetCurrentHandlerAddress
 
@@ -3246,24 +3251,24 @@ Jump_000_1138:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1254
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1176
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld d, $05
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $1187
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $98
@@ -3323,7 +3328,7 @@ Jump_000_1138:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $000e
     add hl, bc
     push hl
@@ -3353,7 +3358,7 @@ Jump_000_1138:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, [$ca2c]
     ld l, a
     ld h, $00
@@ -4158,7 +4163,7 @@ Jump_000_15e8:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld b, [hl]
     ld a, $c0
@@ -4184,15 +4189,15 @@ Jump_000_15e8:
     xor a
     ld [hl], a
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     inc hl
     ld e, [hl]
     ld d, $a0
-    ld bc, $1694
-    call Call_000_0b38
+    ld bc, PlayerInitTemplate
+    call ResetObjectAttributes
     ld de, $169b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
@@ -4216,14 +4221,14 @@ jr_000_1658:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $60
     jp c, Jump_000_1672
 
     ld de, $ff00
-    call Call_000_0b1e
+    call MoveObject
     jp AdvanceToNextHandler
 
 
@@ -4263,11 +4268,13 @@ Jump_000_168a:
     inc bc
     inc bc
 
+PlayerInitTemplate:
     db $12, $08, $08, $02, $02, $0e, $0e, $02, $00, $02, $20, $00, $00, $00, $00, $d0
+    
     db $00, $de, $22, $00, $30, $22, $22, $30, $00, $22, $de, $00, $d0, $de, $de
 
     ; 16b3
-    ld bc, $1694
+    ld bc, PlayerInitTemplate
     ld de, $603a
     xor a
     call TryInitializeObjectAtIndex
@@ -4284,7 +4291,7 @@ Jump_000_168a:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, [wJoypadHeld]
     ld [wPlayerInput], a
     and $f0
@@ -4322,7 +4329,7 @@ Jump_000_168a:
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0b1e
+    call MoveObject
 
 Jump_000_1717:
 jr_000_1717:
@@ -4331,7 +4338,7 @@ jr_000_1717:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, [$cac5]
     or a
     jr nz, jr_000_1774
@@ -4377,12 +4384,12 @@ jr_000_174b:
     jr nz, jr_000_1768
 
     ld de, $169f
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jr jr_000_176e
 
 jr_000_1768:
     ld de, $169b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
 
 jr_000_176e:
     ld de, $16ce
@@ -4391,7 +4398,7 @@ jr_000_176e:
 
 jr_000_1774:
     ld de, $169b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1780
     jp SetCurrentHandlerAddress
 
@@ -4411,7 +4418,7 @@ jr_000_1792:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $0000
     inc hl
     ld a, [hl+]
@@ -4526,12 +4533,12 @@ jr_000_1835:
     ld bc, $18cb
 
 jr_000_183e:
-    jp Jump_000_0b38
+    jp ResetObjectAttributes
 
 
 Call_000_1841:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $90
@@ -4717,7 +4724,7 @@ jr_000_192b:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld b, h
     ld c, l
     ld hl, $c781
@@ -4731,13 +4738,13 @@ jr_000_192b:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1966
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $e0
@@ -4750,7 +4757,7 @@ jr_000_192b:
 
     ld d, $f8
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $198a
     jp SetCurrentHandlerAddress
 
@@ -4761,7 +4768,7 @@ jr_000_1984:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
@@ -4805,7 +4812,7 @@ jr_000_19bb:
     xor a
     ld [hl], a
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $11
     ld [hl], a
     inc hl
@@ -4825,7 +4832,7 @@ jr_000_19bb:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1a37
     call Call_000_092c
     ld de, $1a43
@@ -4833,7 +4840,7 @@ jr_000_19bb:
 
 
 Jump_000_19fb:
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1a0f
     ld a, [wCurrentHandlerIndex]
     and $01
@@ -4878,7 +4885,7 @@ Jump_000_19fb:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1a67
     call Call_000_092c
     ld de, $1a73
@@ -4897,11 +4904,11 @@ Jump_000_19fb:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1af4
     call Call_000_092c
     ld de, $1b08
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1aa4
@@ -4956,7 +4963,7 @@ jr_000_1aa4:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1aaa
     jp SetCurrentHandlerAddress
 
@@ -4975,7 +4982,7 @@ jr_000_1aa4:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1b38
     call Call_000_092c
     ld de, $1b44
@@ -5004,7 +5011,7 @@ jr_000_1aa4:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1b68
     call Call_000_092c
     ld de, $1b74
@@ -5023,7 +5030,7 @@ jr_000_1aa4:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1b98
     call Call_000_092c
     ld de, $1ba4
@@ -5057,14 +5064,14 @@ jr_000_1baa:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $c782
     ld e, [hl]
     ld d, $00
     ld bc, $1c12
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $1c1a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1bdb
@@ -5079,7 +5086,7 @@ jr_000_1bdb:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $90
@@ -5094,7 +5101,7 @@ jr_000_1bdb:
 
     ld d, $06
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $1c04
     jp SetCurrentHandlerAddress
 
@@ -5127,13 +5134,13 @@ jr_000_1bdb:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0010
     add hl, bc
     ld a, $20
     ld [hl], a
     ld de, $1ca5
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1c4c
@@ -5148,7 +5155,7 @@ jr_000_1c4c:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     ld hl, $0010
@@ -5168,7 +5175,7 @@ jr_000_1c67:
     ld a, [$ca16]
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -5206,11 +5213,11 @@ jr_000_1c67:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1d24
     call Call_000_092c
     ld de, $1d30
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1cd6
@@ -5244,7 +5251,7 @@ jr_000_1cd6:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     jr nz, jr_000_1d15
@@ -5292,9 +5299,9 @@ jr_000_1d15:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1e16
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1d5b
@@ -5309,7 +5316,7 @@ jr_000_1d5b:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000c
     add hl, de
     ld d, $32
@@ -5322,7 +5329,7 @@ jr_000_1d5b:
     ld a, [$ca16]
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $c781
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -5356,7 +5363,7 @@ jr_000_1d9f:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000c
     add hl, de
     ld d, $22
@@ -5379,7 +5386,7 @@ jr_000_1dc0:
     ld a, [$ca17]
     ld e, a
     ld d, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $1dd3
     jp SetCurrentHandlerAddress
 
@@ -5435,24 +5442,24 @@ jr_000_1e08:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $1f96
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1e3a
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld d, $02
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $1e4b
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $a0
@@ -5479,7 +5486,7 @@ jr_000_1e64:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld de, $ca34
     ld a, [hl+]
@@ -5498,26 +5505,26 @@ jr_000_1e64:
     ld a, $01
     call SetupAudioPlayback
     ld de, $1f9a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1ea4
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $000e
     add hl, bc
     xor a
     ld [hl+], a
     ld [hl], a
     ld de, $1f9a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $1ebb
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $c786
     ld de, $ca30
     ld a, [hl+]
@@ -5546,7 +5553,7 @@ jr_000_1ee1:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $a0
@@ -5566,7 +5573,7 @@ jr_000_1ee1:
     dec hl
     inc [hl]
     ld de, $1f9e
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
 
 jr_000_1f08:
     ld de, $1f0e
@@ -5574,13 +5581,13 @@ jr_000_1f08:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $08
     call Call_000_0b61
     ld a, [$ca16]
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld hl, $001e
     add hl, bc
     ld a, [hl]
@@ -5593,12 +5600,12 @@ jr_000_1f08:
     jr nz, jr_000_1f3d
 
     ld de, $1fa2
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jr jr_000_1f3d
 
 jr_000_1f37:
     ld de, $1f9e
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
 
 jr_000_1f3d:
     ld de, $1ebb
@@ -5616,7 +5623,7 @@ jr_000_1f3d:
     ld b, [hl]
     ld c, a
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0013
     add hl, bc
     ld bc, wWeaponPowerLevel
@@ -5637,13 +5644,13 @@ jr_000_1f71:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $06
     call Call_000_0b61
     ld a, [$ca16]
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     jp AdvanceToNextHandler
 
 
@@ -5660,11 +5667,11 @@ jr_000_1f71:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $201e
     call Call_000_092c
     ld de, $202a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_1fd3
@@ -5697,7 +5704,7 @@ jr_000_1fd3:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     jr nz, jr_000_200f
@@ -5749,9 +5756,9 @@ jr_000_2030:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $20c3
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_2055
@@ -5766,7 +5773,7 @@ jr_000_2055:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, [$ca81]
     or a
     jr nz, jr_000_206f
@@ -5782,13 +5789,13 @@ jr_000_206f:
 jr_000_2070:
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld de, $207c
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     jr nz, jr_000_2099
@@ -5809,7 +5816,7 @@ jr_000_2099:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $90
@@ -5851,7 +5858,7 @@ jr_000_20c9:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $20e7
     call Call_000_092c
     ld de, $20f3
@@ -5881,7 +5888,7 @@ jr_000_20f9:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $367d
     call Call_000_0939
     ld de, $211f
@@ -5911,7 +5918,7 @@ jr_000_2125:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $3687
     call Call_000_0939
     ld de, $214b
@@ -5939,7 +5946,7 @@ jr_000_2151:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $216f
     call Call_000_092c
     ld de, $217b
@@ -5969,11 +5976,11 @@ jr_000_2181:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $36d5
     call Call_000_0939
     ld de, $21aa
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jp Jump_000_1cd6
 
 
@@ -6005,11 +6012,11 @@ jr_000_21b4:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $2235
     call Call_000_092c
     ld de, $2241
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_21df
@@ -6042,7 +6049,7 @@ jr_000_21df:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     jr nz, jr_000_2226
@@ -6098,11 +6105,11 @@ jr_000_2247:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $2278
     call Call_000_092c
     ld de, $2284
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_2272
@@ -6161,9 +6168,9 @@ jr_000_2272:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $231e
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
     jr z, jr_000_22cf
@@ -6180,11 +6187,11 @@ jr_000_22d2:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     push hl
     ld d, $08
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     pop hl
     ld de, $000c
     add hl, de
@@ -6289,7 +6296,7 @@ jr_000_2374:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0011
     add hl, bc
     ld a, [hl]
@@ -6308,7 +6315,7 @@ jr_000_2374:
     ld bc, $2441
 
 jr_000_239e:
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $23a7
     jp SetCurrentHandlerAddress
 
@@ -6318,7 +6325,7 @@ jr_000_239e:
     jp z, AdvanceToNextHandler
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000d
     add hl, de
     xor a
@@ -6339,7 +6346,7 @@ jr_000_23c6:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000c
     add hl, de
     ld a, [hl+]
@@ -6347,7 +6354,7 @@ jr_000_23c6:
     jr c, jr_000_23e4
 
     ld de, $0000
-    call Call_000_0b1e
+    call MoveObject
     ld de, $23fd
     jp SetCurrentHandlerAddress
 
@@ -6459,12 +6466,12 @@ jr_000_245d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     xor a
     ld hl, $0f78
     call Call_000_0f2f
     ld bc, $24f7
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $249d
     jp SetCurrentHandlerAddress
 
@@ -6474,7 +6481,7 @@ jr_000_245d:
     jp z, AdvanceToNextHandler
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000d
     add hl, de
     xor a
@@ -6484,7 +6491,7 @@ jr_000_245d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000c
     add hl, de
     ld a, [hl+]
@@ -6492,7 +6499,7 @@ jr_000_245d:
     jp c, Jump_000_23e4
 
     ld de, $0000
-    call Call_000_0b1e
+    call MoveObject
     ld a, $05
     ld [$ca2c], a
     ld de, $24d2
@@ -6558,12 +6565,12 @@ jr_000_2505:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     xor a
     ld hl, $0fa0
     call Call_000_0f2f
     ld bc, $25c9
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2545
     jp SetCurrentHandlerAddress
 
@@ -6573,7 +6580,7 @@ jr_000_2505:
     jp z, AdvanceToNextHandler
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000d
     add hl, de
     xor a
@@ -6583,7 +6590,7 @@ jr_000_2505:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000c
     add hl, de
     ld a, [hl+]
@@ -6591,7 +6598,7 @@ jr_000_2505:
     jr c, jr_000_2574
 
     ld de, $0000
-    call Call_000_0b1e
+    call MoveObject
     ld de, $2590
     jp SetCurrentHandlerAddress
 
@@ -6624,7 +6631,7 @@ jr_000_259e:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     call Call_000_09b8
     or a
     jr nz, jr_000_25c3
@@ -6680,7 +6687,7 @@ jr_000_25f0:
 
 
     ld a, [$cf99]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     inc hl
     ld a, [hl]
@@ -6757,7 +6764,7 @@ jr_000_262a:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0004
     add hl, bc
     ld a, [$cace]
@@ -6783,9 +6790,9 @@ jr_000_262a:
     ld e, [hl]
     ld d, a
     ld bc, $26f4
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $26fc
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -6799,13 +6806,13 @@ jr_000_262a:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0005
     add hl, bc
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0b1e
+    call MoveObject
     ld de, $26c5
     jp SetCurrentHandlerAddress
 
@@ -7121,15 +7128,15 @@ jr_000_285f:
     jp z, AdvanceToNextHandler
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $169b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $28a9
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $f800
     call Call_000_0bf3
     ld hl, wCurrentHandlerDataPointer
@@ -7150,7 +7157,7 @@ jr_000_285f:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $08f8
     call Call_000_0bf3
     ld hl, wCurrentHandlerDataPointer
@@ -7172,7 +7179,7 @@ jr_000_285f:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $000f
     add hl, bc
     ld a, [hl]
@@ -7188,7 +7195,7 @@ jr_000_28ff:
     ld hl, $ca16
     ld d, [hl]
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7220,33 +7227,37 @@ jr_000_292d:
     jp SetCurrentHandlerAddress
 
 
+    ; 293a
+    ; Wait for player entrance?
     ld a, [$cac9]
     or a
     jp z, AdvanceToNextHandler
 
+    ; called right before player enters
     ld de, $2947
     jp SetCurrentHandlerAddress
 
 
-    ld a, [bc]
-    call Call_000_0b4a
+    ; 2947
+    ld a, [bc] ; bc is pointing to C100 which is 0
+    call SetObjectPointer
     ld de, $000f
-    add hl, de
+    add hl, de 
     xor a
-    ld [hl], a
-    ld bc, $1694
+    ld [hl], a ; set last byte of object to 0
+    ld bc, PlayerInitTemplate
     ld de, $a050
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $169b
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2966
     jp SetCurrentHandlerAddress
 
-
+    ; 2966
     ld a, [bc]
-    call Call_000_0b4a
-    ld de, $ff00
-    call Call_000_0b1e
+    call SetObjectPointer
+    ld de, $ff00 ; FF is like -1 since adding causes wrap around, 00 is of course, 0
+    call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7269,16 +7280,16 @@ jr_000_292d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $000f
     add hl, de
     xor a
     ld [hl], a
-    ld bc, $1694
+    ld bc, PlayerInitTemplate
     ld de, $3c98
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2af0
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $29af
     jp SetCurrentHandlerAddress
 
@@ -7300,13 +7311,13 @@ jr_000_292d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld a, $f8
     call Call_000_0b7d
     ld a, [$ca17]
     ld e, a
     ld d, $00
-    call Call_000_0b1e
+    call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7332,10 +7343,10 @@ jr_000_292d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $2a34
     ld de, $3040
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld a, [wCurrentStage]
     dec a
     add a
@@ -7346,7 +7357,7 @@ jr_000_292d:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2a27
     jp SetCurrentHandlerAddress
 
@@ -7517,12 +7528,12 @@ jr_000_292d:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $2b6d
     ld de, $3040
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2b75
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2b3b
     jp SetCurrentHandlerAddress
 
@@ -7550,7 +7561,7 @@ jr_000_292d:
     ld b, [hl]
     ld c, a
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $0de6
     call StoreAddressInFreeWramSlot
     jp Jump_000_0a64
@@ -7844,7 +7855,7 @@ jr_000_2c94:
     ld b, [hl]
     ld c, a
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $0de6
     call StoreAddressInFreeWramSlot
     jp RemoveCurrentHandler
@@ -7860,12 +7871,12 @@ jr_000_2c94:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $2f9b
     ld de, $6872
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2fa3
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2d32
     jp SetCurrentHandlerAddress
 
@@ -7882,7 +7893,7 @@ jr_000_2c94:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $001c
     add hl, bc
     inc [hl]
@@ -7919,7 +7930,7 @@ jr_000_2c94:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0008
     add hl, bc
     xor a
@@ -7929,15 +7940,15 @@ jr_000_2c94:
     add hl, bc
     ld bc, $2faf
     ld de, $606a
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2fb7
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2da5
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $f0
@@ -7969,7 +7980,7 @@ jr_000_2dcf:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld hl, $0007
     add hl, bc
     ld a, [hl]
@@ -8143,18 +8154,18 @@ jr_000_2de7:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $2f8d
     ld de, $a048
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $2f95
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $2f1a
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $30
@@ -8167,7 +8178,7 @@ jr_000_2de7:
     ld a, [$ca16]
     ld d, a
     ld e, $00
-    call Call_000_0b1e
+    call MoveObject
     jp AdvanceToNextHandler
 
 
@@ -8361,23 +8372,23 @@ jr_000_2f53:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $31ba
     ld de, $30e1
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $31bc
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $3082
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $31bb
     ld de, $4000
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $31d4
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     ld de, $3082
     jp SetCurrentHandlerAddress
 
@@ -8392,9 +8403,9 @@ jr_000_2f53:
     jp c, Jump_000_309e
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $0001
-    call Call_000_0b1e
+    call MoveObject
     jp AdvanceToNextHandler
 
 
@@ -8412,7 +8423,7 @@ Jump_000_309e:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     inc hl
     ld a, [hl]
@@ -8435,7 +8446,7 @@ jr_000_30c9:
     ld a, [$ca17]
     ld e, a
     ld d, $00
-    call Call_000_0b1e
+    call MoveObject
     jp AdvanceToNextHandler
 
 
@@ -8453,16 +8464,16 @@ jr_000_30c9:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld bc, $31dc
     ld de, $4012
-    call Call_000_0b38
+    call ResetObjectAttributes
     ld de, $3103
     jp SetCurrentHandlerAddress
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc bc
     ld a, [bc]
     inc a
@@ -8487,7 +8498,7 @@ jr_000_30c9:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jp AdvanceToNextHandler
 
 
@@ -8499,7 +8510,7 @@ jr_000_312c:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc bc
     ld a, [bc]
     inc a
@@ -8523,7 +8534,7 @@ jr_000_312c:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jp AdvanceToNextHandler
 
 
@@ -8537,7 +8548,7 @@ jr_000_315b:
 
 
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     inc hl
     inc hl
     ld a, [hl]
@@ -8560,7 +8571,7 @@ jr_000_317f:
     ld a, [$ca17]
     ld e, a
     ld d, $00
-    call Call_000_0b1e
+    call MoveObject
     inc bc
     ld a, [bc]
     inc a
@@ -8582,13 +8593,13 @@ jr_000_317f:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0b03
+    call SetObjectGraphicsPointer
     jp AdvanceToNextHandler
 
 
 Jump_000_31ad:
     ld a, [bc]
-    call Call_000_0b4a
+    call SetObjectPointer
     ld de, $2ef1
     call StoreAddressInFreeWramSlot
     jp Jump_000_0a64

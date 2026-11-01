@@ -1020,7 +1020,7 @@ RegisterNewGameHandlers:
     call StoreAddressInFreeWramSlot
     ld de, UpdatePlayerStatus
     call StoreAddressInFreeWramSlot
-    ld de, $0d1c
+    ld de, InitializeStageEventReader
     call StoreAddressInFreeWramSlot
     ld b, PLAYER_SHOT_SLOT_COUNT
 
@@ -1080,7 +1080,7 @@ SetupNextStage:
     ld [hl+], a
     ld [hl], d
     call DrawInitialBackground
-    ld hl, $ca82
+    ld hl, wStageTickCounter
     xor a
     ld [hl+], a
     ld [hl], a
@@ -1113,7 +1113,7 @@ SetupNextStage:
     ld [hl], e
     ld a, $e4
     ldh [rBGP], a
-    ld de, $0d1c
+    ld de, InitializeStageEventReader
     call StoreAddressInFreeWramSlot
     ld a, $07
     ldh [rTAC], a
@@ -1142,7 +1142,7 @@ jr_000_0691:
     ld [hl], a
     ld a, $e4
     ldh [rBGP], a
-    ld de, $0d1c
+    ld de, InitializeStageEventReader
     call StoreAddressInFreeWramSlot
     ld a, [wCurrentStage]
     cp $08
@@ -1627,7 +1627,7 @@ Call_000_0939:
 
 
 Call_000_0947:
-    ld a, [$cab5]
+    ld a, [wStageEventParams]
     ld hl, $0f19
     call Call_000_0f0f
     xor a
@@ -1647,7 +1647,7 @@ Call_000_0947:
     ld de, $0010
     add hl, de
     ld b, $04
-    ld de, $cab6
+    ld de, wStageEventParams + 1
 
 jr_000_0972:
     ld a, [de]
@@ -2477,22 +2477,22 @@ jr_000_0d0b:
     ret
 
 
-    ; $0D1C
+InitializeStageEventReader:
     xor a
-    ld hl, $cab2
+    ld hl, wStageEventPointer
     ld [hl+], a
     ld a, $d8
     ld [hl], a
-    ld de, $0d2a
+    ld de, ScheduleStageEvents
     jp SetCurrentHandlerAddress
 
 
-    ; $0d2a
-    ld hl, $cab2
+ScheduleStageEvents:
+    ld hl, wStageEventPointer
     ld a, [hl+]
     ld b, [hl]
-    ld c, a
-    ld hl, $ca82
+    ld c, a ; Load event reader pointer into BC
+    ld hl, wStageTickCounter
     ld a, [bc]
     cp [hl]
     jp nz, AdvanceToNextHandler
@@ -2503,31 +2503,40 @@ jr_000_0d0b:
     cp [hl]
     jp nz, AdvanceToNextHandler
 
+    ; Event time matched current stage time/tick
+    ; Next process event type
+    ; 0 ends the handler
+    ; 1 requests the next stage
+    ; others select a pointer and add another handler
     inc bc
     ld a, [bc]
     or a
     jp z, RemoveCurrentHandler
 
     dec a
-    jp z, Jump_000_0de6
+    jp z, RequestNextStage
 
     inc a
     push bc
-    add a
+    add a ; A = entry index * 2
     ld l, a
     ld h, $00
-    ld de, $0eb7
+    ld de, StageEventHandlerTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
-    ld e, a
+    ld e, a ; DE = pointer stored in selected table entry
     call StoreAddressInFreeWramSlot
     pop bc
-    ld hl, $cab5
+    ld hl, wStageEventParams
     inc bc
     ld e, $02
 
-jr_000_0d60:
+; event offset + 3, high nibble -> wStageEventParams
+; event offset + 3, low nibble -> wStageEventParams + 1
+; event offset + 4, high nibble -> wStageEventParams + 2
+; event offset + 4, low nibble -> wStageEventParams + 3
+UnpackStageEventParameters:
     ld a, [bc]
     ld d, a
     swap a
@@ -2538,13 +2547,13 @@ jr_000_0d60:
     ld [hl+], a
     inc bc
     dec e
-    jr nz, jr_000_0d60
+    jr nz, UnpackStageEventParameters
 
-    ld hl, $cab2
+    ld hl, wStageEventPointer
     ld a, c
     ld [hl+], a
     ld [hl], b
-    ld hl, $cab6
+    ld hl, wStageEventParams + 1
     ld b, [hl]
     ld a, [$ca22]
     and b
@@ -2611,7 +2620,7 @@ jr_000_0d60:
     jp RemoveCurrentHandler
 
 
-Jump_000_0de6:
+RequestNextStage:
     ld a, $01
     ld [wNextStageRequested], a
     ld hl, wCurrentStage
@@ -2743,6 +2752,7 @@ StageTileGraphicsTable:
     ld b, b
     ld a, b
 
+StageEventHandlerTable:
 jr_000_0eb7:
     ld h, a
     ld a, [bc]
@@ -2983,7 +2993,7 @@ Call_000_0faa:
     ld de, $0008
     add hl, de
     push hl
-    ld a, [$cab6]
+    ld a, [wStageEventParams + 1]
     add a
 
 jr_000_0fb3:
@@ -3666,8 +3676,8 @@ ScrollBackground:
 
     xor a
     ld [hl], a ; reset counter to 0
-    ld hl, $ca82 
-    inc [hl] ; increment value at ca82
+    ld hl, wStageTickCounter
+    inc [hl]
     ld a, [hl+] ; store in a and move hl to ca83
     or a
     jr nz, jr_000_138d ; if a not zero
@@ -7354,6 +7364,7 @@ jr_000_292d:
     jp Jump_000_0a64
 
 
+    ; 29F2
     ld bc, $2a34
     call Call_000_0947
     or a

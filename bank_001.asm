@@ -650,7 +650,7 @@ jr_001_43d7:
     ld a, [de]
     xor $07
     add $02
-    ld [$cab6], a
+    ld [wStageEventParams + 1], a
     ld bc, $44d6
     call Call_000_0947
     or a
@@ -829,7 +829,7 @@ jr_001_44ee:
     ld de, $cac0
     ld a, [de]
     xor $07
-    ld [$cab6], a
+    ld [wStageEventParams + 1], a
     ld bc, $45ff
     call Call_000_0947
     or a

@@ -14,6 +14,11 @@ DEF wPlayerDeathRequested EQU $CA20
 DEF wBackgroundScrollTimer EQU $CA80
 DEF wBackgroundScrollDelay EQU $06
 
+DEF wStageTickCounter EQU $CA82
+
+DEF wStageEventPointer EQU $CAB2
+DEF wStageEventParams EQU $CAB5
+
 DEF wStageTransitionActive EQU $CAC5
 
 DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop

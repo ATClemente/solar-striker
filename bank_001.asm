@@ -91,7 +91,7 @@ Jump_001_4089:
     call Call_000_0c57
     ld a, $01
     ld [$cac1], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     ld de, $40b5
@@ -101,7 +101,7 @@ Jump_001_4089:
 Jump_001_40a2:
     ld a, $01
     ld [$cac1], a
-    ld hl, $ca69
+    ld hl, wPlayerInvincible
     ld [hl+], a
     ld [hl], a
     ld de, $46d7
@@ -283,7 +283,7 @@ jr_001_41a1:
 Jump_001_41a7:
     ld a, $01
     ld [$cac1], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
@@ -426,7 +426,7 @@ jr_001_4276:
 Jump_001_427c:
     ld a, $01
     ld [$cac1], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     jp Jump_001_46ea

@@ -1014,7 +1014,7 @@ CopyScoreLabelLoop:
     ld [hl+], a
     ld [hl], e ; rSCX
 RegisterNewGameHandlers:
-    ld de, $16b3
+    ld de, InitPlayerObject
     call StoreAddressInFreeWramSlot
     ld de, $17e3
     call StoreAddressInFreeWramSlot
@@ -1088,10 +1088,10 @@ SetupNextStage:
     ld [hl+], a
     ld [hl], a
     ld [wGameOverRequested], a
-    ld [$ca20], a
+    ld [wPlayerDeathRequested], a
     ld [$ca81], a
     ld [wVBlankOccurred], a
-    ld [$cac5], a
+    ld [wStageTransitionActive], a
     ld [wBackgroundScrollTimer], a
     ld [$cfa1], a
     ld [$cad8], a
@@ -1670,7 +1670,7 @@ Call_000_097d:
     ld a, [bc]
     call SetObjectPointer
     ld a, $04
-    call Call_000_0b61
+    call CalculateYMovement
     call Call_000_0ce4
     ld a, [$ca16]
     add d
@@ -1749,7 +1749,7 @@ Call_000_09cd:
     ret z
 
     ld a, $01
-    ld [$ca20], a
+    ld [wPlayerDeathRequested], a
     ret
 
 
@@ -1772,7 +1772,7 @@ Call_000_09ec:
     ret z
 
     ld a, $01
-    ld [$ca20], a
+    ld [wPlayerDeathRequested], a
     ret
 
 
@@ -2097,38 +2097,39 @@ SetObjectPointer:
     ret
 
 
-Call_000_0b61:
+CalculateYMovement:
     bit 7, a
-    jr z, jr_000_0b72
+    jr z, jr_000_0b72 ; jump if bit 7 (top bit) in a is zero
 
-    ld hl, $0003
-    add hl, bc
+    ld hl, $0003 ; bc should be the object pointer I think, so point at 4th byte?
+    add hl, bc 
     cpl
-    inc a
-    call Call_000_0b99
+    inc a ; turn the number positive
+    call AccumulateFractionalMovement
     cpl
     inc a
     jr jr_000_0b79
 
+; a was Non negative
 jr_000_0b72:
-    ld hl, $0004
+    ld hl, $0004 ; bc should be the object pointer I think, so point at 5th byte?
     add hl, bc
-    call Call_000_0b99
+    call AccumulateFractionalMovement
 
 jr_000_0b79:
     ld [$ca16], a
     ret
 
 
-Call_000_0b7d:
+CalculateXMovement:
     bit 7, a
-    jr z, jr_000_0b8e
+    jr z, jr_000_0b8e ; jump if bit 7 is 0
 
     ld hl, $0005
     add hl, bc
     cpl
     inc a
-    call Call_000_0b99
+    call AccumulateFractionalMovement
     cpl
     inc a
     jr jr_000_0b95
@@ -2136,20 +2137,22 @@ Call_000_0b7d:
 jr_000_0b8e:
     ld hl, $0006
     add hl, bc
-    call Call_000_0b99
+    call AccumulateFractionalMovement
 
 jr_000_0b95:
     ld [$ca17], a
     ret
 
 
-Call_000_0b99:
-    add [hl]
-    ld d, a
-    and $0f
-    ld [hl], a
+; Calulates fractional movement and saves remainder in [hl]
+; returns with A = whole pixel amount for that turn
+AccumulateFractionalMovement:
+    add [hl] ; add whatever is at that object byte to A
+    ld d, a ; put a in d
+    and $0f ; mask off top 4 bits of a 
+    ld [hl], a ; load back into that object slot
     swap d
-    ld a, d
+    ld a, d ; put back into a and mask off top bits again,
     and $0f
     ret
 
@@ -2219,9 +2222,9 @@ jr_000_0bed:
 
 Call_000_0bf3:
     ld a, d
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, e
-    call Call_000_0b7d
+    call CalculateXMovement
     ld hl, $ca16
     ld a, [hl+]
     ld e, [hl]
@@ -2245,6 +2248,7 @@ Call_000_0c04:
     ld c, d
     ld [hl], h
 
+    ; 0C19
     call Call_000_0c75
     ld hl, $cfa0
     ld a, [hl]
@@ -2260,13 +2264,13 @@ jr_000_0c27:
     or a
     jr z, jr_000_0c33
 
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     jp AdvanceToNextHandler
 
 
 jr_000_0c33:
     ld hl, $ca68
-    ld de, $ca20
+    ld de, wPlayerDeathRequested
     ld a, [hl]
     or a
     jr nz, jr_000_0c4b
@@ -2473,6 +2477,7 @@ jr_000_0d0b:
     ret
 
 
+    ; $0D1C
     xor a
     ld hl, $cab2
     ld [hl+], a
@@ -2482,6 +2487,7 @@ jr_000_0d0b:
     jp SetCurrentHandlerAddress
 
 
+    ; $0d2a
     ld hl, $cab2
     ld a, [hl+]
     ld b, [hl]
@@ -3063,7 +3069,7 @@ jr_000_0ff8:
     ld a, [bc]
     call SetObjectPointer
     ld a, $08
-    call Call_000_0b61
+    call CalculateYMovement
     ld d, a
     ld e, $00
     call MoveObject
@@ -3199,9 +3205,9 @@ jr_000_1102:
     add hl, bc
     ld a, [hl+]
     ld e, [hl]
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, e
-    call Call_000_0b7d
+    call CalculateXMovement
     ld hl, $ca16
     ld a, [hl+]
     ld e, [hl]
@@ -3873,19 +3879,19 @@ StoreMapRowPosition:
     ret
 
 
-Jump_000_1490:
+ApplyScrollOffsetToNonPlayerObjects:
     ld a, [$ca28]
     or a
-    ret z
+    ret z ; no opposite shift
 
     ld c, a
-    ld hl, $c790
+    ld hl, wObjectTable + $10 ;$c790 ; start at objects after the player
     ld b, $27
 
-jr_000_149b:
+ApplyScrollOffsetLoop:
     ld a, [hl+]
     or a
-    jr z, jr_000_14b4
+    jr z, SkipObjectBytes ; no object at slot
 
     inc hl
     ld a, [hl]
@@ -3904,17 +3910,17 @@ jr_000_149b:
     ld a, [hl]
     add c
     ld [hl+], a
-    jr jr_000_14b8
+    jr MoveToNextObject
 
-jr_000_14b4:
+SkipObjectBytes: ; skip most of object
     ld de, $000b
     add hl, de
 
-jr_000_14b8:
-    ld de, $0004
+MoveToNextObject:
+    ld de, $0004 ; skip rest of object
     add hl, de
     dec b
-    jr nz, jr_000_149b
+    jr nz, ApplyScrollOffsetLoop
 
     ld a, b
     ld [$ca28], a
@@ -4068,31 +4074,32 @@ BuildShadowOAM:
     ret
 
 
-Call_000_1587:
-    ld a, [hl]
+ScrollBackgroundHorizontal:
+    ld a, [hl] ; direction number 0-7 
     and $03
-    ret z
+    ret z ; return if number is 0, 4 (up or down)
 
-    ld a, [hl+]
+    ld a, [hl+] 
     cp $04
-    jr c, jr_000_15a4
+    jr c, AccumulateRightwardScroll ; jump if less than 4
 
-    ld a, [$ca17]
+    ; greater than 4
+    ld a, [$ca17] ; get the whole pixel x movement
     cpl
-    inc a
-    add [hl]
-    ld b, a
-    and $03
-    ld [hl+], a
+    inc a ; turn it positive again
+    add [hl] ; Add saved remainder at $CA26
+    ld b, a ; save that in b
+    and $03 ; Remainder after division by 4 (0–3)
+    ld [hl+], a ; Save remainder at $CA26; HL becomes $CA27
     srl b
-    srl b
+    srl b ; divide by 4 rounded down
     xor a
-    sub b
+    sub b ; Negate the scroll amount
     ld b, a
-    inc hl
-    jr jr_000_15b1
+    inc hl ; HL becomes $CA28
+    jr ApplyHorizontalScroll
 
-jr_000_15a4:
+AccumulateRightwardScroll:
     inc hl
     ld a, [$ca17]
     add [hl]
@@ -4102,7 +4109,7 @@ jr_000_15a4:
     srl b
     srl b
 
-jr_000_15b1:
+ApplyHorizontalScroll:
     ldh a, [rSCX]
     add b
     ldh [rSCX], a
@@ -4111,43 +4118,43 @@ jr_000_15b1:
     ld [hl+], a
     add [hl]
     ld [hl], a
-    jp Jump_000_1490
+    jp ApplyScrollOffsetToNonPlayerObjects
 
 
-Call_000_15be:
+ClampPlayerMovement:
     ld hl, $c781
     ld a, [hl+]
-    cp $15
-    jr nc, jr_000_15ca
+    cp PLAYER_UP_MOVEMENT_LIMIT
+    jr nc, ClampDownwardMovement
 
     res 6, b
-    jr jr_000_15d0
+    jr ClampRightwardMovement
 
-jr_000_15ca:
-    cp $85
-    jr c, jr_000_15d0
+ClampDownwardMovement:
+    cp PLAYER_DOWN_MOVEMENT_LIMIT
+    jr c, ClampRightwardMovement
 
     res 7, b
 
-jr_000_15d0:
+ClampRightwardMovement:
     ld a, [hl]
-    cp $94
-    jr c, jr_000_15d9
+    cp PLAYER_RIGHT_MOVEMENT_LIMIT
+    jr c, ClampLeftwardMovement
 
     res 4, b
-    jr jr_000_15df
+    jr FinishMovementClamp
 
-jr_000_15d9:
-    cp $0d
-    jr nc, jr_000_15df
+ClampLeftwardMovement:
+    cp PLAYER_LEFT_MOVEMENT_LIMIT
+    jr nc, FinishMovementClamp
 
     res 5, b
 
-jr_000_15df:
+FinishMovementClamp:
     ld hl, wPlayerInput
     ld a, [hl]
     and $0f
-    or b
+    or b ; clear any bad inputs
     ld [hl], a
     ret
 
@@ -4162,6 +4169,7 @@ Jump_000_15e8:
     jp SetCurrentHandlerAddress
 
 
+    ; 15fa
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -4196,7 +4204,7 @@ Jump_000_15e8:
     ld d, $a0
     ld bc, PlayerInitTemplate
     call ResetObjectAttributes
-    ld de, $169b
+    ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
     ld a, [wWeaponPowerLevel]
     ld l, a
@@ -4234,28 +4242,29 @@ jr_000_1658:
 
 Jump_000_1672:
     xor a
-    ld [$ca20], a
-    ld de, $16ce
+    ld [wPlayerDeathRequested], a
+    ld de, PlayerMovementHandler
     jp SetCurrentHandlerAddress
 
-
-    db $ff, $02, $06
-
-    rst $38
-
-    db $00, $01, $07
-
-    rst $38
-
-    db $04, $03, $05
-
-    rst $38
-    rst $38
-    rst $38
+; 167C
+    db $ff ; $0: None
+    db $02 ; $1: Right
+    db $06 ; $2: Left
+    db $ff ; $3: Right + Left
+    db $00 ; $4: Up
+    db $01 ; $5: Up + Right
+    db $07 ; $6: Up + Left
+    db $ff ; $7: Up + Right + Left
+    db $04 ; $8: Down
+    db $03 ; $9: Down + Right
+    db $05 ; $A: Down + Left
+    db $ff ; $B: Down + Right + Left
+    db $ff ; $C: Down + Up
+    db $ff ; $D: Down + Up + Right
 
 Jump_000_168a:
-    rst $38
-    rst $38
+    db $ff ; $E: Down + Up + Left
+    db $ff ; $F: All four directions
 
     db $00, $00
 
@@ -4269,11 +4278,19 @@ Jump_000_168a:
     inc bc
 
 PlayerInitTemplate:
-    db $12, $08, $08, $02, $02, $0e, $0e, $02, $00, $02, $20, $00, $00, $00, $00, $d0
-    
-    db $00, $de, $22, $00, $30, $22, $22, $30, $00, $22, $de, $00, $d0, $de, $de
+    db $12, $08, $08, $02, $02, $0e, $0e
 
-    ; 16b3
+; First byte is also the final byte of PlayerInitTemplate.
+PlayerSpriteData:
+    db $02, $00, $02, $20
+
+PlayerBlinkSpriteData:
+    db $00, $00, $00, $00
+    
+    ; 16a3
+    db $d0, $00, $de, $22, $00, $30, $22, $22, $30, $00, $22, $de, $00, $d0, $de, $de
+
+InitPlayerObject:
     ld bc, PlayerInitTemplate
     ld de, $603a
     xor a
@@ -4290,16 +4307,18 @@ PlayerInitTemplate:
     jp SetCurrentHandlerAddress
 
 
+PlayerMovementHandler:
     ld a, [bc]
     call SetObjectPointer
     ld a, [wJoypadHeld]
     ld [wPlayerInput], a
     and $f0
-    jp z, Jump_000_1717
+    jp z, SchedulePlayerStateUpdate ; jump if no movement
 
+    ; Player requesting movement
     push bc
     ld b, a
-    call Call_000_15be
+    call ClampPlayerMovement
     swap a
     and $0f
     ld l, a
@@ -4307,102 +4326,102 @@ PlayerInitTemplate:
     ld de, $167c
     add hl, de
     ld a, [hl]
-    ld [$ca25], a
+    ld [$ca25], a ; store the movement input calculated
     pop bc
-    cp $ff
-    jr z, jr_000_1717
+    cp $ff ; check if movement input cancels out
+    jr z, SchedulePlayerStateUpdate
 
     add a
     ld e, a
     ld d, $00
     ld hl, $16a3
     add hl, de
-    ld a, [hl+]
+    ld a, [hl+] ; load the y movement amount in a, point hl at x
     push hl
-    call Call_000_0b61
+    call CalculateYMovement
     pop hl
-    ld a, [hl]
-    call Call_000_0b7d
+    ld a, [hl] ; load the x movement amount in a 
+    call CalculateXMovement
     ld hl, $ca25
-    call Call_000_1587
+    call ScrollBackgroundHorizontal
     ld hl, $ca16
     ld a, [hl+]
     ld e, [hl]
     ld d, a
     call MoveObject
 
-Jump_000_1717:
-jr_000_1717:
-    ld de, $171d
+SchedulePlayerStateUpdate:
+    ld de, UpdatePlayerState
     jp SetCurrentHandlerAddress
 
-
+UpdatePlayerState:
     ld a, [bc]
     call SetObjectPointer
-    ld a, [$cac5]
+    ld a, [wStageTransitionActive]
     or a
     jr nz, jr_000_1774
 
-    ld a, [$ca69]
+    ld a, [wPlayerInvincible]
     or a
-    jr nz, jr_000_1734
+    jr nz, HandleFireInput
 
-    ld a, [$ca20]
+    ld a, [wPlayerDeathRequested]
     or a
     jp nz, Jump_000_15e8
 
-jr_000_1734:
+HandleFireInput:
     ld bc, wPlayerInput
     ld a, [bc]
-    and $08
+    and BUTTON_START
     ld [wPauseRequested], a
     ld hl, $ca24
     ld a, [bc]
-    and $03
-    jr z, jr_000_174b
+    and BUTTON_A | BUTTON_B
+    jr z, SetPlayerSpriteGraphics
 
     ld a, [hl]
     or a
-    jr nz, jr_000_174b
+    jr nz, SetPlayerSpriteGraphics
 
     inc a
     ld [hl], a
 
-jr_000_174b:
-    ld a, [$ca69]
+; continue after fire input handling
+SetPlayerSpriteGraphics:
+    ld a, [wPlayerInvincible]
     or a
-    jr z, jr_000_1768
+    jr z, SetNormalPlayerSpriteGraphics
 
     ld hl, $cfa3
     ld a, [hl]
     xor $01
     ld [hl], a
-    jr nz, jr_000_1768
+    jr nz, SetNormalPlayerSpriteGraphics
 
     ld a, [wPauseRequested]
     or a
-    jr nz, jr_000_1768
+    jr nz, SetNormalPlayerSpriteGraphics
 
-    ld de, $169f
+    ld de, PlayerBlinkSpriteData
     call SetObjectGraphicsPointer
-    jr jr_000_176e
+    jr SetPlayerMovementHandler
 
-jr_000_1768:
-    ld de, $169b
+SetNormalPlayerSpriteGraphics:
+    ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
 
-jr_000_176e:
-    ld de, $16ce
+SetPlayerMovementHandler:
+    ld de, PlayerMovementHandler
     jp SetCurrentHandlerAddress
 
 
 jr_000_1774:
-    ld de, $169b
+    ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
     ld de, $1780
     jp SetCurrentHandlerAddress
 
-
+    ; $1780
     ld a, [wCurrentStage]
     cp $06
     jr z, jr_000_1792
@@ -4466,11 +4485,12 @@ jr_000_17c0:
     xor a
     ld [hl+], a
     ld [hl], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $28f0
     jp SetCurrentHandlerAddress
 
 
+    ; 17e3
     ld bc, $ca24
     ld a, [bc]
     or a
@@ -5171,7 +5191,7 @@ jr_000_1c4c:
 
 jr_000_1c67:
     ld a, [hl]
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     ld d, a
     ld e, $00
@@ -5325,7 +5345,7 @@ jr_000_1d5b:
     jp c, Jump_000_0bbb
 
     ld a, $28
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     ld d, a
     ld e, $00
@@ -5382,7 +5402,7 @@ jr_000_1d9f:
 
 jr_000_1dc0:
     ld a, d
-    call Call_000_0b7d
+    call CalculateXMovement
     ld a, [$ca17]
     ld e, a
     ld d, $00
@@ -5583,7 +5603,7 @@ jr_000_1f08:
     ld a, [bc]
     call SetObjectPointer
     ld a, $08
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     ld d, a
     ld e, $00
@@ -5646,7 +5666,7 @@ jr_000_1f71:
     ld a, [bc]
     call SetObjectPointer
     ld a, $06
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     ld d, a
     ld e, $00
@@ -5779,7 +5799,7 @@ jr_000_2055:
     jr nz, jr_000_206f
 
     ld a, $08
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     jr jr_000_2070
 
@@ -6363,7 +6383,7 @@ Jump_000_23e4:
 jr_000_23e4:
     ld a, $01
     ld [$cac1], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     ld a, $14
@@ -6524,7 +6544,7 @@ jr_000_24e4:
     jr nc, jr_000_24f1
 
     ld a, $01
-    ld [$ca20], a
+    ld [wPlayerDeathRequested], a
 
 jr_000_24f1:
     ld de, $24b4
@@ -6606,7 +6626,7 @@ jr_000_2505:
 jr_000_2574:
     ld a, $01
     ld [$cac1], a
-    ld [$ca69], a
+    ld [wPlayerInvincible], a
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     ld a, $24
@@ -7129,7 +7149,7 @@ jr_000_285f:
 
     ld a, [bc]
     call SetObjectPointer
-    ld de, $169b
+    ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
     ld de, $28a9
     jp SetCurrentHandlerAddress
@@ -7191,7 +7211,7 @@ jr_000_285f:
 
 jr_000_28ff:
     ld a, [hl]
-    call Call_000_0b61
+    call CalculateYMovement
     ld hl, $ca16
     ld d, [hl]
     ld e, $00
@@ -7248,7 +7268,7 @@ jr_000_292d:
     ld bc, PlayerInitTemplate
     ld de, $a050
     call ResetObjectAttributes
-    ld de, $169b
+    ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
     ld de, $2966
     jp SetCurrentHandlerAddress
@@ -7267,7 +7287,7 @@ jr_000_292d:
     cp $60
     jp nz, AdvanceToNextHandler
 
-    ld de, $16ce
+    ld de, PlayerMovementHandler
     jp SetCurrentHandlerAddress
 
 
@@ -7313,7 +7333,7 @@ jr_000_292d:
     ld a, [bc]
     call SetObjectPointer
     ld a, $f8
-    call Call_000_0b7d
+    call CalculateXMovement
     ld a, [$ca17]
     ld e, a
     ld d, $00
@@ -7513,7 +7533,7 @@ jr_000_292d:
     jp c, AdvanceToNextHandler
 
     ld a, $01
-    ld [$cac5], a
+    ld [wStageTransitionActive], a
     ld bc, $2b6d
     call Call_000_0947
     or a
@@ -7829,7 +7849,7 @@ jr_000_2c94:
     jp c, AdvanceToNextHandler
 
     ld a, $01
-    ld [$cac5], a
+    ld [wStageTransitionActive], a
     ld a, [$cf9a]
     call StopAudioPlayback
     call Call_000_2c79
@@ -8174,7 +8194,7 @@ jr_000_2de7:
     ld d, b
     ld e, c
     ld a, $fc
-    call Call_000_0b61
+    call CalculateYMovement
     ld a, [$ca16]
     ld d, a
     ld e, $00
@@ -8442,7 +8462,7 @@ Jump_000_309e:
 
 jr_000_30c9:
     ld a, [hl]
-    call Call_000_0b7d
+    call CalculateXMovement
     ld a, [$ca17]
     ld e, a
     ld d, $00
@@ -8567,7 +8587,7 @@ jr_000_315b:
 
 jr_000_317f:
     ld a, [hl]
-    call Call_000_0b7d
+    call CalculateXMovement
     ld a, [$ca17]
     ld e, a
     ld d, $00

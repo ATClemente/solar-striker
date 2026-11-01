@@ -9,8 +9,12 @@ DEF wScreenShakeOffset EQU $CA1E
 
 DEF wGameMode     EQU $CA2E
 
+DEF wPlayerDeathRequested EQU $CA20
+
 DEF wBackgroundScrollTimer EQU $CA80
 DEF wBackgroundScrollDelay EQU $06
+
+DEF wStageTransitionActive EQU $CAC5
 
 DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop
 DEF wNextStageRequested EQU $CF9B

@@ -1016,9 +1016,9 @@ CopyScoreLabelLoop:
 RegisterNewGameHandlers:
     ld de, InitPlayerObject
     call StoreAddressInFreeWramSlot
-    ld de, $17e3
+    ld de, HandleShotRequest
     call StoreAddressInFreeWramSlot
-    ld de, $0c19
+    ld de, UpdatePlayerStatus
     call StoreAddressInFreeWramSlot
     ld de, $0d1c
     call StoreAddressInFreeWramSlot
@@ -2248,13 +2248,14 @@ Call_000_0c04:
     ld c, d
     ld [hl], h
 
-    ; 0C19
-    call Call_000_0c75
+UpdatePlayerStatus:
+    call UpdatePlayerLivesHUD
     ld hl, $cfa0
     ld a, [hl]
     or a
     jr z, jr_000_0c27
 
+    ; Increment counter; wrap from 63 to 0
     inc a
     and $3f
     ld [hl], a
@@ -2262,34 +2263,34 @@ Call_000_0c04:
 jr_000_0c27:
     ld a, [$ca2a]
     or a
-    jr z, jr_000_0c33
+    jr z, UpdatePlayerInvincibilityTimer
 
     ld [wPlayerInvincible], a
     jp AdvanceToNextHandler
 
-
-jr_000_0c33:
+UpdatePlayerInvincibilityTimer:
     ld hl, $ca68
     ld de, wPlayerDeathRequested
     ld a, [hl]
     or a
-    jr nz, jr_000_0c4b
+    jr nz, UpdateInvincibilityTimer
 
     dec hl
     ld a, [de]
     or a
-    jr z, jr_000_0c46
+    jr z, CheckPendingInvincibility
 
     ld [hl], a
     jp AdvanceToNextHandler
 
-
-jr_000_0c46:
+; Timer inactive and player death is NOT requested
+CheckPendingInvincibility:
     ld a, [hl+]
     or a
-    jp z, AdvanceToNextHandler
+    jp z, AdvanceToNextHandler ; jump if ca67 is zero
 
-jr_000_0c4b:
+; Start or advance the invincibility timer
+UpdateInvincibilityTimer:
     inc [hl]
     ld a, [hl+]
     and $7f
@@ -2331,51 +2332,50 @@ jr_000_0c6e:
     ld a, $01
     jr jr_000_0c67
 
-Call_000_0c75:
-    call Call_000_0c92
+UpdatePlayerLivesHUD:
+    call CheckPlayerScoreForExtraLife
     ld hl, $cf8f
     ld a, $0b
-    ld [hl+], a
-    ld [hl+], a
+    ld [hl+], a ; empty space tile
+    ld [hl+], a ; empty space tile
     dec a
-    ld [hl+], a
+    ld [hl+], a ; ship icon tile
     ld a, [wPlayerLives]
     ld b, a
     swap a
     and $0f
-    ld [hl+], a
+    ld [hl+], a ; lives tens digit
     ld a, b
     and $0f
-    ld [hl+], a
+    ld [hl+], a ; lives ones digit
     ld a, $0b
-    ld [hl], a
+    ld [hl], a ; empty tile
     ret
 
 
-Call_000_0c92:
-    ld hl, $cf87
+CheckPlayerScoreForExtraLife:
+    ld hl, wPlayerScore - 1
     ld de, $0003
-    add hl, de
+    add hl, de ; point at the 10000 place of the score
     ld a, [hl]
     or a
-    jr z, jr_000_0ca7
+    jr z, TryAwardExtraLife ; if its 0, jump
 
     cp $05
-    jr z, jr_000_0ca7
+    jr z, TryAwardExtraLife ; otherwise check if its 5, if so, jump
 
     ld a, $01
-    ld [$cf96], a
+    ld [wScoreExtraLifeReady], a ; not 0 or 5, set a flag
     ret
 
-
-jr_000_0ca7:
-    ld a, [$cf96]
+TryAwardExtraLife:
+    ld a, [wScoreExtraLifeReady]
     or a
     ret z
 
     call IncrementPlayerLives
     xor a
-    ld [$cf96], a
+    ld [wScoreExtraLifeReady], a
     inc a
     ld hl, $5d41
     call SetupAudioPlayback
@@ -4164,7 +4164,7 @@ Jump_000_15e8:
     ld a, $01
     call SetupAudioPlayback
     xor a
-    ld [$ca24], a
+    ld [wPlayerShotCooldown], a
     ld de, $15fa
     jp SetCurrentHandlerAddress
 
@@ -4374,7 +4374,7 @@ HandleFireInput:
     ld a, [bc]
     and BUTTON_START
     ld [wPauseRequested], a
-    ld hl, $ca24
+    ld hl, wPlayerShotCooldown
     ld a, [bc]
     and BUTTON_A | BUTTON_B
     jr z, SetPlayerSpriteGraphics
@@ -4490,8 +4490,8 @@ jr_000_17c0:
     jp SetCurrentHandlerAddress
 
 
-    ; 17e3
-    ld bc, $ca24
+HandleShotRequest:
+    ld bc, wPlayerShotCooldown
     ld a, [bc]
     or a
     jp z, AdvanceToNextHandler
@@ -4509,7 +4509,7 @@ jr_000_17f6:
     inc a
     ld [bc], a
     ld a, [wWeaponPowerLevel]
-    ld de, $18f9
+    ld de, FindEmptyShotSlot
     jp SetCurrentHandlerAddress
 
 InitializePlayerShot:
@@ -4687,6 +4687,7 @@ jr_000_18c0:
     nop
     ld e, $00
 
+FindEmptyShotSlot:
     ld bc, wWeaponShotSlots
     ld a, [bc]
     or a
@@ -4702,7 +4703,7 @@ jr_000_18c0:
     or a
     jr z, QueuePlayerShot
 
-    jr jr_000_1918
+    jr ScheduleShotRequestHandler
 
 QueuePlayerShot:
     ld a, [wWeaponPowerLevel]
@@ -4710,22 +4711,22 @@ QueuePlayerShot:
     ld [bc], a
     ld a, [$cfa0]
     or a
-    call z, Call_000_191e
+    call z, ChoosePlayerFiringSound
 
-jr_000_1918:
-    ld de, $17e3
+ScheduleShotRequestHandler:
+    ld de, HandleShotRequest
     jp SetCurrentHandlerAddress
 
 
-Call_000_191e:
+ChoosePlayerFiringSound:
     ld hl, $72d1
     ld a, [wWeaponPowerLevel]
     cp MAX_WEAPON_POWER_LEVEL
-    jr nz, jr_000_192b
+    jr nz, PlayPlayerFiringSound
 
-    ld hl, $72ef ; reached if weapon is max power
+    ld hl, $72ef ; max power sound
 
-jr_000_192b:
+PlayPlayerFiringSound:
     ld a, $01
     jp SetupAudioPlayback
 

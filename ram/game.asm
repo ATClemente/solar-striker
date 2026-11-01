@@ -17,6 +17,7 @@ DEF wBackgroundScrollDelay EQU $06
 DEF wStageTransitionActive EQU $CAC5
 
 DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop
+DEF wScoreExtraLifeReady EQU $CF96
 DEF wNextStageRequested EQU $CF9B
 DEF wGameOverRequested EQU $CF9C
 DEF wPauseRequested EQU $CF9D

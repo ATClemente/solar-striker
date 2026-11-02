@@ -570,7 +570,7 @@ jr_001_4374:
 jr_001_437f:
     ld a, [hl]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     call Call_000_0a0c
     or a
@@ -724,7 +724,7 @@ jr_001_4453:
     inc hl
     ld a, [hl]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $0004
     add hl, de
@@ -921,7 +921,7 @@ jr_001_4582:
     inc hl
     ld a, [hl]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     call Call_000_09b8
     or a
@@ -1057,7 +1057,7 @@ Call_001_4627:
     ld a, [hl]
     inc [hl]
     cp $05
-    jp z, Jump_000_0a64
+    jp z, FreeObjectAndRemoveHandler
 
     ld hl, $4686
     call Call_001_465d
@@ -1126,7 +1126,7 @@ jr_001_46a2:
     call SetObjectPointer
     ld a, [$cac1]
     or a
-    jp nz, Jump_000_0a64
+    jp nz, FreeObjectAndRemoveHandler
 
     ld de, $46be
     jp SetCurrentHandlerAddress
@@ -1164,13 +1164,13 @@ Jump_001_46ea:
 
     ld de, $2cbe
     call StoreAddressInFreeWramSlot
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
 jr_001_46fa:
     ld de, $2af4
     call StoreAddressInFreeWramSlot
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
     db $01, $23, $45, $67, $89, $ab, $cd, $ef, $ed, $cb, $a9, $87, $65, $43, $21, $00

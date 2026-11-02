@@ -1852,9 +1852,8 @@ SetCurrentHandlerAddress:
     ld [hl], d
     jp AdvanceToNextHandler
 
-
-Jump_000_0a64:
-    call Call_000_0b10
+FreeObjectAndRemoveHandler:
+    call ClearSelectedObject
 
 RemoveCurrentHandler:
     ld a, [wCurrentHandlerIndex]
@@ -2023,7 +2022,7 @@ SetObjectGraphicsPointer:
     ret
 
 
-Call_000_0b10:
+ClearSelectedObject:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -2590,9 +2589,9 @@ UnpackStageEventParameters:
     ld [$caca], a
     jp RemoveCurrentHandler
 
-
+    ; 0DAE
     ld a, $01
-    ld [$cac9], a
+    ld [wStageReady], a
     xor a
     ld [$cac1], a
     jp RemoveCurrentHandler
@@ -2759,7 +2758,7 @@ StageEventHandlerTable:
     dw RequestNextStage ; event type $01 (handled directly by ScheduleStageEvents)
     dw $0d8f ; event type $02
     dw $0d9e ; event type $03
-    dw $29f2 ; event type $04
+    dw InitializeStageAnnouncement ; event type $04
     dw $19db ; event type $05
     dw $1a47 ; event type $06
     dw $1a77 ; event type $07
@@ -3086,7 +3085,7 @@ jr_000_0ff8:
     inc a
     and $03
     ld [bc], a
-    jp z, Jump_000_0a64
+    jp z, FreeObjectAndRemoveHandler
 
 jr_000_105e:
     ld de, $1064
@@ -3205,7 +3204,7 @@ jr_000_1102:
 
     call Call_000_1841
     or a
-    jp nz, Jump_000_0a64
+    jp nz, FreeObjectAndRemoveHandler
 
     call Call_000_09cd
     ld de, $1108
@@ -3264,7 +3263,7 @@ Jump_000_1138:
     inc hl
     ld a, [hl]
     cp $98
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $1198
     jp SetCurrentHandlerAddress
@@ -4859,7 +4858,7 @@ Jump_000_19fb:
 
     call Call_000_1841
     or a
-    jp nz, Jump_000_0a64
+    jp nz, FreeObjectAndRemoveHandler
 
     call Call_000_097d
     ld d, $22
@@ -4941,7 +4940,7 @@ jr_000_1aa4:
     inc hl
     ld a, [hl]
     cp $90
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $1ac6
     jp SetCurrentHandlerAddress
@@ -5097,7 +5096,7 @@ jr_000_1bdb:
     inc hl
     ld a, [hl+]
     cp $90
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $000a
     add hl, de
@@ -5168,7 +5167,7 @@ jr_000_1c4c:
     ld hl, $0010
     add hl, bc
     cp $90
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     cp $30
     jr c, jr_000_1c67
@@ -5251,7 +5250,7 @@ jr_000_1cd6:
     inc hl
     ld a, [hl]
     cp $e0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $1cf8
     jp SetCurrentHandlerAddress
@@ -5406,12 +5405,12 @@ jr_000_1dc0:
     inc hl
     ld a, [hl+]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld a, [hl]
     add $20
     cp $d0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $1df1
     jp SetCurrentHandlerAddress
@@ -5470,7 +5469,7 @@ jr_000_1e08:
     inc hl
     ld a, [hl+]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $000b
     add hl, de
@@ -5564,7 +5563,7 @@ jr_000_1ee1:
     inc hl
     ld a, [hl]
     cp $a0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld hl, $000e
     add hl, bc
@@ -5641,13 +5640,13 @@ jr_000_1f3d:
     inc a
     ld [bc], a
     ld [$ca2c], a
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
 jr_000_1f71:
     ld a, $82
     call Call_000_0c57
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
     ld a, [bc]
@@ -5704,7 +5703,7 @@ jr_000_1fd3:
     inc hl
     ld a, [hl]
     cp $e0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $1ff5
     jp SetCurrentHandlerAddress
@@ -5827,7 +5826,7 @@ jr_000_2099:
     inc hl
     ld a, [hl+]
     cp $90
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $000a
     add hl, de
@@ -6049,7 +6048,7 @@ jr_000_21df:
     inc hl
     ld a, [hl]
     cp $90
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld de, $2201
     jp SetCurrentHandlerAddress
@@ -6213,7 +6212,7 @@ jr_000_22d2:
 
     call Call_000_1841
     or a
-    jp nz, Jump_000_0a64
+    jp nz, FreeObjectAndRemoveHandler
 
     ld de, $2300
     jp SetCurrentHandlerAddress
@@ -6221,7 +6220,7 @@ jr_000_22d2:
 
     call Call_000_099d
     or a
-    jp z, Jump_000_0a64
+    jp z, FreeObjectAndRemoveHandler
 
     ld de, $230d
     jp SetCurrentHandlerAddress
@@ -6826,7 +6825,7 @@ jr_000_262a:
 
     call Call_000_1841
     or a
-    jp nz, Jump_000_0a64
+    jp nz, FreeObjectAndRemoveHandler
 
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -7236,7 +7235,7 @@ jr_000_292d:
 
     ; 293a
     ; Wait for player entrance?
-    ld a, [$cac9]
+    ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
@@ -7301,7 +7300,7 @@ jr_000_292d:
     jp SetCurrentHandlerAddress
 
 
-    ld a, [$cac9]
+    ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
@@ -7337,22 +7336,22 @@ jr_000_292d:
 
     ld de, $3207
     call StoreAddressInFreeWramSlot
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
-    ; 29F2
-    ld bc, $2a34
+InitializeStageAnnouncement:
+    ld bc, StageAnnouncementObjectTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2a02
+    ld de, ConfigureStageAnnouncement
     jp SetCurrentHandlerAddress
 
-
+ConfigureStageAnnouncement:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $2a34
+    ld bc, StageAnnouncementObjectTemplate
     ld de, $3040
     call ResetObjectAttributes
     ld a, [wCurrentStage]
@@ -7360,154 +7359,61 @@ jr_000_292d:
     add a
     ld l, a
     ld h, $00
-    ld de, $2a3c
+    ld de, StageAnnouncementGraphicsTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
     ld e, a
     call SetObjectGraphicsPointer
-    ld de, $2a27
+    ld de, WaitForStageAnnouncementDismissal
     jp SetCurrentHandlerAddress
 
 
-    ld a, [$cac9]
+WaitForStageAnnouncementDismissal:
+    ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
-    ld [$cac9], a
-    jp Jump_000_0a64
+    ld [wStageReady], a
+    jp FreeObjectAndRemoveHandler
 
 
-    ; 2A34 (some object)
-    db $27, $08, $08, $00, $00, $10, $10, $01, 
-    db $48, $2a, $64, $2a
+StageAnnouncementObjectTemplate:
+    db $27, $08, $08, $00, $00, $10, $10, $01,
+    
+StageAnnouncementGraphicsTable: ; $2A3C
+    dw Stage1AnnouncementGraphics ; Stage 1
+    dw Stage2AnnouncementGraphics ; Stage 2
+    dw Stage3AnnouncementGraphics ; Stage 3
+    dw Stage4AnnouncementGraphics ; Stage 4
+    dw Stage5AnnouncementGraphics ; Stage 5
+    dw Stage6AnnouncementGraphics ; Stage 6
 
-    add b
-    ld a, [hl+]
-    sbc h
-    ld a, [hl+]
-    cp b
-    ld a, [hl+]
-    db $d4
-    ld a, [hl+]
+; Each stage: 28 bytes, two rows of seven (tile, attributes) pairs.
+Stage1AnnouncementGraphics: ; $2A48
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $a2, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    db $d8, $00, $da, $00, $b4, $00, $c0, $00, $bc, $00, $00, $00, $a2, $00, $00, $00
-    db $d6, $00, $bc, $00, $b4, $00, $ba, $00, $e4, $00, $00, $00, $d8, $00, $da, $00
-    db $b4, $00, $c0, $00, $bc, $00, $00, $00, $a4, $00, $00, $00, $d6, $00, $bc, $00
-    db $b4, $00, $ba, $00, $e4, $00, $00, $00
+Stage2AnnouncementGraphics: ; $2A64
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $a4, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    ret c
+Stage3AnnouncementGraphics: ; $2A80
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $a6, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    nop
-    jp c, $b400
+Stage4AnnouncementGraphics: ; $2A9C
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $a8, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    nop
-    ret nz
+Stage5AnnouncementGraphics: ; $2AB8
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $aa, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    nop
-    cp h
-    nop
-    nop
-    nop
-    and [hl]
-    nop
-    nop
-    nop
-    sub $00
-    cp h
-    nop
-    or h
-    nop
-    cp d
-    nop
-    db $e4
-    nop
-    nop
-    nop
-    ret c
+Stage6AnnouncementGraphics: ; $2AD4
+    db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $ac, $00 ; Row 1
+    db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    nop
-    jp c, $b400
-
-    nop
-    ret nz
-
-    nop
-    cp h
-    nop
-    nop
-    nop
-    xor b
-    nop
-    nop
-    nop
-    sub $00
-    cp h
-    nop
-    or h
-    nop
-    cp d
-    nop
-    db $e4
-    nop
-    nop
-    nop
-    ret c
-
-    nop
-    jp c, $b400
-
-    nop
-    ret nz
-
-    nop
-    cp h
-    nop
-    nop
-    nop
-    xor d
-    nop
-    nop
-    nop
-    sub $00
-    cp h
-    nop
-    or h
-    nop
-    cp d
-    nop
-    db $e4
-    nop
-    nop
-    nop
-    ret c
-
-    nop
-    jp c, $b400
-
-    nop
-    ret nz
-
-    nop
-    cp h
-    nop
-    nop
-    nop
-    xor h
-    nop
-    nop
-    nop
-    sub $00
-    cp h
-    nop
-    or h
-    nop
-    cp d
-    nop
-    db $e4
-    nop
-    nop
-    nop
     ld [bc], a
     nop
     inc b
@@ -7574,7 +7480,7 @@ jr_000_292d:
     call SetObjectPointer
     ld de, $0de6
     call StoreAddressInFreeWramSlot
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
     db $25, $08, $08, $00, $00, $10, $10, $01, $ce, $00, $bc, $00, $e2, $00, $da, $00
@@ -7915,7 +7821,7 @@ jr_000_2c94:
     ld a, [hl]
     inc [hl]
     cp $07
-    jp z, Jump_000_0a64
+    jp z, FreeObjectAndRemoveHandler
 
     push hl
     ld hl, $2fc7
@@ -7975,7 +7881,7 @@ jr_000_2c94:
 
 
 jr_000_2dbf:
-    call Call_000_0b10
+    call ClearSelectedObject
     ld a, [$ca22]
     cp $0f
     jr nz, jr_000_2dcf
@@ -8136,7 +8042,7 @@ jr_000_2de7:
     jp SetCurrentHandlerAddress
 
 
-    ld a, [$cac9]
+    ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
@@ -8438,7 +8344,7 @@ Jump_000_309e:
     inc hl
     ld a, [hl]
     cp $c0
-    jp nc, Jump_000_0a64
+    jp nc, FreeObjectAndRemoveHandler
 
     ld hl, $0004
     add hl, bc
@@ -8612,7 +8518,7 @@ Jump_000_31ad:
     call SetObjectPointer
     ld de, $2ef1
     call StoreAddressInFreeWramSlot
-    jp Jump_000_0a64
+    jp FreeObjectAndRemoveHandler
 
 
     inc [hl]

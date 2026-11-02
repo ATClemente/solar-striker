@@ -4803,34 +4803,36 @@ jr_000_19bb:
     jp SetCurrentHandlerAddress
 
 
-    ld bc, $1a3b
+InitializeProtodroid:
+    ld bc, ProtodroidInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $19eb
+    ld de, ConfigureProtodroid
     jp SetCurrentHandlerAddress
 
-
+ConfigureProtodroid:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1a37
+    ld de, ProtodroidMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1a43
-    jp Jump_000_19fb
+    ld de, ProtodroidGraphics
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-Jump_000_19fb:
+SetEnemyGraphicsAndStartUpdateCycle:
     call SetObjectGraphicsPointer
-    ld de, $1a0f
+    ld de, UpdateProtodroidMovement
     ld a, [wCurrentHandlerIndex]
     and $01
     jp nz, SetCurrentHandlerAddress
 
-    ld de, $1a2e
+    ld de, UpdateProtodroidState
     jp SetCurrentHandlerAddress
 
 
+UpdateProtodroidMovement:
     call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
@@ -4840,21 +4842,32 @@ Jump_000_19fb:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, $1a25
+    ld de, TryFireProtodroidShot
     jp SetCurrentHandlerAddress
 
-
+TryFireProtodroidShot:
     call TryScheduleEnemyShot
-    ld de, $1a2e
+    ld de, UpdateProtodroidState
     jp SetCurrentHandlerAddress
 
 
+UpdateProtodroidState:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1a0f
+    ld de, UpdateProtodroidMovement
     jp SetCurrentHandlerAddress
 
 
-    db $31, $35, $29, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $2e, $00, $2e, $20
+    ; $1A37: movement script pointers
+ProtodroidMovementScriptTable:
+    dw ProtodroidMovementScriptA, ProtodroidMovementScriptB
+
+    ; $1A3B: object template (one row, two sprites)
+ProtodroidInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $00
+
+    ; $1A43: two (tile, attributes) pairs, left sprite then right sprite
+ProtodroidGraphics:
+    db $2e, $00,  $2e, $20
 
     ld bc, $1a6b
     call TryInitializeObjectInFreeSlot
@@ -4870,7 +4883,7 @@ Jump_000_19fb:
     ld de, $1a67
     call InitializeMovementScriptFromTable
     ld de, $1a73
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     db $4f, $35, $61, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $30, $00, $30, $20
@@ -4990,7 +5003,7 @@ RotomechGraphicsFrame3: ; $1B14
     ld de, $1b38
     call InitializeMovementScriptFromTable
     ld de, $1b44
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     adc e
@@ -5019,7 +5032,7 @@ RotomechGraphicsFrame3: ; $1B14
     ld de, $1b68
     call InitializeMovementScriptFromTable
     ld de, $1b74
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     db $9f, $35, $c3, $35, $12, $08, $08, $00, $fe, $10, $12, $01, $38, $00, $38, $20
@@ -5038,7 +5051,7 @@ RotomechGraphicsFrame3: ; $1B14
     ld de, $1b98
     call InitializeMovementScriptFromTable
     ld de, $1ba4
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     rst $20
@@ -5866,7 +5879,7 @@ jr_000_20c9:
     ld de, $20e7
     call InitializeMovementScriptFromTable
     ld de, $20f3
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     ld d, l
@@ -5898,7 +5911,7 @@ jr_000_20f9:
     ld de, $211f
 
 jr_000_2114:
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     ld [de], a
@@ -5926,7 +5939,7 @@ jr_000_2125:
     ld de, $3687
     call InitializeMovementScript
     ld de, $214b
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     ld [de], a
@@ -5954,7 +5967,7 @@ jr_000_2151:
     ld de, $216f
     call InitializeMovementScriptFromTable
     ld de, $217b
-    jp Jump_000_19fb
+    jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     and l
@@ -9251,7 +9264,19 @@ Call_000_32ab:
     cp a
     cp a
 
-    db $43, $3e, $4e, $3e, $45, $3d, $a1, $3c, $6f, $3e, $7a, $3e, $3d, $3d, $91, $3c
+; Each pointer selects a movement command sequence, read in order.
+ProtodroidMovementScriptB: ; $3529
+    dw $3e43
+    dw $3e4e
+    dw $3d45
+    dw $3ca1
+
+ProtodroidMovementScriptA: ; $3531
+    dw $3e6f
+    dw $3e7a
+    dw $3d3d
+    dw $3c91
+
     db $43, $3e, $4e, $3e, $45, $3d, $a1, $3c, $6f, $3e, $7a, $3e
 
     dec a

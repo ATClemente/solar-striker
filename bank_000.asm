@@ -2589,7 +2589,7 @@ UnpackStageEventParameters:
     ld [$caca], a
     jp RemoveCurrentHandler
 
-    ; 0DAE
+SetStageReady:
     ld a, $01
     ld [wStageReady], a
     xor a
@@ -2773,7 +2773,7 @@ StageEventHandlerTable:
     dw $43cf ; event type $10
     dw $44e6 ; event type $11
     dw $0da6 ; event type $12
-    dw $0dae ; event type $13
+    dw SetStageReady ; event type $13
     dw $202e ; event type $14
     dw $0d97 ; event type $15
     dw $20f7 ; event type $16

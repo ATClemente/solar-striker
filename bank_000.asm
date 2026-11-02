@@ -1625,43 +1625,41 @@ Call_000_0939:
     ld [hl+], a
     ret
 
-
-Call_000_0947:
+TryInitializeObjectInFreeSlot:
     ld a, [wStageEventParams]
     ld hl, $0f19
-    call Call_000_0f0f
+    call GetStartingXCoord
     xor a
     ld [$caa4], a
-    call Call_000_0aa7
-    jp c, Jump_000_097b
+    call FindFreeObjectSlot
+    jp c, ObjectInitializationFailed ; couldn't find an open slot
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
-    ld [hl], a
+    ld a, [wAllocatedObjectIndex]
+    ld [hl], a ; save object index in handler data
     push hl
-    call Call_000_0faa
+    call InitializeHandlerDataPair
     pop hl
     ld de, $0010
     add hl, de
     ld b, $04
     ld de, wStageEventParams + 1
 
-jr_000_0972:
+CopyStageEventParamsToHandlerData:
     ld a, [de]
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_0972
+    jr nz, CopyStageEventParamsToHandlerData
 
     ld a, b
     dec a
     ret
 
-
-Jump_000_097b:
+ObjectInitializationFailed:
     xor a
     ret
 
@@ -1897,9 +1895,9 @@ ZeroMemory:
 ; [$CAA4] = initial value for object field $05
 ; return: C set = init failed
 ; C clear and A = 0, init succeeded
-; ca11 contains requested object index
+; wAllocatedObjectIndex contains requested object index
 TryInitializeObjectAtIndex:
-    ld [$ca11], a
+    ld [wAllocatedObjectIndex], a
     push de
     push bc
     ld c, a
@@ -1918,23 +1916,26 @@ TryInitializeObjectAtIndex:
     ret
 
 
-Call_000_0aa7:
-    ld hl, $c7c0
+; Find a free slot among indices $04–$0F.
+; Success continues into RecordObjectIndex and InitializeObjectHeader.
+; Failure returns with carry set.
+FindFreeObjectSlot:
+    ld hl, (wObjectTable + $10 + ($10 * PLAYER_SHOT_SLOT_COUNT))
     push de
     push bc
-    ld c, $04
+    ld c, PLAYER_SHOT_SLOT_COUNT + 1
 
-jr_000_0aae:
+CheckCurrentObjectSlot:
     ld a, [hl+]
     or [hl]
-    jr z, jr_000_0ad9
+    jr z, RecordObjectIndex ; jump if the first two bytes in the object row are empty
 
     ld de, $000f
-    add hl, de
+    add hl, de ; move to next row in table
     inc c
     ld a, $10
-    cp c
-    jr nz, jr_000_0aae
+    cp c ; see if c is 16
+    jr nz, CheckCurrentObjectSlot ; if we haven't hit that limit, check the next row 
 
     pop bc
     pop de
@@ -1952,7 +1953,7 @@ Jump_000_0ac0:
 jr_000_0ac7:
     ld a, [hl+]
     or [hl]
-    jr z, jr_000_0ad9
+    jr z, RecordObjectIndex
 
     ld de, $000f
     add hl, de
@@ -1967,9 +1968,9 @@ jr_000_0ac7:
     ret
 
 
-jr_000_0ad9:
+RecordObjectIndex:
     ld a, c
-    ld [$ca11], a
+    ld [wAllocatedObjectIndex], a ; store index of object we are initializing
 
 InitializeObjectHeader:
     dec hl
@@ -2753,96 +2754,69 @@ StageTileGraphicsTable:
     ld a, b
 
 StageEventHandlerTable:
-jr_000_0eb7:
-    ld h, a
-    ld a, [bc]
-    and $0d
-    adc a
-    dec c
-    sbc [hl]
-    dec c
+    ; Indexed by event type; each entry is a little-endian handler address.
+    dw RemoveCurrentHandler ; event type $00 (handled directly by ScheduleStageEvents)
+    dw RequestNextStage ; event type $01 (handled directly by ScheduleStageEvents)
+    dw $0d8f ; event type $02
+    dw $0d9e ; event type $03
+    dw $29f2 ; event type $04
+    dw $19db ; event type $05
+    dw $1a47 ; event type $06
+    dw $1a77 ; event type $07
+    dw $1b48 ; event type $08
+    dw $1c1e ; event type $09
+    dw $1d34 ; event type $0a
+    dw $1e1a ; event type $0b
+    dw $4000 ; event type $0c
+    dw $20c7 ; event type $0d
+    dw $41e0 ; event type $0e
+    dw $42b5 ; event type $0f
+    dw $43cf ; event type $10
+    dw $44e6 ; event type $11
+    dw $0da6 ; event type $12
+    dw $0dae ; event type $13
+    dw $202e ; event type $14
+    dw $0d97 ; event type $15
+    dw $20f7 ; event type $16
+    dw $2322 ; event type $17
+    dw $2457 ; event type $18
+    dw $24ff ; event type $19
+    dw $2d09 ; event type $1a
+    dw RemoveCurrentHandler ; event type $1b
+    dw $0dcb ; event type $1c
+    dw $0ddd ; event type $1d
+    dw $0dba ; event type $1e
+    dw $2ec9 ; event type $1f
+    dw $1b18 ; event type $20
+    dw $1b78 ; event type $21
+    dw $1ba8 ; event type $22
+    dw $1ca9 ; event type $23
+    dw $1fa6 ; event type $24
+    dw $0d81 ; event type $25
+    dw $2123 ; event type $26
+    dw $214f ; event type $27
+    dw $217f ; event type $28
+    dw $21b2 ; event type $29
+    dw $2245 ; event type $2a
+    dw $40fd ; event type $2b
 
-    db $f2, $29, $db, $19, $47, $1a, $77, $1a, $48, $1b, $1e, $1c, $34, $1d, $1a, $1e
+; Preserve addresses referenced by disassembled data below.
+DEF jr_000_0efc EQU StageEventHandlerTable + $45
+DEF jr_000_0f0c EQU StageEventHandlerTable + $55
 
-    nop
-    ld b, b
-    rst $00
-    db $20
-
-    db $e0, $41
-
-    or l
-    ld b, d
-    rst $08
-    ld b, e
-
-jr_000_0ed9:
-    and $44
-    and [hl]
-    dec c
-
-    db $ae, $0d
-
-    ld l, $20
-    sub a
-    dec c
-    rst $30
-    jr nz, jr_000_0f08
-
-    inc hl
-    ld d, a
-    inc h
-    rst $38
-    inc h
-    add hl, bc
-    dec l
-    ld h, a
-    ld a, [bc]
-
-    db $cb, $0d, $dd, $0d
-
-    cp d
-    dec c
-    ret
-
-
-    ld l, $18
-    dec de
-    ld a, b
-    dec de
-    xor b
-
-jr_000_0efc:
-    dec de
-    xor c
-    inc e
-    and [hl]
-    rra
-    add c
-    dec c
-    inc hl
-    ld hl, $214f
-    ld a, a
-
-jr_000_0f08:
-    ld hl, $21b2
-    ld b, l
-
-jr_000_0f0c:
-    ld [hl+], a
-    db $fd
-    ld b, b
-
-Call_000_0f0f:
+; A = index, HL = X coordinate table
+; Returns A and E = table[index] + wHorizontalScrollOffset
+GetStartingXCoord:
     ld e, a
     ld d, $00
     add hl, de
-    ld a, [$ca29]
+    ld a, [wHorizontalScrollOffset]
     add [hl]
     ld e, a
     ret
 
 
+    ; 0F19
     db $08, $18, $20, $28, $30, $38, $48, $50, $58, $68, $70, $78, $80, $88
 
 jr_000_0f27:
@@ -2864,7 +2838,7 @@ Call_000_0f2f:
     add hl, de
     ld a, [hl+]
     ld d, a
-    ld a, [$ca29]
+    ld a, [wHorizontalScrollOffset]
     add [hl]
     ld e, a
     ret
@@ -2896,7 +2870,7 @@ Call_000_0f2f:
 
     jr c, jr_000_0f6e
 
-    jr c, jr_000_0fc0
+    jr c, GetCurrentGameMode
 
     ld h, b
     ld b, b
@@ -2907,7 +2881,7 @@ Call_000_0f2f:
 
     ld l, b
     ld d, b
-    jr jr_000_0fb3
+    jr SetupDataPairOffset
 
     add b
     ld c, b
@@ -2926,7 +2900,7 @@ jr_000_0f6e:
 jr_000_0f72:
     jr nz, @+$6a
 
-    jr jr_000_0fb6
+    jr WriteDataPairBytes
 
     jr @+$5a
 
@@ -2941,7 +2915,7 @@ jr_000_0f72:
     inc e
     ld [$101c], sp
     inc [hl]
-    jr nc, jr_000_0fb3
+    jr nc, SetupDataPairOffset
 
     ld b, b
     inc l
@@ -2961,7 +2935,7 @@ jr_000_0f90:
     inc e
     and b
     inc [hl]
-    jr nc, jr_000_0fc3
+    jr nc, TryApplyHardModeOverrides
 
     ld b, b
 
@@ -2989,18 +2963,18 @@ jr_000_0fa4:
     adc b
     adc h
 
-Call_000_0faa:
+InitializeHandlerDataPair:
     ld de, $0008
     add hl, de
     push hl
     ld a, [wStageEventParams + 1]
     add a
 
-jr_000_0fb3:
+SetupDataPairOffset:
     ld l, a
     ld h, $00
 
-jr_000_0fb6:
+WriteDataPairBytes:
     ld de, $0fd5
     add hl, de
     pop de
@@ -3010,10 +2984,10 @@ jr_000_0fb6:
     ld a, [hl+]
     ld [de], a
 
-jr_000_0fc0:
+GetCurrentGameMode:
     ld a, [wGameMode]
 
-jr_000_0fc3:
+TryApplyHardModeOverrides:
     or a
     ret z
 
@@ -3029,24 +3003,26 @@ jr_000_0fc3:
     ret
 
 
-    db $e0, $f0, $1c, $40, $1c, $38, $18, $38, $18, $30, $16, $30, $16, $2c, $14, $2c
-    db $14, $28, $12, $28
+    ; $0FD5: two-byte entries indexed by wStageEventParams + 1.
+    db $e0, $f0 ; index $00
+    db $1c, $40 ; index $01
+    db $1c, $38 ; index $02
+    db $18, $38 ; index $03
+    db $18, $30 ; index $04
+    db $16, $30 ; index $05
+    db $16, $2c ; index $06
+    db $14, $2c ; index $07
+    db $14, $28 ; index $08
+    db $12, $28 ; index $09
+    db $10, $24 ; index $0a
+    db $0c, $24 ; index $0b
+    db $0a, $20 ; index $0c
+    db $08, $1c ; index $0d
+    db $04, $18 ; index $0e
+    db $04, $10 ; index $0f
 
-    db $10
-    inc h
-
-    db $0c, $24
-
-    ld a, [bc]
-    jr nz, jr_000_0ff8
-
-    inc e
-    inc b
-
-jr_000_0ff2:
-    jr jr_000_0ff8
-
-    db $10
+; Preserve the address referenced by disassembled data above.
+DEF jr_000_0ff2 EQU $0ff2
 
     ld bc, $1072
 
@@ -3057,14 +3033,14 @@ jr_000_0ff8:
     ld d, a
     ld a, $01
     ld [$caa4], a
-    call Call_000_0aa7
+    call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     ld de, $1019
     jp SetCurrentHandlerAddress
@@ -3136,7 +3112,7 @@ jr_000_105e:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     ld de, $10a2
     jp SetCurrentHandlerAddress
@@ -3256,7 +3232,7 @@ Jump_000_1138:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     xor a
     ld hl, $ca60
@@ -3337,7 +3313,7 @@ Jump_000_1138:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     ld de, $11ec
     jp SetCurrentHandlerAddress
@@ -4535,7 +4511,7 @@ InitializePlayerShot:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     ld de, $1930
     jp SetCurrentHandlerAddress
@@ -4854,7 +4830,7 @@ jr_000_19bb:
 
 
     ld bc, $1a3b
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -4907,7 +4883,7 @@ Jump_000_19fb:
     db $31, $35, $29, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $2e, $00, $2e, $20
 
     ld bc, $1a6b
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -4926,7 +4902,7 @@ Jump_000_19fb:
     db $4f, $35, $61, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $30, $00, $30, $20
 
     ld bc, $1b00
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5004,7 +4980,7 @@ jr_000_1aa4:
     db $36, $20, $36, $40
 
     ld bc, $1b3c
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5033,7 +5009,7 @@ jr_000_1aa4:
     db $20
 
     ld bc, $1b6c
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5052,7 +5028,7 @@ jr_000_1aa4:
     db $9f, $35, $c3, $35, $12, $08, $08, $00, $fe, $10, $12, $01, $38, $00, $38, $20
 
     ld bc, $1b9c
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5086,7 +5062,7 @@ jr_000_1aa4:
 
 jr_000_1baa:
     inc e
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5156,7 +5132,7 @@ jr_000_1bdb:
     db $20
 
     ld bc, $1c9d
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5235,7 +5211,7 @@ jr_000_1c67:
     db $12, $08, $08, $00, $fe, $14, $12, $00, $3a, $00, $3a, $20
 
     ld bc, $1d28
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5321,7 +5297,7 @@ jr_000_1d15:
     db $20
 
     ld bc, $1e0e
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5464,7 +5440,7 @@ jr_000_1e08:
     db $12, $08, $08, $00, $fe, $10, $12, $00, $3c, $00, $3c, $20
 
     ld bc, $1f8e
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -5689,7 +5665,7 @@ jr_000_1f71:
     db $04, $00, $06, $00, $16, $00, $18, $00
 
     ld bc, $2022
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6034,7 +6010,7 @@ jr_000_2181:
 
 jr_000_21b4:
     ld [hl+], a
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6127,7 +6103,7 @@ jr_000_2226:
 
 jr_000_2247:
     ld [hl+], a
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6181,14 +6157,14 @@ jr_000_2272:
     ld d, a
     xor a
     ld [$caa4], a
-    call Call_000_0aa7
+    call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [de], a
     xor a
     ld hl, $ca60
@@ -6302,21 +6278,21 @@ jr_000_2341:
 
 
     ld bc, $2431
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
     jr jr_000_2374
 
     ld bc, $2439
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
     jr jr_000_2374
 
     ld bc, $2441
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6487,7 +6463,7 @@ jr_000_245d:
 
 
     ld bc, $24f7
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6586,7 +6562,7 @@ jr_000_2505:
 
 
     ld bc, $25c9
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -6781,14 +6757,14 @@ jr_000_262a:
     ld d, a
     ld e, a
     ld [$caa4], a
-    call Call_000_0aa7
+    call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld a, [$ca11]
+    ld a, [wAllocatedObjectIndex]
     ld [hl], a
     ld de, $266b
     jp SetCurrentHandlerAddress
@@ -7366,7 +7342,7 @@ jr_000_292d:
 
     ; 29F2
     ld bc, $2a34
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -7402,7 +7378,9 @@ jr_000_292d:
     jp Jump_000_0a64
 
 
-    db $27, $08, $08, $00, $00, $10, $10, $01, $48, $2a, $64, $2a
+    ; 2A34 (some object)
+    db $27, $08, $08, $00, $00, $10, $10, $01, 
+    db $48, $2a, $64, $2a
 
     add b
     ld a, [hl+]
@@ -7547,7 +7525,7 @@ jr_000_292d:
     ld a, $01
     ld [wStageTransitionActive], a
     ld bc, $2b6d
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -7894,7 +7872,7 @@ jr_000_2c94:
 
 
     ld bc, $2f9b
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -7953,7 +7931,7 @@ jr_000_2c94:
 
 
     ld bc, $2faf
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -8177,7 +8155,7 @@ jr_000_2de7:
 
 
     ld bc, $2f8d
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -8386,7 +8364,7 @@ jr_000_2f53:
 
 
     ld bc, $31ba
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -8395,7 +8373,7 @@ jr_000_2f53:
 
 
     ld bc, $31bb
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -8487,7 +8465,7 @@ jr_000_30c9:
     jp z, AdvanceToNextHandler
 
     ld bc, $31dc
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 

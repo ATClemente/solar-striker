@@ -1,5 +1,6 @@
 DEF wHandlerTable EQU $C700
 DEF wCurrentHandlerIndex EQU $CA10
+DEF wAllocatedObjectIndex EQU $CA11
 DEF wCurrentHandlerDataPointer EQU $CA12
 
 DEF wCurrentStage EQU $CA19
@@ -10,6 +11,8 @@ DEF wScreenShakeOffset EQU $CA1E
 DEF wGameMode     EQU $CA2E
 
 DEF wPlayerDeathRequested EQU $CA20
+
+DEF wHorizontalScrollOffset EQU $CA29
 
 DEF wBackgroundScrollTimer EQU $CA80
 DEF wBackgroundScrollDelay EQU $06

@@ -15,7 +15,7 @@ jr_001_4006:
     jr nz, jr_001_4006
 
     ld bc, $40d5
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -179,7 +179,7 @@ jr_001_4103:
     jr nz, jr_001_4103
 
     ld bc, $41b8
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -341,7 +341,7 @@ jr_001_41e6:
 
     ld [$cf99], a
     ld bc, $428d
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -454,7 +454,7 @@ jr_001_42bd:
 
 
     ld bc, $43b7
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -652,7 +652,7 @@ jr_001_43d7:
     add $02
     ld [wStageEventParams + 1], a
     ld bc, $44d6
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -691,7 +691,7 @@ jr_001_43d7:
     add hl, bc
     ld a, [hl]
     ld hl, $0f29
-    call Call_000_0f0f
+    call GetStartingXCoord
     ld bc, $44d6
 
 jr_001_4438:
@@ -831,7 +831,7 @@ jr_001_44ee:
     xor $07
     ld [wStageEventParams + 1], a
     ld bc, $45ff
-    call Call_000_0947
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -870,7 +870,7 @@ jr_001_4539:
     ld a, [hl]
     push af
     ld hl, $0f2d
-    call Call_000_0f0f
+    call GetStartingXCoord
     ld bc, $45ff
     call ResetObjectAttributes
     pop af

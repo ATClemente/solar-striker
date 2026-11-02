@@ -6466,7 +6466,7 @@ jr_002_789b:
     rst $38
     push bc
     nop
-    jp z, Jump_000_0ac0
+    jp z, TryInitializeEnemyProjectile
 
     nop
     ld a, [bc]

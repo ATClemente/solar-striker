@@ -14,6 +14,13 @@ DEF wPlayerDeathRequested EQU $CA20
 
 DEF wHorizontalScrollOffset EQU $CA29
 
+; Shared point for player, enemy, projectile, and pickup collision checks.
+DEF wCollisionPointY EQU $CA30
+DEF wCollisionPointX EQU $CA31
+
+DEF wEnemyShotSpawnY EQU $CA60 ; Zero means no pending shot request
+DEF wEnemyShotSpawnX EQU $CA61
+
 DEF wBackgroundScrollTimer EQU $CA80
 DEF wBackgroundScrollDelay EQU $06
 

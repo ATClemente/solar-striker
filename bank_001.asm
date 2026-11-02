@@ -28,7 +28,7 @@ jr_001_4006:
     ld a, [bc]
     call SetObjectPointer
     ld de, $373d
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $40dd
     call SetObjectGraphicsPointer
     ld de, $2630
@@ -193,7 +193,7 @@ jr_001_4103:
     ld [$cf99], a
     call SetObjectPointer
     ld de, $37bf
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $41c0
     call SetObjectGraphicsPointer
     ld de, $4136
@@ -226,7 +226,7 @@ jr_001_4156:
     cp $a0
     jp nc, Jump_001_41a7
 
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
 
 jr_001_415f:
@@ -234,7 +234,7 @@ jr_001_415f:
 
     ld de, $ca63
     ld bc, $100c
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld a, $06
 
 jr_001_416c:
@@ -352,7 +352,7 @@ jr_001_41e6:
     ld a, [bc]
     call SetObjectPointer
     ld de, $38c9
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $4295
     call SetObjectGraphicsPointer
     ld de, $4213
@@ -392,7 +392,7 @@ Jump_001_4225:
     ld [hl], a
     ld de, $ca63
     ld bc, $100c
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld a, $03
     ld [de], a
     inc de
@@ -487,7 +487,7 @@ jr_001_42bd:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0939
+    call InitializeMovementScript
     pop bc
     ld hl, $0011
     add hl, bc
@@ -685,7 +685,7 @@ jr_001_43d7:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    call Call_000_0939
+    call InitializeMovementScript
     pop bc
     ld hl, $0011
     add hl, bc
@@ -730,17 +730,17 @@ jr_001_4453:
     add hl, de
     xor a
     ld [hl], a
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_001_4489
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_001_4489
 
     ld bc, $1c00
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld de, $1141
     call StoreAddressInFreeWramSlot
 
@@ -752,7 +752,7 @@ jr_001_4489:
 
 
     push bc
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     pop bc
     call Call_000_0a0c
     or a
@@ -863,7 +863,7 @@ jr_001_44ee:
     ld de, $3c67
 
 jr_001_4539:
-    call Call_000_0939
+    call InitializeMovementScript
     pop bc
     ld hl, $0011
     add hl, bc
@@ -923,13 +923,13 @@ jr_001_4582:
     cp $a0
     jp nc, FreeObjectAndRemoveHandler
 
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_001_45b6
 
     ld de, $ca63
     ld bc, $1008
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld a, $02
     ld [de], a
     inc de
@@ -1032,7 +1032,7 @@ jr_001_4616:
 Call_001_4627:
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_0ce4
+    call ReadMovementScriptCommand
     call MoveObject
     ld hl, wSelectedObjectPointer
     ld a, [hl+]

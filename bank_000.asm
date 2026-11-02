@@ -1515,40 +1515,40 @@ CopyOneByteDown:
     inc de
     ret
 
-
-Call_000_08e2:
+; DE points to a Y/X coordinate pair. Returns A = direction, clockwise from 0 (up).
+; Uses a 24-pixel band to choose cardinal versus diagonal directions.
+GetDirectionToPlayer:
     ld hl, $c781
     ld a, [hl+]
     ld c, [hl]
-    ld b, a
+    ld b, a ; B = player Y, C = player X
     ld a, [de]
     ld h, a
     inc de
     ld a, [de]
     ld d, h
-    ld e, a
+    ld e, a ; D = source Y, E = source X
     add $18
     sub c
-    jr c, jr_000_0902
+    jr c, jr_000_0902 ; Player X > source X + 24
 
     ld a, e
     sub $18
     sub c
-    jr nc, jr_000_0917
+    jr nc, jr_000_0917 ; Player X <= source X - 24
 
     ld a, d
     sub b
-    jr c, jr_000_08ff
+    jr c, jr_000_08ff ; Player is below the source
 
-    xor a
+    xor a ; Up
     ret
-
 
 jr_000_08ff:
-    ld a, $04
+    ld a, $04 ; Down
     ret
 
-
+; Player is right of the horizontal band.
 jr_000_0902:
     ld a, d
     add $18
@@ -1560,20 +1560,18 @@ jr_000_0902:
     sub b
     jr nc, jr_000_0914
 
-    ld a, $02
+    ld a, $02 ; Right
     ret
-
 
 jr_000_0911:
-    ld a, $03
+    ld a, $03 ; Down-right
     ret
-
 
 jr_000_0914:
-    ld a, $01
+    ld a, $01 ; Up-right
     ret
 
-
+; Player is at or left of the horizontal band's left edge.
 jr_000_0917:
     ld a, d
     add $18
@@ -1585,33 +1583,31 @@ jr_000_0917:
     sub b
     jr nc, jr_000_0929
 
-    ld a, $06
+    ld a, $06 ; Left
     ret
-
 
 jr_000_0926:
-    ld a, $05
+    ld a, $05 ; Down-left
     ret
-
 
 jr_000_0929:
-    ld a, $07
+    ld a, $07 ; Up-left
     ret
 
-
-Call_000_092c:
+InitializeMovementScriptFromTable:
     ld hl, $0011
     add hl, bc
-    ld a, [hl]
-    add a
+    ld a, [hl]     ; index from handler data offset $11
+    add a          ; Two bytes per pointer
     ld l, a
     ld h, $00
-    add hl, de
-    ld a, [hl+]
-    ld d, [hl]
-    ld e, a
+    add hl, de     ; HL = table address + index * 2
+    ld a, [hl+]    ; read pointer's low byte
+    ld d, [hl]     ; read pointer's high byte
+    ld e, a        ; DE = selected pointer
 
-Call_000_0939:
+; Save DE at handler offsets $0A-$0B and its first two bytes at $0C-$0D.
+InitializeMovementScript:
     ld hl, $000a
     add hl, bc
     ld a, e
@@ -1664,12 +1660,14 @@ ObjectInitializationFailed:
     ret
 
 
-Call_000_097d:
+; Apply scripted movement plus a 1/4-pixel downward drift.
+; Returns object byte $0C in A, with HL pointing to byte $0D.
+UpdateScriptedEnemyMovement:
     ld a, [bc]
     call SetObjectPointer
     ld a, $04
     call CalculateYMovement
-    call Call_000_0ce4
+    call ReadMovementScriptCommand
     ld a, [$ca16]
     add d
     ld d, a
@@ -1683,34 +1681,34 @@ Call_000_097d:
     ld a, [hl+]
     ret
 
-
-Call_000_099d:
+TryScheduleEnemyShot:
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     ret nz
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     ret nz
 
     ld bc, $0804
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld de, $1083
     jp StoreAddressInFreeWramSlot
 
-
-Call_000_09b8:
+; BC = handler data. Advance counter $07; $08 is the trigger, $09 the reset value.
+; Returns A = 0 at the trigger, $FF on reset, otherwise the current counter.
+CheckEnemyShotTimer:
     ld hl, $0007
     add hl, bc
     inc [hl]
     ld a, [hl+]
     cp [hl]
-    jr z, jr_000_09cb
+    jr z, .returnZero
 
-    ret c
+    ret c ; Counter < trigger
 
     inc hl
     cp [hl]
@@ -1723,25 +1721,23 @@ Call_000_09b8:
     dec a
     ret
 
-
-jr_000_09cb:
+.returnZero:
     xor a
     ret
 
-
-Call_000_09cd:
+CheckEnemyCollisionWithPlayer:
     ld a, [bc]
     call SetObjectPointer
     ld de, $0006
     add hl, de
-    ld de, $ca30
+    ld de, wCollisionPointY
     ld a, [hl+]
     ld [de], a
     inc de
     ld a, [hl]
     ld [de], a
-    ld hl, $c788
-    call Call_000_0ba4
+    ld hl, $c788 ; Player hitbox minimum Y
+    call CheckPointInHitbox
     ld a, c
     or a
     ret z
@@ -1755,7 +1751,7 @@ Call_000_09ec:
     ld a, [bc]
     call SetObjectPointer
     ld bc, $c786
-    ld de, $ca30
+    ld de, wCollisionPointY
     ld a, [bc]
     ld [de], a
     inc de
@@ -1764,7 +1760,7 @@ Call_000_09ec:
     ld [de], a
     ld de, $0008
     add hl, de
-    call Call_000_0ba4
+    call CheckPointInHitbox
     ld a, c
     or a
     ret z
@@ -1799,7 +1795,8 @@ Call_000_0a0c:
     ret
 
 
-Call_000_0a2e:
+; Store selected object Y + B and X + C at DE; advance DE by two bytes.
+StoreOffsetObjectPosition:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -1942,24 +1939,23 @@ CheckCurrentObjectSlot:
     ret
 
 
-Call_000_0ac0:
-Jump_000_0ac0:
+TryInitializeEnemyProjectile:
     ld hl, $c880
     push de
     push bc
     ld c, $10
 
-jr_000_0ac7:
+FindOpenProjectileSlot:
     ld a, [hl+]
     or [hl]
-    jr z, RecordObjectIndex
+    jr z, RecordObjectIndex ; Both dimensions and Y are zero: slot is free
 
     ld de, $000f
     add hl, de
     inc c
     ld a, $26
     cp c
-    jr nz, jr_000_0ac7
+    jr nz, FindOpenProjectileSlot ; Search slots 16-37
 
     pop bc
     pop de
@@ -2097,12 +2093,14 @@ SetObjectPointer:
     ret
 
 
+; A = signed movement in 1/16 pixels; BC = handler data.
+; Returns whole-pixel displacement in A and $CA16, retaining fractional movement.
 CalculateYMovement:
     bit 7, a
     jr z, jr_000_0b72 ; jump if bit 7 (top bit) in a is zero
 
-    ld hl, $0003 ; bc should be the object pointer I think, so point at 4th byte?
-    add hl, bc 
+    ld hl, $0003 ; Handler data: negative Y fractional remainder
+    add hl, bc
     cpl
     inc a ; turn the number positive
     call AccumulateFractionalMovement
@@ -2110,9 +2108,9 @@ CalculateYMovement:
     inc a
     jr jr_000_0b79
 
-; a was Non negative
+; A is nonnegative.
 jr_000_0b72:
-    ld hl, $0004 ; bc should be the object pointer I think, so point at 5th byte?
+    ld hl, $0004 ; Handler data: positive Y fractional remainder
     add hl, bc
     call AccumulateFractionalMovement
 
@@ -2157,28 +2155,31 @@ AccumulateFractionalMovement:
     ret
 
 
-Call_000_0ba4:
+; HL points to minimum Y/X followed by maximum Y/X.
+; Test the shared collision point; minimum edges included, maximum edges excluded.
+; Returns C = $FF inside, $00 outside.
+CheckPointInHitbox:
     ld c, $00
-    ld a, [$ca30]
+    ld a, [wCollisionPointY]
     cp [hl]
-    ret c
+    ret c ; Y < top
 
     inc hl
     inc hl
     cp [hl]
-    ret nc
+    ret nc ; Y >= bottom
 
     dec hl
-    ld a, [$ca31]
+    ld a, [wCollisionPointX]
     cp [hl]
-    ret c
+    ret c ; X < left
 
     inc hl
     inc hl
     cp [hl]
-    ret nc
+    ret nc ; X >= right
 
-    dec c
+    dec c ; C = $FF: collision
     ret
 
 
@@ -2415,7 +2416,9 @@ DecrementPlayerLives:
     ret
 
 
-Call_000_0ce4:
+; BC = handler data. Read the script cursor at $0C-$0D and advance or redirect it.
+; Returns signed pixel offsets in D (Y) and E (X).
+ReadMovementScriptCommand:
     ld hl, $000c
     add hl, bc
     ld a, [hl+]
@@ -2761,7 +2764,7 @@ StageEventHandlerTable:
     dw InitializeStageAnnouncement ; event type $04
     dw $19db ; event type $05
     dw $1a47 ; event type $06
-    dw $1a77 ; event type $07
+    dw InitializeRotomech ; event type $07
     dw $1b48 ; event type $08
     dw $1c1e ; event type $09
     dw $1d34 ; event type $0a
@@ -3099,13 +3102,14 @@ jr_000_105e:
     db $77, $10, $7b, $10, $7f, $10, $77, $10, $12, $00, $00, $00, $00, $22, $00, $24
     db $00, $26, $00, $28, $00, $2a, $00, $2c, $00
 
+    ; 1083
     ld bc, $1244
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0ac0
-    jp c, Jump_000_1138
+    call TryInitializeEnemyProjectile
+    jp c, Jump_000_1138 ; projectile spawn failed
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -3113,31 +3117,31 @@ jr_000_105e:
     ld l, a
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
-    ld de, $10a2
+    ld de, SetEnemyProjectileDirection
     jp SetCurrentHandlerAddress
 
-
+SetEnemyProjectileDirection:
     push bc
-    ld de, $ca60
-    call Call_000_08e2
+    ld de, wEnemyShotSpawnY
+    call GetDirectionToPlayer
     pop bc
     ld hl, $000e
     add hl, bc
     ld [hl], a
     xor a
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld [hl+], a
     ld [hl+], a
-    ld de, $10bb
+    ld de, ConfigureEnemyProjectileMovement
     jp SetCurrentHandlerAddress
 
-
+ConfigureEnemyProjectileMovement:
     ld a, [bc]
     call SetObjectPointer
     ld de, $133e
     ld a, [$ca2f]
     or a
-    jr nz, jr_000_10de
+    jr nz, jr_000_10de ; Use the alternate projectile movement table
 
     ld a, [$ca2c]
     ld l, a
@@ -3173,17 +3177,16 @@ jr_000_10de:
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     or a
-    jr z, jr_000_1102
+    jr z, SetUpdateProjectileStatusHandler
 
-    ld de, $1108
+    ld de, UpdateProjectilePosition
     jp SetCurrentHandlerAddress
 
-
-jr_000_1102:
-    ld de, $1128
+SetUpdateProjectileStatusHandler:
+    ld de, UpdateProjectileStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateProjectilePosition:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0008
@@ -3198,16 +3201,16 @@ jr_000_1102:
     ld e, [hl]
     ld d, a
     call MoveObject
-    ld de, $1128
+    ld de, UpdateProjectileStatus
     jp SetCurrentHandlerAddress
 
-
-    call Call_000_1841
+UpdateProjectileStatus:
+    call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
 
-    call Call_000_09cd
-    ld de, $1108
+    call CheckEnemyCollisionWithPlayer
+    ld de, UpdateProjectilePosition
     jp SetCurrentHandlerAddress
 
 
@@ -3220,11 +3223,11 @@ Jump_000_1138:
 
 
     ld bc, $124d
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0ac0
+    call TryInitializeEnemyProjectile
     jp c, Jump_000_1138
 
     ld hl, wCurrentHandlerDataPointer
@@ -3234,7 +3237,7 @@ Jump_000_1138:
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
     xor a
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld [hl+], a
     ld [hl+], a
     ld de, $1166
@@ -3269,7 +3272,7 @@ Jump_000_1138:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1176
     jp SetCurrentHandlerAddress
 
@@ -3305,7 +3308,7 @@ Jump_000_1138:
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0ac0
+    call TryInitializeEnemyProjectile
     jp c, Jump_000_1138
 
     ld hl, wCurrentHandlerDataPointer
@@ -3376,6 +3379,7 @@ Jump_000_1138:
     jp Jump_000_10de
 
 
+    ; $1244
     db $11, $08, $04, $06, $02, $0a, $06, $0a, $00
 
     ld de, $0408
@@ -4541,24 +4545,24 @@ jr_000_183e:
     jp ResetObjectAttributes
 
 
-Call_000_1841:
+; Returns A = $FF outside Y < $90 and wrapped X range -32..175, otherwise zero.
+CheckObjectOutOfBounds:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $90
-    jr nc, jr_000_1854
+    jr nc, .markForRemoval
 
     ld a, [hl]
     add $20
     cp $d0
-    jr nc, jr_000_1854
+    jr nc, .markForRemoval
 
     xor a
     ret
 
-
-jr_000_1854:
+.markForRemoval:
     ld a, $ff
     ret
 
@@ -4570,7 +4574,7 @@ Call_000_1857:
     ld l, a
     ld bc, $0006
     add hl, bc
-    ld bc, $ca30
+    ld bc, wCollisionPointY
     ld a, [hl+]
     ld [bc], a
     inc bc
@@ -4585,7 +4589,7 @@ Call_000_186b:
     ld l, a
     ld bc, $0006
     add hl, bc
-    ld bc, $ca30
+    ld bc, wCollisionPointY
     ld a, [hl+]
     ld [bc], a
     inc bc
@@ -4601,7 +4605,7 @@ Call_000_1881:
     ld l, a
     ld bc, $0006
     add hl, bc
-    ld bc, $ca30
+    ld bc, wCollisionPointY
     ld a, [hl+]
     ld [bc], a
     inc bc
@@ -4628,7 +4632,7 @@ Jump_000_189a:
     inc hl
     inc hl
     push hl
-    call Call_000_0ba4
+    call CheckPointInHitbox
     pop hl
     ld a, c
     or a
@@ -4840,7 +4844,7 @@ jr_000_19bb:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1a37
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1a43
     jp Jump_000_19fb
 
@@ -4856,11 +4860,11 @@ Jump_000_19fb:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_1841
+    call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
 
-    call Call_000_097d
+    call UpdateScriptedEnemyMovement
     ld d, $22
     cp [hl]
     jp c, Jump_000_0bbb
@@ -4869,12 +4873,12 @@ Jump_000_19fb:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_099d
+    call TryScheduleEnemyShot
     ld de, $1a2e
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1a0f
     jp SetCurrentHandlerAddress
 
@@ -4893,42 +4897,43 @@ Jump_000_19fb:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1a67
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1a73
     jp Jump_000_19fb
 
 
     db $4f, $35, $61, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $30, $00, $30, $20
 
-    ld bc, $1b00
+InitializeRotomech:
+    ld bc, RotomechInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1a87
+    ld de, ConfigureRotomech
     jp SetCurrentHandlerAddress
 
-
+ConfigureRotomech:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1af4
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1b08
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1aa4
+    jr z, SetRotomechMovementHandler
 
-    ld de, $1acf
+    ; Odd handler slots start with collision/animation; even slots with movement.
+    ld de, UpdateRotomechState
     jp SetCurrentHandlerAddress
 
-
-jr_000_1aa4:
-    ld de, $1aaa
+SetRotomechMovementHandler:
+    ld de, UpdateRotomechMovement
     jp SetCurrentHandlerAddress
 
-
-    call Call_000_097d
+UpdateRotomechMovement:
+    call UpdateScriptedEnemyMovement
     ld d, $22
     cp [hl]
     jp c, Jump_000_0bbb
@@ -4939,19 +4944,20 @@ jr_000_1aa4:
     ld l, a
     inc hl
     ld a, [hl]
-    cp $90
+    cp $90 ; Remove at the lower Y cutoff
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $1ac6
+    ld de, TryFireRotomechShot
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_099d
-    ld de, $1acf
+TryFireRotomechShot:
+    call TryScheduleEnemyShot
+    ld de, UpdateRotomechState
     jp SetCurrentHandlerAddress
 
-
-    call Call_000_09cd
+UpdateRotomechState:
+    call CheckEnemyCollisionWithPlayer
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -4970,12 +4976,20 @@ jr_000_1aa4:
     ld d, [hl]
     ld e, a
     call SetObjectGraphicsPointer
-    ld de, $1aaa
+    ld de, UpdateRotomechMovement
     jp SetCurrentHandlerAddress
 
 
-    db $73, $35, $7f, $35, $08, $1b, $10, $1b, $0c, $1b, $14, $1b, $12, $08, $08, $00
-    db $fe, $10, $12, $00, $32, $00, $32, $20, $34, $00, $34, $20, $36, $60, $36, $00
+    ; $1AF4
+    dw $3573, $357F
+
+    ; $1AF8
+    dw $1B08, $1B10, $1B0C, $1B14
+
+RotomechInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $00
+
+    db $32, $00, $32, $20, $34, $00, $34, $20, $36, $60, $36, $00
     db $36, $20, $36, $40
 
     ld bc, $1b3c
@@ -4990,7 +5004,7 @@ jr_000_1aa4:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1b38
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1b44
     jp Jump_000_19fb
 
@@ -5019,7 +5033,7 @@ jr_000_1aa4:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1b68
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1b74
     jp Jump_000_19fb
 
@@ -5038,7 +5052,7 @@ jr_000_1aa4:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1b98
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1ba4
     jp Jump_000_19fb
 
@@ -5113,9 +5127,9 @@ jr_000_1bdb:
 
 
     push bc
-    call Call_000_099d
+    call TryScheduleEnemyShot
     pop bc
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1be1
     jp SetCurrentHandlerAddress
 
@@ -5197,12 +5211,12 @@ jr_000_1c67:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_099d
+    call TryScheduleEnemyShot
     ld de, $1c94
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1c52
     jp SetCurrentHandlerAddress
 
@@ -5221,7 +5235,7 @@ jr_000_1c67:
     ld a, [bc]
     call SetObjectPointer
     ld de, $1d24
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $1d30
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
@@ -5238,7 +5252,7 @@ jr_000_1cd6:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_097d
+    call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
     jp c, Jump_000_0bbb
@@ -5258,17 +5272,17 @@ jr_000_1cd6:
 
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_000_1d15
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_1d15
 
     ld bc, $0806
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld de, $1141
     call StoreAddressInFreeWramSlot
 
@@ -5277,7 +5291,7 @@ jr_000_1d15:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1cdc
     jp SetCurrentHandlerAddress
 
@@ -5397,7 +5411,7 @@ jr_000_1dc0:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_099d
+    call TryScheduleEnemyShot
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -5416,7 +5430,7 @@ jr_000_1dc0:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -5486,7 +5500,7 @@ jr_000_1e64:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1e3a
     jp SetCurrentHandlerAddress
 
@@ -5532,7 +5546,7 @@ jr_000_1e64:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $c786
-    ld de, $ca30
+    ld de, wCollisionPointY
     ld a, [hl+]
     ld [de], a
     inc de
@@ -5544,7 +5558,7 @@ jr_000_1e64:
     ld l, a
     ld de, $0008
     add hl, de
-    call Call_000_0ba4
+    call CheckPointInHitbox
     ld a, c
     or a
     jr nz, jr_000_1ee1
@@ -5675,7 +5689,7 @@ jr_000_1f71:
     ld a, [bc]
     call SetObjectPointer
     ld de, $201e
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $202a
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
@@ -5691,7 +5705,7 @@ jr_000_1fd3:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_097d
+    call UpdateScriptedEnemyMovement
     ld d, $52
     cp [hl]
     jp c, Jump_000_0bbb
@@ -5711,12 +5725,12 @@ jr_000_1fd3:
 
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_000_200f
 
 jr_000_1fff:
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
 
 Call_000_2003:
@@ -5724,7 +5738,7 @@ Call_000_2003:
     jr nz, jr_000_200f
 
     ld bc, $0800
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     call $2288
 
 jr_000_200f:
@@ -5732,7 +5746,7 @@ jr_000_200f:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $1fd9
     jp SetCurrentHandlerAddress
 
@@ -5802,17 +5816,17 @@ jr_000_2070:
 
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_000_2099
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_2099
 
     ld bc, $0804
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld de, $1083
     call StoreAddressInFreeWramSlot
 
@@ -5866,7 +5880,7 @@ jr_000_20c9:
     ld a, [bc]
     call SetObjectPointer
     ld de, $20e7
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $20f3
     jp Jump_000_19fb
 
@@ -5896,7 +5910,7 @@ jr_000_20f9:
     ld a, [bc]
     call SetObjectPointer
     ld de, $367d
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $211f
 
 jr_000_2114:
@@ -5926,7 +5940,7 @@ jr_000_2125:
     ld a, [bc]
     call SetObjectPointer
     ld de, $3687
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $214b
     jp Jump_000_19fb
 
@@ -5954,7 +5968,7 @@ jr_000_2151:
     ld a, [bc]
     call SetObjectPointer
     ld de, $216f
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $217b
     jp Jump_000_19fb
 
@@ -5984,7 +5998,7 @@ jr_000_2181:
     ld a, [bc]
     call SetObjectPointer
     ld de, $36d5
-    call Call_000_0939
+    call InitializeMovementScript
     ld de, $21aa
     call SetObjectGraphicsPointer
     jp Jump_000_1cd6
@@ -6020,7 +6034,7 @@ jr_000_21b4:
     ld a, [bc]
     call SetObjectPointer
     ld de, $2235
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $2241
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
@@ -6036,7 +6050,7 @@ jr_000_21df:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_097d
+    call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
     jp c, Jump_000_0bbb
@@ -6056,7 +6070,7 @@ jr_000_21df:
 
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_000_2226
 
@@ -6067,7 +6081,7 @@ jr_000_21df:
 jr_000_2211:
     ld de, $ca63
     ld bc, $0804
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld a, $03
     ld [de], a
     inc de
@@ -6081,7 +6095,7 @@ jr_000_2226:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $21e5
     jp SetCurrentHandlerAddress
 
@@ -6113,7 +6127,7 @@ jr_000_2247:
     ld a, [bc]
     call SetObjectPointer
     ld de, $2278
-    call Call_000_092c
+    call InitializeMovementScriptFromTable
     ld de, $2284
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
@@ -6150,7 +6164,7 @@ jr_000_2272:
 
 
     ld bc, $2316
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -6166,7 +6180,7 @@ jr_000_2272:
     ld a, [wAllocatedObjectIndex]
     ld [de], a
     xor a
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld [hl+], a
     ld [hl+], a
     ld de, $22b8
@@ -6210,7 +6224,7 @@ jr_000_22d2:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_1841
+    call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
 
@@ -6218,7 +6232,7 @@ jr_000_22d2:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_099d
+    call TryScheduleEnemyShot
     or a
     jp z, FreeObjectAndRemoveHandler
 
@@ -6226,7 +6240,7 @@ jr_000_22d2:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $22d5
     jp SetCurrentHandlerAddress
 
@@ -6638,13 +6652,13 @@ jr_000_259e:
 
     ld a, [bc]
     call SetObjectPointer
-    call Call_000_09b8
+    call CheckEnemyShotTimer
     or a
     jr nz, jr_000_25c3
 
     ld de, $ca63
     ld bc, $0804
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld a, $06
     ld [de], a
     inc de
@@ -6720,12 +6734,12 @@ jr_000_25f0:
 
 jr_000_2618:
     ld b, $10
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_262a
 
-    call Call_000_0a2e
+    call StoreOffsetObjectPosition
     ld de, $1141
     call StoreAddressInFreeWramSlot
 
@@ -6823,7 +6837,7 @@ jr_000_262a:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_1841
+    call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
 
@@ -6842,7 +6856,7 @@ jr_000_262a:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09cd
+    call CheckEnemyCollisionWithPlayer
     ld de, $26b1
     jp SetCurrentHandlerAddress
 
@@ -6905,7 +6919,7 @@ jr_000_272e:
     jp SetCurrentHandlerAddress
 
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_2756
@@ -6949,7 +6963,7 @@ Call_000_2769:
     ld h, b
     ld l, c
     call Call_000_0f2f
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld a, d
     ld [hl+], a
     ld [hl], e
@@ -7016,7 +7030,7 @@ jr_000_27d3:
     jp SetCurrentHandlerAddress
 
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_2805
@@ -7033,7 +7047,7 @@ jr_000_27d3:
     and $03
     ld hl, $0f7a
     call Call_000_0f2f
-    ld hl, $ca60
+    ld hl, wEnemyShotSpawnY
     ld a, d
     ld [hl+], a
     ld [hl], e
@@ -7085,7 +7099,7 @@ jr_000_2843:
     jp SetCurrentHandlerAddress
 
 
-    ld de, $ca60
+    ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
     jr nz, jr_000_285f

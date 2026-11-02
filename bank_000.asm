@@ -1623,7 +1623,7 @@ InitializeMovementScript:
 
 TryInitializeObjectInFreeSlot:
     ld a, [wStageEventParams]
-    ld hl, $0f19
+    ld hl, EnemySpawnXCoords
     call GetStartingXCoord
     xor a
     ld [$caa4], a
@@ -1695,7 +1695,7 @@ TryScheduleEnemyShot:
 
     ld bc, $0804
     call StoreOffsetObjectPosition
-    ld de, $1083
+    ld de, TrySpawnEnemyProjectile
     jp StoreAddressInFreeWramSlot
 
 ; BC = handler data. Advance counter $07; $08 is the trigger, $09 the reset value.
@@ -2818,7 +2818,7 @@ GetStartingXCoord:
     ret
 
 
-    ; 0F19
+EnemySpawnXCoords:
     db $08, $18, $20, $28, $30, $38, $48, $50, $58, $68, $70, $78, $80, $88
 
 jr_000_0f27:
@@ -3102,14 +3102,14 @@ jr_000_105e:
     db $77, $10, $7b, $10, $7f, $10, $77, $10, $12, $00, $00, $00, $00, $22, $00, $24
     db $00, $26, $00, $28, $00, $2a, $00, $2c, $00
 
-    ; 1083
-    ld bc, $1244
+TrySpawnEnemyProjectile:
+    ld bc, EnemyProjectileObjectTemplate
     ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
     call TryInitializeEnemyProjectile
-    jp c, Jump_000_1138 ; projectile spawn failed
+    jp c, FailedProjectileSpawn
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -3138,7 +3138,7 @@ SetEnemyProjectileDirection:
 ConfigureEnemyProjectileMovement:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $133e
+    ld de, EnemyShotAlternateMovementTable
     ld a, [$ca2f]
     or a
     jr nz, jr_000_10de ; Use the alternate projectile movement table
@@ -3146,13 +3146,13 @@ ConfigureEnemyProjectileMovement:
     ld a, [$ca2c]
     ld l, a
     ld h, $00
-    ld de, $1256
+    ld de, EnemyShotMovementIndexByPowerLevel
     add hl, de
     ld a, [hl]
     add a
     ld l, a
     ld h, $00
-    ld de, $125e
+    ld de, EnemyShotMovementTablePointers
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -3173,7 +3173,7 @@ jr_000_10de:
     add hl, bc
     ld [hl+], a
     ld [hl], e
-    ld de, $124b
+    ld de, EnemyProjectileGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     or a
@@ -3213,8 +3213,7 @@ UpdateProjectileStatus:
     ld de, UpdateProjectilePosition
     jp SetCurrentHandlerAddress
 
-
-Jump_000_1138:
+FailedProjectileSpawn:
     ld hl, $ca63
     xor a
     ld [hl+], a
@@ -3222,13 +3221,13 @@ Jump_000_1138:
     jp RemoveCurrentHandler
 
 
-    ld bc, $124d
+    ld bc, AlternateEnemyProjectileObjectTemplate
     ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
     call TryInitializeEnemyProjectile
-    jp c, Jump_000_1138
+    jp c, FailedProjectileSpawn
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -3246,7 +3245,7 @@ Jump_000_1138:
 
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1254
+    ld de, AlternateEnemyProjectileGraphics
     call SetObjectGraphicsPointer
     ld de, $1176
     jp SetCurrentHandlerAddress
@@ -3303,13 +3302,13 @@ Jump_000_1138:
     jp RemoveCurrentHandler
 
 
-    ld bc, $1244
+    ld bc, EnemyProjectileObjectTemplate
     ld hl, $ca63
     ld a, [hl+]
     ld e, [hl]
     ld d, a
     call TryInitializeEnemyProjectile
-    jp c, Jump_000_1138
+    jp c, FailedProjectileSpawn
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -3356,13 +3355,13 @@ Jump_000_1138:
     ld a, [$ca2c]
     ld l, a
     ld h, $00
-    ld de, $1256
+    ld de, EnemyShotMovementIndexByPowerLevel
     add hl, de
     ld a, [hl]
     add a
     ld l, a
     ld h, $00
-    ld de, $125e
+    ld de, EnemyShotMovementTablePointers
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -3379,26 +3378,38 @@ Jump_000_1138:
     jp Jump_000_10de
 
 
-    ; $1244
-    db $11, $08, $04, $06, $02, $0a, $06, $0a, $00
+; Each eight-byte object template shares its final byte with its graphics data.
+EnemyProjectileObjectTemplate: ; $1244
+    db $11      ; Sprite grid: one row, one column
+    db $08, $04 ; Collision center Y/X offsets
+    db $06, $02 ; Hitbox minimum Y/X offsets
+    db $0a, $06 ; Hitbox maximum Y/X offsets
+EnemyProjectileGraphics: ; $124B
+    db $0a      ; Final object attribute and sprite tile number
+    db $00      ; Sprite attributes
 
-    ld de, $0408
-    nop
-    nop
-    db $10
-    ld [$0010], sp
+AlternateEnemyProjectileObjectTemplate: ; $124D
+    db $11      ; Sprite grid: one row, one column
+    db $08, $04 ; Collision center Y/X offsets
+    db $00, $00 ; Hitbox minimum Y/X offsets
+    db $10, $08 ; Hitbox maximum Y/X offsets
+AlternateEnemyProjectileGraphics: ; $1254
+    db $10      ; Final object attribute and sprite tile number
+    db $00      ; Sprite attributes
 
-    db $00, $01, $01, $02, $02, $03
+EnemyShotMovementIndexByPowerLevel:
+    db $00, $01, $01, $02, $02, $03, $03, $03
 
-    inc bc
-    inc bc
+EnemyShotMovementTablePointers: ; $125E
+    dw EnemyShotMovementTable0 ; Movement index 0
+    dw EnemyShotMovementTable1 ; Movement index 1
+    dw EnemyShotMovementTable2 ; Movement index 2
+    dw EnemyShotMovementTable3 ; Movement index 3
+    dw EnemyShotMovementTable4 ; Movement index 4
+    dw EnemyShotMovementTable4 ; Movement index 5
+    dw EnemyShotMovementTable4 ; Movement index 6
+    dw EnemyShotMovementTable4 ; Movement index 7
 
-    db $de, $12, $ee, $12, $fe, $12, $0e, $13
-
-    ld e, $13
-    ld e, $13
-    ld e, $13
-    ld e, $13
     ld bc, $0202
 
     db $03
@@ -3492,118 +3503,78 @@ Jump_000_1138:
     inc b
     inc b
 
-    db $dc, $00
+; Eight (Y, X) movement pairs per table, clockwise from up.
+; Values are signed 1/16-pixel units passed to CalculateYMovement/CalculateXMovement.
+EnemyShotMovementTable0: ; $12DE
+    db $dc, $00 ; Up: Y=-36, X=0
+    db $e7, $19 ; Up-right: Y=-25, X=25
+    db $00, $24 ; Right: Y=0, X=36
+    db $19, $19 ; Down-right: Y=25, X=25
+    db $24, $00 ; Down: Y=36, X=0
+    db $19, $e7 ; Down-left: Y=25, X=-25
+    db $00, $dc ; Left: Y=0, X=-36
+    db $e7, $e7 ; Up-left: Y=-25, X=-25
 
-    rst $20
-    add hl, de
+EnemyShotMovementTable1: ; $12EE
+    db $d8, $00 ; Up: Y=-40, X=0
+    db $e4, $1c ; Up-right: Y=-28, X=28
+    db $00, $28 ; Right: Y=0, X=40
+    db $1c, $1c ; Down-right: Y=28, X=28
+    db $28, $00 ; Down: Y=40, X=0
+    db $1c, $e4 ; Down-left: Y=28, X=-28
+    db $00, $d8 ; Left: Y=0, X=-40
+    db $e4, $e4 ; Up-left: Y=-28, X=-28
 
-    db $00, $24
+EnemyShotMovementTable2: ; $12FE
+    db $d0, $00 ; Up: Y=-48, X=0
+    db $de, $22 ; Up-right: Y=-34, X=34
+    db $00, $30 ; Right: Y=0, X=48
+    db $22, $22 ; Down-right: Y=34, X=34
+    db $30, $00 ; Down: Y=48, X=0
+    db $22, $de ; Down-left: Y=34, X=-34
+    db $00, $d0 ; Left: Y=0, X=-48
+    db $de, $de ; Up-left: Y=-34, X=-34
 
-    add hl, de
-    add hl, de
+EnemyShotMovementTable3: ; $130E
+    db $c8, $00 ; Up: Y=-56, X=0
+    db $d8, $28 ; Up-right: Y=-40, X=40
+    db $00, $38 ; Right: Y=0, X=56
+    db $28, $28 ; Down-right: Y=40, X=40
+    db $38, $00 ; Down: Y=56, X=0
+    db $28, $d8 ; Down-left: Y=40, X=-40
+    db $00, $c8 ; Left: Y=0, X=-56
+    db $d8, $d8 ; Up-left: Y=-40, X=-40
 
-    db $24, $00, $19, $e7, $00, $dc
+EnemyShotMovementTable4: ; $131E
+    db $c0, $00 ; Up: Y=-64, X=0
+    db $d3, $2d ; Up-right: Y=-45, X=45
+    db $00, $40 ; Right: Y=0, X=64
+    db $2d, $2d ; Down-right: Y=45, X=45
+    db $40, $00 ; Down: Y=64, X=0
+    db $2d, $d3 ; Down-left: Y=45, X=-45
+    db $00, $c0 ; Left: Y=0, X=-64
+    db $d3, $d3 ; Up-left: Y=-45, X=-45
 
-    rst $20
-    rst $20
-    ret c
+EnemyShotMovementTable5: ; $132E
+    db $b0, $00 ; Up: Y=-80, X=0
+    db $c7, $39 ; Up-right: Y=-57, X=57
+    db $00, $50 ; Right: Y=0, X=80
+    db $39, $39 ; Down-right: Y=57, X=57
+    db $50, $00 ; Down: Y=80, X=0
+    db $39, $c7 ; Down-left: Y=57, X=-57
+    db $00, $b0 ; Left: Y=0, X=-80
+    db $c7, $c7 ; Up-left: Y=-57, X=-57
 
-    nop
-    db $e4
-    inc e
+EnemyShotAlternateMovementTable: ; $133E
+    db $a0, $00 ; Up: Y=-96, X=0
+    db $bc, $44 ; Up-right: Y=-68, X=68
+    db $00, $60 ; Right: Y=0, X=96
+    db $44, $44 ; Down-right: Y=68, X=68
+    db $60, $00 ; Down: Y=96, X=0
+    db $44, $bc ; Down-left: Y=68, X=-68
+    db $00, $a0 ; Left: Y=0, X=-96
+    db $bc, $bc ; Up-left: Y=-68, X=-68
 
-    db $00, $28, $1c, $1c, $28, $00, $1c, $e4, $00, $d8
-
-    db $e4
-    db $e4
-    ret nc
-
-    nop
-    sbc $22
-    nop
-    jr nc, jr_000_1327
-
-    ld [hl+], a
-
-    db $30, $00, $22, $de
-
-    nop
-    ret nc
-
-    sbc $de
-    ret z
-
-    nop
-    ret c
-
-    jr z, jr_000_1313
-
-jr_000_1313:
-    db $38
-
-    db $28, $28, $38, $00, $28, $d8
-
-    nop
-    ret z
-
-    ret c
-
-    ret c
-
-    ret nz
-
-    nop
-    db $d3
-    dec l
-    nop
-    ld b, b
-    dec l
-    dec l
-    ld b, b
-
-jr_000_1327:
-    nop
-    dec l
-    db $d3
-    nop
-    ret nz
-
-    db $d3
-    db $d3
-    or b
-    nop
-    rst $00
-    add hl, sp
-    nop
-    ld d, b
-    add hl, sp
-    add hl, sp
-    ld d, b
-    nop
-    add hl, sp
-    rst $00
-    nop
-    or b
-    rst $00
-
-jr_000_133d:
-    rst $00
-    and b
-    nop
-    cp h
-    ld b, h
-    nop
-    ld h, b
-    ld b, h
-    ld b, h
-    ld h, b
-    nop
-    ld b, h
-    cp h
-    nop
-    and b
-    cp h
-    cp h
     nop
     ld b, b
     dec l
@@ -4916,9 +4887,9 @@ InitializeRotomech:
 ConfigureRotomech:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1af4
+    ld de, RotomechMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1b08
+    ld de, RotomechGraphicsFrame0
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
@@ -4970,7 +4941,7 @@ UpdateRotomechState:
     add a
     ld e, a
     ld d, $00
-    ld hl, $1af8
+    ld hl, RotomechAnimationTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -4980,17 +4951,30 @@ UpdateRotomechState:
     jp SetCurrentHandlerAddress
 
 
-    ; $1AF4
-    dw $3573, $357F
+RotomechMovementScriptTable:
+    dw RotomechMovementScriptA, RotomechMovementScriptB
 
-    ; $1AF8
-    dw $1B08, $1B10, $1B0C, $1B14
+RotomechAnimationTable: ; $1AF8
+    dw RotomechGraphicsFrame0
+    dw RotomechGraphicsFrame1
+    dw RotomechGraphicsFrame2
+    dw RotomechGraphicsFrame3
 
 RotomechInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $00
 
-    db $32, $00, $32, $20, $34, $00, $34, $20, $36, $60, $36, $00
-    db $36, $20, $36, $40
+; Each frame contains two (tile, attributes) pairs, left sprite then right sprite.
+RotomechGraphicsFrame0: ; $1B08
+    db $32, $00,  $32, $20
+
+RotomechGraphicsFrame2: ; $1B0C
+    db $34, $00,  $34, $20
+
+RotomechGraphicsFrame1: ; $1B10
+    db $36, $60,  $36, $00
+
+RotomechGraphicsFrame3: ; $1B14
+    db $36, $20,  $36, $40
 
     ld bc, $1b3c
     call TryInitializeObjectInFreeSlot
@@ -5827,7 +5811,7 @@ jr_000_2070:
 
     ld bc, $0804
     call StoreOffsetObjectPosition
-    ld de, $1083
+    ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_2099:
@@ -6934,7 +6918,7 @@ jr_000_272e:
 
 jr_000_274d:
     call Call_000_2769
-    ld de, $1083
+    ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_2756:
@@ -7107,7 +7091,7 @@ jr_000_2843:
     ld de, $2872
     ld bc, $0fa2
     call Call_000_2769
-    ld de, $1083
+    ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_285f:
@@ -9302,14 +9286,23 @@ Call_000_32ab:
     and c
     inc a
 
-    db $a9, $3d, $65, $3d, $f6, $3d, $01, $3e, $5d, $3d
+; Each pointer selects a movement command sequence, read in order.
+RotomechMovementScriptA: ; $3573
+    dw $3da9
+    dw $3d65
+    dw $3df6
+    dw $3e01
+    dw $3d5d
+    dw $3d9e
 
-    sbc [hl]
-    dec a
+RotomechMovementScriptB: ; $357F
+    dw $3e01
+    dw $3d5d
+    dw $3d9e
+    dw $3da9
+    dw $3d65
+    dw $3df6
 
-    db $01, $3e, $5d, $3d, $9e, $3d, $a9, $3d, $65, $3d
-
-    or $3d
     or c
     inc a
     or c

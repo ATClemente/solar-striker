@@ -1747,7 +1747,7 @@ CheckEnemyCollisionWithPlayer:
     ret
 
 
-Call_000_09ec:
+CheckPlayerCenterInEnemyHitbox:
     ld a, [bc]
     call SetObjectPointer
     ld bc, $c786
@@ -2771,7 +2771,7 @@ StageEventHandlerTable:
     dw InitializePowerUpContainer ; event type $0b
     dw $4000 ; event type $0c
     dw $20c7 ; event type $0d
-    dw $41e0 ; event type $0e
+    dw InitializeEpikhan ; event type $0e
     dw $42b5 ; event type $0f
     dw $43cf ; event type $10
     dw $44e6 ; event type $11
@@ -3166,7 +3166,7 @@ ConfigureEnemyProjectileMovement:
     ld de, EnemyShotAlternateMovementTable
     ld a, [$ca2f]
     or a
-    jr nz, jr_000_10de ; Use the alternate projectile movement table
+    jr nz, SetProjectileVelocityAndStartUpdateCycle ; Use the alternate projectile movement table
 
     ld a, [$ca2c]
     ld l, a
@@ -3183,8 +3183,7 @@ ConfigureEnemyProjectileMovement:
     ld d, [hl]
     ld e, a
 
-Jump_000_10de:
-jr_000_10de:
+SetProjectileVelocityAndStartUpdateCycle:
     ld hl, $000e
     add hl, bc
     ld a, [hl]
@@ -3301,6 +3300,7 @@ FailedProjectileSpawn:
     jp SetCurrentHandlerAddress
 
 
+UpdateEnemyFiringSequence:
     ld hl, $ca6a
     inc [hl]
     ld a, [hl]
@@ -3308,12 +3308,12 @@ FailedProjectileSpawn:
     jp nz, AdvanceToNextHandler
 
     ld [hl], a
-    ld de, $11cd
+    ld de, TrySpawnFiringSequenceProjectile
     call StoreAddressInFreeWramSlot
     ld a, [$ca65]
     ld e, a
     ld d, $00
-    ld hl, $126e
+    ld hl, FiringSequenceSpawnCounts
     add hl, de
     ld b, [hl]
     ld hl, $ca6b
@@ -3326,7 +3326,7 @@ FailedProjectileSpawn:
     ld [$ca6b], a
     jp RemoveCurrentHandler
 
-
+TrySpawnFiringSequenceProjectile:
     ld bc, EnemyProjectileObjectTemplate
     ld hl, $ca63
     ld a, [hl+]
@@ -3341,10 +3341,10 @@ FailedProjectileSpawn:
     ld l, a
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
-    ld de, $11ec
+    ld de, GetFiringSequenceDirection
     jp SetCurrentHandlerAddress
 
-
+GetFiringSequenceDirection:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $000e
@@ -3357,7 +3357,7 @@ FailedProjectileSpawn:
     add hl, hl
     add hl, hl
     add hl, hl
-    ld de, $127e
+    ld de, FiringSequenceDirectionTable
     add hl, de
     inc bc
     ld a, [bc]
@@ -3371,10 +3371,10 @@ FailedProjectileSpawn:
     inc a
     and $0f
     ld [bc], a
-    ld de, $1217
+    ld de, GetFiringSequenceMovement
     jp SetCurrentHandlerAddress
 
-
+GetFiringSequenceMovement:
     ld a, [bc]
     call SetObjectPointer
     ld a, [$ca2c]
@@ -3391,16 +3391,16 @@ FailedProjectileSpawn:
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    jp Jump_000_10de
+    jp SetProjectileVelocityAndStartUpdateCycle
 
 
     ld de, $1364
     ld a, [$ca2f]
     or a
-    jp nz, Jump_000_10de
+    jp nz, SetProjectileVelocityAndStartUpdateCycle
 
     ld de, $134e
-    jp Jump_000_10de
+    jp SetProjectileVelocityAndStartUpdateCycle
 
 
 ; Each eight-byte object template shares its final byte with its graphics data.
@@ -3435,50 +3435,19 @@ EnemyShotMovementTablePointers: ; $125E
     dw EnemyShotMovementTable4 ; Movement index 6
     dw EnemyShotMovementTable4 ; Movement index 7
 
-    ld bc, $0202
+; Number of projectile spawn attempts for each firing-pattern index.
+FiringSequenceSpawnCounts: ; $126E
+    db $01, $02, $02, $03, $03, $04, $05, $05
+    db $05, $05, $05, $05, $05, $05, $05, $05
 
-    db $03
+; Lookup: pattern index * 8 + sequence position.
+; First four rows shown as data; the table continues below.
+FiringSequenceDirectionTable: ; $127E
+    db $04, $04, $04, $04, $04, $04, $04, $04 ; Pattern $00
+    db $02, $06, $02, $06, $02, $06, $02, $06 ; Pattern $01
+    db $00, $04, $00, $04, $00, $04, $00, $04 ; Pattern $02
+    db $03, $04, $05, $03, $04, $05, $05, $07 ; Pattern $03 (Epikhan)
 
-    inc bc
-    inc b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    dec b
-    inc b
-    inc b
-    inc b
-    inc b
-    inc b
-    inc b
-    inc b
-    inc b
-    ld [bc], a
-    ld b, $02
-    ld b, $02
-    ld b, $02
-    ld b, $00
-    inc b
-    nop
-    inc b
-    nop
-    inc b
-    nop
-    inc b
-
-    db $03, $04, $05
-
-    inc bc
-    inc b
-    dec b
-    dec b
-    rlca
     ld bc, $0503
     rlca
     ld bc, $0503
@@ -6139,7 +6108,7 @@ jr_000_2211:
     inc de
     xor a
     ld [de], a
-    ld de, $11a1
+    ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
 jr_000_2226:
@@ -6436,7 +6405,7 @@ jr_000_23e4:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     ld a, $14
     call AddPlayerScore
@@ -6444,7 +6413,7 @@ jr_000_23e4:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     ld de, $2406
     jp SetCurrentHandlerAddress
 
@@ -6578,7 +6547,7 @@ jr_000_245d:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     ld de, $24db
     jp SetCurrentHandlerAddress
 
@@ -6679,7 +6648,7 @@ jr_000_2574:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     ld a, $24
     call AddPlayerScore
@@ -6689,7 +6658,7 @@ jr_000_2574:
 
 
     push bc
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
@@ -6716,7 +6685,7 @@ jr_000_259e:
     inc de
     xor a
     ld [de], a
-    ld de, $11a1
+    ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
 jr_000_25c3:
@@ -10107,89 +10076,24 @@ RotomechMovementScriptB: ; $357F
     or c
     inc a
 
-    db $4d, $3d, $89, $3c, $a1, $3c, $89, $3c, $91, $3c, $91, $3c, $89, $3c, $a1, $3c
-    db $a1, $3c, $89, $3c, $91, $3c, $91, $3c, $89, $3c, $a1, $3c, $a1, $3c, $89, $3c
-    db $91, $3c, $91, $3c, $89, $3c, $a1, $3c, $a1, $3c, $89, $3c, $91, $3c, $91, $3c
-    db $89, $3c, $a1, $3c, $a1, $3c, $89, $3c, $91, $3c, $91, $3c, $89, $3c
+EpikhanMovementScript: ; $38C9
+    ; Enter: move down 24 pixels, then pause for 8 movement updates.
+    dw $3d4d, $3c89
+    ; Sweep horizontally with pauses: $3CA1 = left, $3C91 = right, $3C89 = pause.
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    dw $3ca1, $3c89, $3c91, $3c91, $3c89, $3ca1
+    ; $3945: exit downward, 24 pixels per sequence over 16 movement updates.
+    dw $3d83, $3d83, $3d83, $3d83
+    dw $3d83, $3d83, $3d83, $3d83
 
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
     or c
     inc a
     sub b

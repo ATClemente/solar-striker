@@ -72,7 +72,7 @@ jr_001_4047:
 
 
     push bc
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
@@ -92,7 +92,7 @@ Jump_001_4089:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     ld de, $40b5
     jp SetCurrentHandlerAddress
@@ -104,11 +104,12 @@ Jump_001_40a2:
     ld hl, wPlayerInvincible
     ld [hl+], a
     ld [hl], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
 
+    ; 40B5
     ld a, [bc]
     call SetObjectPointer
     ld hl, $001c
@@ -254,7 +255,7 @@ jr_001_417b:
     inc de
     xor a
     ld [de], a
-    ld de, $11a1
+    ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
 jr_001_4184:
@@ -266,7 +267,7 @@ jr_001_4184:
 
 jr_001_4190:
     push bc
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
@@ -284,7 +285,7 @@ Jump_001_41a7:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
@@ -330,63 +331,67 @@ Jump_001_41a7:
 
     db $30
 
+InitializeEpikhan:
     xor a
     ld hl, $cac0
     ld b, $10
 
-jr_001_41e6:
+.clearStateBytes
     ld [hl+], a
     dec b
-    jr nz, jr_001_41e6
+    jr nz, .clearStateBytes
 
     ld [$cf99], a
-    ld bc, $428d
+    ld bc, EpikhanInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $41fd
+    ld de, ConfigureEpikhan
     jp SetCurrentHandlerAddress
 
-
+ConfigureEpikhan:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $38c9
+    ld de, EpikhanMovementScript
     call InitializeMovementScript
-    ld de, $4295
+    ld de, EpikhanBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4213
+    ld de, UpdateEpikhanMovement
     jp SetCurrentHandlerAddress
 
 
+    ; Apply scripted movement.
+UpdateEpikhanMovement:
+    ; Returns object byte $0C in A, with HL pointing to byte $0D.
     call Call_001_4627
     cp [hl]
-    jp c, Jump_001_4225
+    jp c, HandleEpikhanDefeat ; object[$0C] < object[$0D]
 
     ld a, $05
     ld [$ca2c], a
-    ld de, $422e
+    ld de, UpdateEpikhanStatus
     jp SetCurrentHandlerAddress
 
 
-Jump_001_4225:
-    ld de, $4295
+HandleEpikhanDefeat:
+    ld de, EpikhanBaseGraphics
     call SetObjectGraphicsPointer
     jp Jump_001_4089
 
-
+UpdateEpikhanStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $a0
-    jp nc, Jump_001_427c
+    jp nc, HandleEpikhanExit
 
     ld hl, $cf99
     inc [hl]
     ld a, [hl]
     cp $0b
-    jr nz, jr_001_4259
+    jr nz, .restoreBaseGraphics
 
     xor a
     ld [hl], a
@@ -398,42 +403,49 @@ Jump_001_4225:
     inc de
     xor a
     ld [de], a
-    ld de, $11a1
+    ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
-jr_001_4259:
-    ld de, $4295
+.restoreBaseGraphics
+    ld de, EpikhanBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4265
+    ld de, CheckEpikhanCollision
     jp SetCurrentHandlerAddress
 
-
+CheckEpikhanCollision:
     push bc
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
-    jr z, jr_001_4276
+    jr z, .scheduleMovement
 
-    ld de, $42a5
+    ld de, EpikhanDamageGraphics
     call SetObjectGraphicsPointer
 
-jr_001_4276:
-    ld de, $4213
+.scheduleMovement:
+    ld de, UpdateEpikhanMovement
     jp SetCurrentHandlerAddress
 
 
-Jump_001_427c:
+HandleEpikhanExit:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
-    ld de, $46d7
+    ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
     jp Jump_001_46ea
 
 
-    db $24, $10, $10, $02, $02, $1c, $1c, $60, $64, $00, $66, $00, $66, $20, $64, $20
-    db $68, $00, $6a, $00, $6a, $20, $68, $20, $64, $10, $66, $10, $66, $30, $64, $30
+EpikhanInitTemplate:
+    db $24, $10, $10, $02, $02, $1c, $1c, $60
+
+EpikhanBaseGraphics:
+    db $64, $00, $66, $00, $66, $20, $64, $20
+    db $68, $00, $6a, $00, $6a, $20, $68, $20
+
+EpikhanDamageGraphics:
+    db $64, $10, $66, $10, $66, $30, $64, $30
     db $68, $10, $6a, $10, $6a, $30, $68, $30
 
     xor a
@@ -539,7 +551,7 @@ jr_001_433d:
     jp Jump_000_0bbb
 
 
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -935,7 +947,7 @@ jr_001_4582:
     inc de
     xor a
     ld [de], a
-    ld de, $11a1
+    ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
 jr_001_45b6:
@@ -943,7 +955,7 @@ jr_001_45b6:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -1140,11 +1152,11 @@ jr_001_46a2:
     jp SetCurrentHandlerAddress
 
 
-    call Call_000_09ec
+    call CheckPlayerCenterInEnemyHitbox
     ld de, $46ad
     jp SetCurrentHandlerAddress
 
-
+DelayThenHideBackground:
     ld hl, $cac3
     inc [hl]
     ld a, [hl+]

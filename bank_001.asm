@@ -88,7 +88,7 @@ jr_001_4083:
 
 Jump_001_4089:
     ld a, $53
-    call Call_000_0c57
+    call AddPlayerScore
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
@@ -776,7 +776,7 @@ jr_001_44a6:
     inc de
     ld a, [hl]
     ld [de], a
-    ld de, $0ff5
+    ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
     ld hl, $734c
     ld a, $01
@@ -911,7 +911,7 @@ jr_001_456e:
 jr_001_4582:
     call SetObjectGraphicsPointer
     ld a, $14
-    call Call_000_0c57
+    call AddPlayerScore
     ld de, $463d
     jp SetCurrentHandlerAddress
 
@@ -1086,7 +1086,7 @@ Call_001_465d:
     ld a, [bc]
     add [hl]
     ld [de], a
-    ld de, $0ff5
+    ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
     ld hl, $734c
     ld a, $01

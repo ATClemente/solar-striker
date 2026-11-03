@@ -2185,7 +2185,7 @@ CheckPointInHitbox:
 
 Jump_000_0bbb:
     ld a, d
-    call Call_000_0c57
+    call AddPlayerScore
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -2217,7 +2217,7 @@ Jump_000_0bbb:
     call SetupAudioPlayback
 
 jr_000_0bed:
-    ld de, $1019
+    ld de, AssignSmokeGraphics
     jp SetCurrentHandlerAddress
 
 
@@ -2302,36 +2302,35 @@ UpdateInvincibilityTimer:
     ld [de], a
     jp AdvanceToNextHandler
 
-
-Call_000_0c57:
+AddPlayerScore:
     ld b, a
     and $0f
     ld hl, $cf8f
     dec hl
 
-jr_000_0c5e:
+.selectScoreDigit:
     dec hl
     dec a
-    jr nz, jr_000_0c5e
+    jr nz, .selectScoreDigit
 
     swap b
     ld a, b
     and $0f
 
-jr_000_0c67:
+.addToDigit:
     add [hl]
     cp $0a
-    jr nc, jr_000_0c6e
+    jr nc, .carryToNextDigit
 
     ld [hl], a
     ret
 
 
-jr_000_0c6e:
+.carryToNextDigit:
     sub $0a
     ld [hl-], a
     ld a, $01
-    jr jr_000_0c67
+    jr .addToDigit
 
 UpdatePlayerLivesHUD:
     call CheckPlayerScoreForExtraLife
@@ -2768,7 +2767,7 @@ StageEventHandlerTable:
     dw $1b48 ; event type $08
     dw $1c1e ; event type $09
     dw $1d34 ; event type $0a
-    dw $1e1a ; event type $0b
+    dw InitializePowerUpContainer ; event type $0b
     dw $4000 ; event type $0c
     dw $20c7 ; event type $0d
     dw $41e0 ; event type $0e
@@ -3026,9 +3025,10 @@ TryApplyHardModeOverrides:
 ; Preserve the address referenced by disassembled data above.
 DEF jr_000_0ff2 EQU $0ff2
 
-    ld bc, $1072
+; Allocate a separate smoke object at the coordinates in $CA34-$CA35.
+InitializeSmokeObject:
+    ld bc, SmokePuffInitTemplate
 
-jr_000_0ff8:
     ld hl, $ca34
     ld a, [hl+]
     ld e, [hl]
@@ -3044,16 +3044,18 @@ jr_000_0ff8:
     ld l, a
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
-    ld de, $1019
+    ld de, AssignSmokeGraphics
     jp SetCurrentHandlerAddress
 
-
+AssignSmokeGraphics:
     ld a, [bc]
     call SetObjectPointer
     ld a, $12
     ld [hl], a
-    ld de, $1077
+    ld de, SmokePuffGraphicsFrame0
     call SetObjectGraphicsPointer
+
+UpdateSmokeMovement:
     ld a, [bc]
     call SetObjectPointer
     ld a, $08
@@ -3061,24 +3063,24 @@ jr_000_0ff8:
     ld d, a
     ld e, $00
     call MoveObject
-    ld de, $103b
+    ld de, UpdateSmokeAnimation
     jp SetCurrentHandlerAddress
 
-
+UpdateSmokeAnimation:
     ld a, [bc]
     call SetObjectPointer
     inc bc
     ld a, [bc]
     xor $01
     ld [bc], a
-    jr nz, jr_000_105e
+    jr nz, ScheduleSmokeMovement
 
     inc bc
     ld a, [bc]
     add a
     ld e, a
     ld d, $00
-    ld hl, $106a
+    ld hl, SmokePuffAnimationTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -3090,17 +3092,39 @@ jr_000_0ff8:
     ld [bc], a
     jp z, FreeObjectAndRemoveHandler
 
-jr_000_105e:
-    ld de, $1064
+ScheduleSmokeMovement:
+    ld de, ResumeSmokeMovement
+    jp SetCurrentHandlerAddress
+
+ResumeSmokeMovement:
+    ld de, UpdateSmokeMovement
     jp SetCurrentHandlerAddress
 
 
-    ld de, $1026
-    jp SetCurrentHandlerAddress
+; Provisional smoke-puff identification based on the observed collision effect.
+SmokePuffAnimationTable: ; $106A
+    dw SmokePuffGraphicsFrame0
+    dw SmokePuffGraphicsFrame1
+    dw SmokePuffGraphicsFrame2
+    dw SmokePuffGraphicsFrame0
 
+; Eight-byte template; its last three bytes overlap the first graphics frame.
+SmokePuffInitTemplate: ; $1072
+    db $12      ; Sprite grid: one row, two columns
+    db $00, $00 ; Collision center Y/X offsets
+    db $00, $00 ; Hitbox minimum Y/X offsets
 
-    db $77, $10, $7b, $10, $7f, $10, $77, $10, $12, $00, $00, $00, $00, $22, $00, $24
-    db $00, $26, $00, $28, $00, $2a, $00, $2c, $00
+; Each frame contains two (tile, attributes) pairs, left sprite then right sprite.
+SmokePuffGraphicsFrame0: ; $1077
+    db $22, $00 ; Also template hitbox maximum Y/X offsets
+    db $24      ; Also the template's final object attribute
+    db $00
+
+SmokePuffGraphicsFrame1: ; $107B
+    db $26, $00,  $28, $00
+
+SmokePuffGraphicsFrame2: ; $107F
+    db $2a, $00,  $2c, $00
 
 TrySpawnEnemyProjectile:
     ld bc, EnemyProjectileObjectTemplate
@@ -4141,7 +4165,7 @@ Jump_000_15e8:
     ld [hl], b
     inc hl
     ld [hl], c
-    ld de, $0ff5
+    ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
     ld de, $1616
     jp SetCurrentHandlerAddress
@@ -5449,32 +5473,34 @@ jr_000_1e08:
 
     db $12, $08, $08, $00, $fe, $10, $12, $00, $3c, $00, $3c, $20
 
-    ld bc, $1f8e
+InitializePowerUpContainer:
+    ld bc, PowerUpContainerInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1e2a
+    ld de, ConfigurePowerUpContainer
     jp SetCurrentHandlerAddress
 
-
+ConfigurePowerUpContainer:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1f96
+    ld de, PowerUpContainerGraphics
     call SetObjectGraphicsPointer
-    ld de, $1e3a
+    ld de, UpdatePowerUpContainerMovement
     jp SetCurrentHandlerAddress
 
-
+UpdatePowerUpContainerMovement:
     ld a, [bc]
     call SetObjectPointer
     ld d, $02
     ld e, $00
     call MoveObject
-    ld de, $1e4b
+    ld de, UpdatePowerUpContainerStatus
     jp SetCurrentHandlerAddress
 
 
+UpdatePowerUpContainerStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5486,22 +5512,22 @@ jr_000_1e08:
     add hl, de
     ld a, [hl]
     or a
-    jr nz, jr_000_1e64
+    jr nz, SchedulePowerUpContainerHit
 
-    ld de, $1e6a
+    ld de, CheckPowerUpContainerCollision
+    jp SetCurrentHandlerAddress
+
+SchedulePowerUpContainerHit:
+    ld de, HandlePowerUpContainerHit
     jp SetCurrentHandlerAddress
 
 
-jr_000_1e64:
-    ld de, $1e73
-    jp SetCurrentHandlerAddress
-
-
+CheckPowerUpContainerCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1e3a
+    ld de, UpdatePowerUpContainerMovement
     jp SetCurrentHandlerAddress
 
-
+HandlePowerUpContainerHit:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5514,19 +5540,19 @@ jr_000_1e64:
     ld de, $0003
     add hl, de
     inc [hl]
-    ld de, $0ff5
+    ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
     ld a, $22
-    call Call_000_0c57
+    call AddPlayerScore
     ld hl, $732d
     ld a, $01
     call SetupAudioPlayback
-    ld de, $1f9a
+    ld de, PowerUpContainerHiddenGraphics
     call SetObjectGraphicsPointer
-    ld de, $1ea4
+    ld de, InitializePowerUpReveal
     jp SetCurrentHandlerAddress
 
-
+InitializePowerUpReveal:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $000e
@@ -5534,12 +5560,12 @@ jr_000_1e64:
     xor a
     ld [hl+], a
     ld [hl], a
-    ld de, $1f9a
+    ld de, PowerUpContainerHiddenGraphics
     call SetObjectGraphicsPointer
-    ld de, $1ebb
+    ld de, CheckPowerUpCollection
     jp SetCurrentHandlerAddress
 
-
+CheckPowerUpCollection:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $c786
@@ -5558,17 +5584,18 @@ jr_000_1e64:
     call CheckPointInHitbox
     ld a, c
     or a
-    jr nz, jr_000_1ee1
+    jr nz, SchedulePowerUpAward ; Player touching power up
 
-    ld de, $1ee7
+    ld de, UpdatePowerUpStatus
     jp SetCurrentHandlerAddress
 
 
-jr_000_1ee1:
-    ld de, $1f43
+SchedulePowerUpAward:
+    ld de, AwardPowerUp
     jp SetCurrentHandlerAddress
 
 
+UpdatePowerUpStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5580,23 +5607,24 @@ jr_000_1ee1:
     add hl, bc
     ld a, [hl+]
     or a
-    jr nz, jr_000_1f08
+    jr nz, SchedulePowerUpMovementAndAnimation
 
     inc [hl]
     ld a, [hl]
     and $03
-    jr nz, jr_000_1f08
+    jr nz, SchedulePowerUpMovementAndAnimation
 
     dec hl
     inc [hl]
-    ld de, $1f9e
+    ld de, PowerUpGraphicsFrame0
     call SetObjectGraphicsPointer
 
-jr_000_1f08:
-    ld de, $1f0e
+SchedulePowerUpMovementAndAnimation:
+    ld de, UpdatePowerUpMovementAndAnimation
     jp SetCurrentHandlerAddress
 
 
+UpdatePowerUpMovementAndAnimation:
     ld a, [bc]
     call SetObjectPointer
     ld a, $08
@@ -5611,26 +5639,26 @@ jr_000_1f08:
     inc a
     and $0f
     ld [hl], a
-    jr z, jr_000_1f37
+    jr z, SetPowerUpGraphicsFrame0
 
     cp $08
-    jr nz, jr_000_1f3d
+    jr nz, SchedulePowerUpCollection
 
-    ld de, $1fa2
+    ld de, PowerUpGraphicsFrame1
     call SetObjectGraphicsPointer
-    jr jr_000_1f3d
+    jr SchedulePowerUpCollection
 
-jr_000_1f37:
-    ld de, $1f9e
+SetPowerUpGraphicsFrame0:
+    ld de, PowerUpGraphicsFrame0
     call SetObjectGraphicsPointer
 
-jr_000_1f3d:
-    ld de, $1ebb
+SchedulePowerUpCollection:
+    ld de, CheckPowerUpCollection
     jp SetCurrentHandlerAddress
 
-
+AwardPowerUp:
     ld a, $22
-    call Call_000_0c57
+    call AddPlayerScore
     ld hl, $5e5b
     ld a, $01
     call SetupAudioPlayback
@@ -5646,17 +5674,16 @@ jr_000_1f3d:
     ld bc, wWeaponPowerLevel
     ld a, [bc]
     cp MAX_WEAPON_POWER_LEVEL
-    jr z, jr_000_1f71
+    jr z, AwardMaxPowerBonus
 
     inc a
     ld [bc], a
     ld [$ca2c], a
     jp FreeObjectAndRemoveHandler
 
-
-jr_000_1f71:
+AwardMaxPowerBonus:
     ld a, $82
-    call Call_000_0c57
+    call AddPlayerScore
     jp FreeObjectAndRemoveHandler
 
 
@@ -5671,8 +5698,21 @@ jr_000_1f71:
     jp AdvanceToNextHandler
 
 
-    db $12, $08, $08, $00, $fe, $10, $12, $00, $3e, $00, $3e, $20, $00, $00, $00, $00
-    db $04, $00, $06, $00, $16, $00, $18, $00
+; $1F8E: one row, two sprites
+PowerUpContainerInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $00
+
+PowerUpContainerGraphics: ; $1F96: two (tile, attributes) pairs
+    db $3e, $00,  $3e, $20
+
+PowerUpContainerHiddenGraphics: ; $1F9A: two blank sprites
+    db $00, $00, $00, $00
+
+PowerUpGraphicsFrame0: ; $1F9E
+    db $04, $00, $06, $00
+
+PowerUpGraphicsFrame1: ; $1FA2
+    db $16, $00, $18, $00
 
     ld bc, $2022
     call TryInitializeObjectInFreeSlot
@@ -6384,7 +6424,7 @@ jr_000_23e4:
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     ld a, $14
-    call Call_000_0c57
+    call AddPlayerScore
     ld de, $2415
     jp SetCurrentHandlerAddress
 
@@ -6627,7 +6667,7 @@ jr_000_2574:
     ld de, $46d7
     call StoreAddressInFreeWramSlot
     ld a, $24
-    call Call_000_0c57
+    call AddPlayerScore
     call IncrementPlayerLives
     ld de, $2415
     jp SetCurrentHandlerAddress

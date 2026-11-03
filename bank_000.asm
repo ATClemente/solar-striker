@@ -2761,7 +2761,7 @@ StageEventHandlerTable:
     dw $0d8f ; event type $02
     dw $0d9e ; event type $03
     dw InitializeStageAnnouncement ; event type $04
-    dw $19db ; event type $05
+    dw InitializeProtodroid ; event type $05
     dw $1a47 ; event type $06
     dw InitializeRotomech ; event type $07
     dw $1b48 ; event type $08

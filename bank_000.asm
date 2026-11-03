@@ -2762,7 +2762,7 @@ StageEventHandlerTable:
     dw $0d9e ; event type $03
     dw InitializeStageAnnouncement ; event type $04
     dw InitializeProtodroid ; event type $05
-    dw $1a47 ; event type $06
+    dw InitializeCruiser ; event type $06
     dw InitializeRotomech ; event type $07
     dw $1b48 ; event type $08
     dw $1c1e ; event type $09
@@ -4847,16 +4847,16 @@ ConfigureProtodroid:
 
 SetEnemyGraphicsAndStartUpdateCycle:
     call SetObjectGraphicsPointer
-    ld de, UpdateProtodroidMovement
+    ld de, UpdateScriptedEnemyMovementHandler
     ld a, [wCurrentHandlerIndex]
     and $01
     jp nz, SetCurrentHandlerAddress
 
-    ld de, UpdateProtodroidState
+    ld de, CheckScriptedEnemyCollision
     jp SetCurrentHandlerAddress
 
 
-UpdateProtodroidMovement:
+UpdateScriptedEnemyMovementHandler:
     call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
@@ -4866,18 +4866,18 @@ UpdateProtodroidMovement:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, TryFireProtodroidShot
+    ld de, TryFireScriptedEnemyShot
     jp SetCurrentHandlerAddress
 
-TryFireProtodroidShot:
+TryFireScriptedEnemyShot:
     call TryScheduleEnemyShot
-    ld de, UpdateProtodroidState
+    ld de, CheckScriptedEnemyCollision
     jp SetCurrentHandlerAddress
 
 
-UpdateProtodroidState:
+CheckScriptedEnemyCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, UpdateProtodroidMovement
+    ld de, UpdateScriptedEnemyMovementHandler
     jp SetCurrentHandlerAddress
 
 
@@ -4893,24 +4893,32 @@ ProtodroidInitTemplate:
 ProtodroidGraphics:
     db $2e, $00,  $2e, $20
 
-    ld bc, $1a6b
+InitializeCruiser:
+    ld bc, CruiserInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1a57
+    ld de, ConfigureCruiser
     jp SetCurrentHandlerAddress
 
-
+ConfigureCruiser:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1a67
+    ld de, CruiserMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1a73
+    ld de, CruiserGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    db $4f, $35, $61, $35, $12, $08, $08, $00, $fe, $10, $12, $00, $30, $00, $30, $20
+CruiserMovementScriptTable:
+    dw CruiserMovementScriptA, CruiserMovementScriptB
+
+CruiserInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $00
+
+CruiserGraphics:
+    db $30, $00,  $30, $20
 
 InitializeRotomech:
     ld bc, RotomechInitTemplate
@@ -9335,27 +9343,28 @@ ProtodroidMovementScriptA: ; $3531
     ld a, $4e
     db $3e
 
-    db $b1, $3c, $01, $3e, $0c, $3e, $91, $3c
+; Each pointer selects a movement command sequence, read in order.
+CruiserMovementScriptA: ; $354F
+    dw $3cb1
+    dw $3e01
+    dw $3e0c
+    dw $3c91
+    dw $3c91
+    dw $3c91
+    dw $3c91
+    dw $3c91
+    dw $3c91
 
-    sub c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-
-    db $b1, $3c, $a9, $3d, $b4, $3d, $a1, $3c, $a1, $3c, $a1, $3c
-
-    and c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
+CruiserMovementScriptB: ; $3561
+    dw $3cb1
+    dw $3da9
+    dw $3db4
+    dw $3ca1
+    dw $3ca1
+    dw $3ca1
+    dw $3ca1
+    dw $3ca1
+    dw $3ca1
 
 ; Each pointer selects a movement command sequence, read in order.
 RotomechMovementScriptA: ; $3573

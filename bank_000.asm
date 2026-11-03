@@ -2616,7 +2616,7 @@ SetStageReady:
     ld [$cfa1], a
     jp RemoveCurrentHandler
 
-
+StopStageAudio:
     ld a, [$cf9a]
     call StopAudioPlayback
     jp RemoveCurrentHandler
@@ -2785,7 +2785,7 @@ StageEventHandlerTable:
     dw $2d09 ; event type $1a
     dw RemoveCurrentHandler ; event type $1b
     dw $0dcb ; event type $1c
-    dw $0ddd ; event type $1d
+    dw StopStageAudio ; event type $1d
     dw $0dba ; event type $1e
     dw $2ec9 ; event type $1f
     dw $1b18 ; event type $20

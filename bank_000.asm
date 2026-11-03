@@ -2766,7 +2766,7 @@ StageEventHandlerTable:
     dw InitializeRotomech ; event type $07
     dw $1b48 ; event type $08
     dw $1c1e ; event type $09
-    dw $1d34 ; event type $0a
+    dw InitializeHarrier ; event type $0a
     dw InitializePowerUpContainer ; event type $0b
     dw $4000 ; event type $0c
     dw $20c7 ; event type $0d
@@ -5330,32 +5330,33 @@ jr_000_1d15:
     ld c, b
     db $20
 
-    ld bc, $1e0e
+InitializeHarrier:
+    ld bc, HarrierInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1d44
+    ld de, ConfigureHarrier
     jp SetCurrentHandlerAddress
 
-
+ConfigureHarrier:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1e16
+    ld de, HarrierGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1d5b
+    jr z, SetUpdateHarrierMovementHandler
 
-    ld de, $1df1
+    ld de, CheckHarrierCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_1d5b:
-    ld de, $1d61
+SetUpdateHarrierMovementHandler:
+    ld de, UpdateHarrierVerticalMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateHarrierVerticalMovement:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000c
@@ -5380,29 +5381,30 @@ jr_000_1d5b:
     ld a, [de]
     sub $04
     cp [hl]
-    jr nc, jr_000_1d9f
+    jr nc, SetUpdateHarrierStatusHandler ; playerY - 4 >= enemyY
 
     inc de
     inc hl
     ld a, [de]
     cp [hl]
-    jr c, jr_000_1d95
+    jr c, ActivateHarrierHorizontalMovement
 
     xor a
 
-jr_000_1d95:
+ActivateHarrierHorizontalMovement:
     ld hl, $000f
     add hl, bc
     inc [hl]
     ld hl, $0011
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; zero to move right, non zero for left
 
-jr_000_1d9f:
-    ld de, $1dd3
+SetUpdateHarrierStatusHandler:
+    ld de, UpdateHarrierStatus
     jp SetCurrentHandlerAddress
 
 
+UpdateHarrierHorizontalMovement:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000c
@@ -5417,21 +5419,21 @@ jr_000_1d9f:
     add hl, bc
     ld a, [hl]
     or a
-    jr z, jr_000_1dc0
+    jr z, .applyHorizontalMovement
 
     ld d, $a0
 
-jr_000_1dc0:
+.applyHorizontalMovement
     ld a, d
     call CalculateXMovement
     ld a, [$ca17]
     ld e, a
     ld d, $00
     call MoveObject
-    ld de, $1dd3
+    ld de, UpdateHarrierStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateHarrierStatus:
     call TryScheduleEnemyShot
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -5447,10 +5449,11 @@ jr_000_1dc0:
     cp $d0
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $1df1
+    ld de, CheckHarrierCollision
     jp SetCurrentHandlerAddress
 
 
+CheckHarrierCollision:
     call CheckEnemyCollisionWithPlayer
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -5460,18 +5463,21 @@ jr_000_1dc0:
     add hl, de
     ld a, [hl]
     or a
-    jr z, jr_000_1e08
+    jr z, .skipHorizontalMovement
 
-    ld de, $1da5
+    ld de, UpdateHarrierHorizontalMovement
+    jp SetCurrentHandlerAddress
+
+.skipHorizontalMovement
+    ld de, UpdateHarrierVerticalMovement
     jp SetCurrentHandlerAddress
 
 
-jr_000_1e08:
-    ld de, $1d61
-    jp SetCurrentHandlerAddress
+HarrierInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $00
 
-
-    db $12, $08, $08, $00, $fe, $10, $12, $00, $3c, $00, $3c, $20
+HarrierGraphics:
+    db $3c, $00, $3c, $20
 
 InitializePowerUpContainer:
     ld bc, PowerUpContainerInitTemplate

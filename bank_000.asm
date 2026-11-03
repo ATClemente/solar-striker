@@ -2608,6 +2608,7 @@ SetStageReady:
     jp RemoveCurrentHandler
 
 
+StartBossAudio:
     ld hl, $5eb0
     xor a
     call SetupAudioPlayback
@@ -2784,7 +2785,7 @@ StageEventHandlerTable:
     dw $24ff ; event type $19
     dw $2d09 ; event type $1a
     dw RemoveCurrentHandler ; event type $1b
-    dw $0dcb ; event type $1c
+    dw StartBossAudio ; event type $1c
     dw StopStageAudio ; event type $1d
     dw $0dba ; event type $1e
     dw $2ec9 ; event type $1f

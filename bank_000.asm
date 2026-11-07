@@ -2563,6 +2563,7 @@ UnpackStageEventParameters:
     jp AdvanceToNextHandler
 
 
+IncreaseScrollSpeed:
     ld a, [$cac1]
     or a
     jp nz, RemoveCurrentHandler
@@ -2794,7 +2795,7 @@ StageEventHandlerTable:
     dw $1ba8 ; event type $22
     dw $1ca9 ; event type $23
     dw $1fa6 ; event type $24
-    dw $0d81 ; event type $25
+    dw IncreaseScrollSpeed ; event type $25
     dw $2123 ; event type $26
     dw $214f ; event type $27
     dw $217f ; event type $28

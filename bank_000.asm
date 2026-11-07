@@ -2798,7 +2798,7 @@ StageEventHandlerTable:
     dw IncreaseScrollSpeed ; event type $25
     dw $2123 ; event type $26
     dw $214f ; event type $27
-    dw $217f ; event type $28
+    dw InitializeMack ; event type $28
     dw $21b2 ; event type $29
     dw $2245 ; event type $2a
     dw $40fd ; event type $2b
@@ -3246,6 +3246,7 @@ FailedProjectileSpawn:
     jp RemoveCurrentHandler
 
 
+TrySpawnAlternateEnemyProjectile:
     ld bc, AlternateEnemyProjectileObjectTemplate
     ld hl, wEnemyShotSpawnY
     ld a, [hl+]
@@ -3264,27 +3265,27 @@ FailedProjectileSpawn:
     ld hl, wEnemyShotSpawnY
     ld [hl+], a
     ld [hl+], a
-    ld de, $1166
+    ld de, ConfigureAlternateEnemyProjectile
     jp SetCurrentHandlerAddress
 
-
+ConfigureAlternateEnemyProjectile:
     ld a, [bc]
     call SetObjectPointer
     ld de, AlternateEnemyProjectileGraphics
     call SetObjectGraphicsPointer
-    ld de, $1176
+    ld de, UpdateAlternateProjectilePosition
     jp SetCurrentHandlerAddress
 
-
+UpdateAlternateProjectilePosition:
     ld a, [bc]
     call SetObjectPointer
     ld d, $05
     ld e, $00
     call MoveObject
-    ld de, $1187
+    ld de, UpdateAlternateProjectileStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateAlternateProjectileStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -3292,12 +3293,12 @@ FailedProjectileSpawn:
     cp $98
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $1198
+    ld de, CheckAlternateProjectileCollision
     jp SetCurrentHandlerAddress
 
-
+CheckAlternateProjectileCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1176
+    ld de, UpdateAlternateProjectilePosition
     jp SetCurrentHandlerAddress
 
 
@@ -5258,7 +5259,7 @@ jr_000_1cd6:
     ld de, $1cdc
     jp SetCurrentHandlerAddress
 
-
+    ; 1cdc
     call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
@@ -5276,7 +5277,7 @@ jr_000_1cd6:
     ld de, $1cf8
     jp SetCurrentHandlerAddress
 
-
+    ; 1cf8
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
@@ -5290,14 +5291,14 @@ jr_000_1cd6:
 
     ld bc, $0806
     call StoreOffsetObjectPosition
-    ld de, $1141
+    ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_1d15:
     ld de, $1d1b
     jp SetCurrentHandlerAddress
 
-
+    ; 1D1B
     call CheckEnemyCollisionWithPlayer
     ld de, $1cdc
     jp SetCurrentHandlerAddress
@@ -5995,56 +5996,42 @@ jr_000_2151:
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    and l
-    ld [hl], $bd
-    ld [hl], $12
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $004c
-    ld c, h
-    jr nz, jr_000_2181
+    ; $216F: movement script pointers
+    dw $36a5, $36bd
 
-    and d
+    ; $2173: initialization template
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-jr_000_2181:
-    ld hl, $47cd
-    add hl, bc
+    ; $217B: graphics (tile, attributes)
+    db $4c, $00, $4c, $20
+
+InitializeMack:
+    ld bc, MackInitTemplate
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $218f
+    ld de, ConfigureMack
     jp SetCurrentHandlerAddress
 
-
+ConfigureMack:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $36d5
+    ld de, MackMovementScript
     call InitializeMovementScript
-    ld de, $21aa
+    ld de, MackGraphics
     call SetObjectGraphicsPointer
     jp Jump_000_1cd6
 
 
-    ld [hl+], a
-    db $10
-    ld [$fe00], sp
-    jr nz, @+$14
+MackInitTemplate:
+    db $22, $10, $08, $00, $fe, $20, $12, $04
 
-    inc b
-    ld c, [hl]
-    nop
-    ld c, [hl]
-    jr nz, jr_000_2211
+MackGraphics:
+    db $4e, $00, $4e, $20, $62, $00, $62, $20
 
-    nop
-    ld h, d
-    jr nz, jr_000_21b4
-
-    add hl, sp
-
-jr_000_21b4:
-    ld [hl+], a
+    ; $21B2: event $29 initializer
+    ld bc, $2239
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -6762,7 +6749,7 @@ jr_000_2618:
     jr nz, jr_000_262a
 
     call StoreOffsetObjectPosition
-    ld de, $1141
+    ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_262a:
@@ -7071,7 +7058,7 @@ jr_000_27d3:
     ld a, d
     ld [hl+], a
     ld [hl], e
-    ld de, $1141
+    ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_000_2805:
@@ -9612,30 +9599,15 @@ SkimbotMovementScript: ; $367D
     dec a
     sbc [hl]
     dec a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
+
+MackMovementScript: ; $36D5
+    dw $3d4d, $3c89
+    dw $3d4d, $3c89
+    dw $3d4d, $3c89
+    dw $3d4d, $3c89
+    dw $3d4d, $3c89
+    dw $3d4d, $3c89
+
     or c
     inc a
     dec a

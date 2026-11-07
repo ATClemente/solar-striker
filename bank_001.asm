@@ -728,7 +728,7 @@ jr_001_4453:
 
     ld bc, $1c00
     call StoreOffsetObjectPosition
-    ld de, $1141
+    ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
 jr_001_4489:

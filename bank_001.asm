@@ -144,76 +144,70 @@ DestructorDamageGraphics:
     db $6c, $10, $6e, $10, $6e, $30, $6c, $30
     db $70, $10, $72, $10, $72, $30, $70, $30
 
-    ; 40FD
+InitializeUltraCrusher:
     xor a
     ld hl, $cac0
     ld b, $10
 
-jr_001_4103:
+.clearStateBytes
     ld [hl+], a
     dec b
-    jr nz, jr_001_4103
+    jr nz, .clearStateBytes
 
-    ld bc, $41b8
+    ld bc, UltraCrusherInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $25d9
+    ld de, UpdateUltraCrusherShotTimer
     call StoreAddressInFreeWramSlot
-    ld de, $411d
+    ld de, ConfigureUltraCrusher
     jp SetCurrentHandlerAddress
 
-
+ConfigureUltraCrusher:
     ld a, [bc]
     ld [$cf99], a
     call SetObjectPointer
-    ld de, $37bf
+    ld de, UltraCrusherMovementScript
     call InitializeMovementScript
-    ld de, $41c0
+    ld de, UltraCrusherBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4136
+    ld de, UpdateUltraCrusherMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateUltraCrusherMovement:
     call Call_001_4627
     cp [hl]
-    jr c, jr_001_4147
+    jr c, HandleUltraCrusherDefeat
 
     ld a, $05
     ld [$ca2c], a
-    ld de, $4150
+    ld de, UpdateUltraCrusherStatus
     jp SetCurrentHandlerAddress
 
 
-jr_001_4147:
-    ld de, $41c0
+HandleUltraCrusherDefeat:
+    ld de, UltraCrusherBaseGraphics
     call SetObjectGraphicsPointer
     jp Jump_001_4089
 
 
-jr_001_4150:
+UpdateUltraCrusherStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl]
-
-jr_001_4156:
     cp $a0
-    jp nc, Jump_001_41a7
+    jp nc, HandleUltraCrusherExit
 
     call CheckEnemyShotTimer
     or a
-
-jr_001_415f:
-    jr nz, jr_001_4184
+    jr nz, .restoreBaseGraphics
 
     ld de, $ca63
     ld bc, $100c
     call StoreOffsetObjectPosition
     ld a, $06
-
-jr_001_416c:
     ld [de], a
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -221,42 +215,42 @@ jr_001_416c:
     ld l, a
     ld a, [hl]
     cp $50
-    jr c, jr_001_417b
+    jr c, .updateFiringSequence
 
     ld a, $07
     ld [de], a
 
-jr_001_417b:
+.updateFiringSequence
     inc de
     xor a
     ld [de], a
     ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
-jr_001_4184:
-    ld de, $41c0
+.restoreBaseGraphics
+    ld de, UltraCrusherBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4190
+    ld de, CheckUltraCrusherCollision
     jp SetCurrentHandlerAddress
 
 
-jr_001_4190:
+CheckUltraCrusherCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
-    jr z, jr_001_41a1
+    jr z, .setMovementHandler
 
-    ld de, $41d0
+    ld de, UltraCrusherDamageGraphics
     call SetObjectGraphicsPointer
 
-jr_001_41a1:
-    ld de, $4136
+.setMovementHandler
+    ld de, UpdateUltraCrusherMovement
     jp SetCurrentHandlerAddress
 
 
-Jump_001_41a7:
+HandleUltraCrusherExit:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
@@ -265,46 +259,16 @@ Jump_001_41a7:
     jp Jump_001_46ea
 
 
-    inc h
-    db $10
-    db $10
-    ld [bc], a
-    ld [bc], a
-    inc e
-    inc e
-    ld h, b
-    adc h
-    nop
-    adc [hl]
-    nop
-    adc [hl]
-    jr nz, @-$72
+UltraCrusherInitTemplate:
+    db $24, $10, $10, $02, $02, $1c, $1c, $60
 
-    jr nz, @-$6e
+UltraCrusherBaseGraphics:
+    db $8c, $00, $8e, $00, $8e, $20, $8c, $20
+    db $90, $00, $92, $00, $92, $20, $90, $20
 
-    nop
-    sub d
-    nop
-    sub d
-    jr nz, jr_001_415f
-
-    jr nz, @-$72
-
-    db $10
-    adc [hl]
-    db $10
-    adc [hl]
-    jr nc, @-$72
-
-    jr nc, @-$6e
-
-    db $10
-    sub d
-    db $10
-    sub d
-    jr nc, @-$6e
-
-    db $30
+UltraCrusherDamageGraphics:
+    db $8c, $10, $8e, $10, $8e, $30, $8c, $30
+    db $90, $10, $92, $10, $92, $30, $90, $30
 
 InitializeEpikhan:
     xor a

@@ -2801,7 +2801,7 @@ StageEventHandlerTable:
     dw InitializeMack ; event type $28
     dw $21b2 ; event type $29
     dw $2245 ; event type $2a
-    dw $40fd ; event type $2b
+    dw InitializeUltraCrusher ; event type $2b
 
 ; Preserve addresses referenced by disassembled data below.
 DEF jr_000_0efc EQU StageEventHandlerTable + $45
@@ -6684,12 +6684,14 @@ jr_000_25c3:
     nop
     jr nz, jr_000_25f0
 
-    ldh [$fffa], a
-    pop bc
-    jp z, $c2b7
+    ; $25D8: final byte of preceding data
+    db $e0
 
-    ld h, a
-    ld a, [bc]
+UpdateUltraCrusherShotTimer:
+    ld a, [$cac1]
+    or a
+    jp nz, RemoveCurrentHandler
+
     ld a, [bc]
     ld hl, $0004
     add hl, bc
@@ -6699,12 +6701,12 @@ jr_000_25c3:
     jp nz, AdvanceToNextHandler
 
     ld [hl], a
-    ld de, $25f3
+    ld de, TryFireUltraCrusherLaser
 
 jr_000_25f0:
     jp SetCurrentHandlerAddress
 
-
+TryFireUltraCrusherLaser:
     ld a, [$cf99]
     call SetObjectPointer
     inc hl
@@ -6716,34 +6718,34 @@ jr_000_25f0:
     ld a, [de]
     add $10
     cp b
-    jr c, jr_000_262a
+    jr c, .setFireHandler
 
     ld a, [de]
     sub $10
     cp b
-    jr nc, jr_000_262a
+    jr nc, .setFireHandler
 
     ld c, $18
     ld a, [de]
     add $04
     cp b
-    jr nc, jr_000_2618
+    jr nc, .trySpawnShot
 
     ld c, $00
 
-jr_000_2618:
+.trySpawnShot
     ld b, $10
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_262a
+    jr nz, .setFireHandler
 
     call StoreOffsetObjectPosition
     ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_262a:
-    ld de, $25d9
+.setFireHandler
+    ld de, UpdateUltraCrusherShotTimer
     jp SetCurrentHandlerAddress
 
 
@@ -9690,272 +9692,25 @@ DestructorMovementScript: ; $373D
     dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
     dw $3e90, $3d45, $3cb1, $3cb1, $3cb1
 
-    ld c, l
-    dec a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    and c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+UltraCrusherMovementScript: ; $37BF
+    dw $3d4d
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cc1, $3cc1, $3ca1, $3c91, $3c91, $3ca1
+    dw $3cb1, $3cb1, $3cb1, $3cb1
 
 EpikhanMovementScript: ; $38C9
     ; Enter: move down 24 pixels, then pause for 8 movement updates.

@@ -2765,7 +2765,7 @@ StageEventHandlerTable:
     dw InitializeProtodroid ; event type $05
     dw InitializeCruiser ; event type $06
     dw InitializeRotomech ; event type $07
-    dw $1b48 ; event type $08
+    dw InitializePincher ; event type $08
     dw $1c1e ; event type $09
     dw InitializeHarrier ; event type $0a
     dw InitializePowerUpContainer ; event type $0b
@@ -5020,24 +5020,31 @@ RotomechGraphicsFrame3: ; $1B14
     ld b, d
     db $20
 
-    ld bc, $1b6c
+InitializePincher:
+    ld bc, PincherInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1b58
+    ld de, ConfigurePincher
     jp SetCurrentHandlerAddress
 
-
+ConfigurePincher:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1b68
+    ld de, PincherMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1b74
+    ld de, PincherGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
+PincherMovementScriptTable:
+    dw PincherMovementScriptA, PincherMovementScriptB
 
-    db $9f, $35, $c3, $35, $12, $08, $08, $00, $fe, $10, $12, $01, $38, $00, $38, $20
+PincherInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $01
+
+PincherGraphics:
+    db $38, $00, $38, $20
 
     ld bc, $1b9c
     call TryInitializeObjectInFreeSlot
@@ -9372,44 +9379,47 @@ RotomechMovementScriptB: ; $357F
     or c
     inc a
 
-    db $4d, $3d, $89, $3c, $3d, $3d, $4d, $3d, $89, $3c, $3d, $3d, $4d, $3d, $89, $3c
-    db $3d, $3d, $4d, $3d, $89, $3c, $3d, $3d, $4d, $3d
+; Each pointer selects a movement command sequence, read in order.
+PincherMovementScriptA: ; $359F
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
+    dw $3d4d
+    dw $3c89
+    dw $3d3d
 
-    adc c
-    inc a
-    dec a
-    dec a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    dec a
-    dec a
+PincherMovementScriptB: ; $35C3
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
+    dw $3cb1
+    dw $3c89
+    dw $3ca1
 
-    db $b1, $3c, $89, $3c, $a1, $3c, $b1, $3c, $89, $3c, $a1, $3c, $b1, $3c
-
-    adc c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
     pop de
     inc a
     pop hl

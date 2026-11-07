@@ -5,58 +5,61 @@
 
 SECTION "ROM Bank $001", ROMX[$4000], BANK[$1]
 
+InitializeDestructor:
     xor a
     ld hl, $cac0
     ld b, $10
 
-jr_001_4006:
+.clearStateBytes
     ld [hl+], a
     dec b
-    jr nz, jr_001_4006
+    jr nz, .clearStateBytes
 
-    ld bc, $40d5
+    ld bc, DestructorInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
     ld a, $05
     ld [$ca2c], a
-    ld de, $401f
+    ld de, ConfigureDestructor
     jp SetCurrentHandlerAddress
 
-
+ConfigureDestructor:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $373d
+    ld de, DestructorMovementScript
     call InitializeMovementScript
-    ld de, $40dd
+    ld de, DestructorBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $2630
+    ld de, TryFireDestructorOrb
     call StoreAddressInFreeWramSlot
-    ld de, $403b
+    ld de, UpdateDestructorMovement
     jp SetCurrentHandlerAddress
 
 
+UpdateDestructorMovement:
     call Call_001_4627
     cp [hl]
-    jr c, jr_001_4047
+    jr c, HandleDestructorDefeat
 
-    ld de, $4050
+    ld de, UpdateDestructorStatus
     jp SetCurrentHandlerAddress
 
 
-jr_001_4047:
-    ld de, $40dd
+HandleDestructorDefeat:
+    ld de, DestructorBaseGraphics
     call SetObjectGraphicsPointer
     jp Jump_001_4089
 
 
+UpdateDestructorStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $a0
-    jp nc, Jump_001_40a2
+    jp nc, HandleDestructorExit
 
     ld de, $ca63
     add $10
@@ -65,24 +68,24 @@ jr_001_4047:
     ld a, [hl]
     add $0c
     ld [de], a
-    ld de, $40dd
+    ld de, DestructorBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4072
+    ld de, CheckDestructorCollision
     jp SetCurrentHandlerAddress
 
-
+CheckDestructorCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
-    jr z, jr_001_4083
+    jr z, .applyMovementHandler
 
-    ld de, $40ed
+    ld de, DestructorDamageGraphics
     call SetObjectGraphicsPointer
 
-jr_001_4083:
-    ld de, $403b
+.applyMovementHandler
+    ld de, UpdateDestructorMovement
     jp SetCurrentHandlerAddress
 
 
@@ -98,7 +101,7 @@ Jump_001_4089:
     jp SetCurrentHandlerAddress
 
 
-Jump_001_40a2:
+HandleDestructorExit:
     ld a, $01
     ld [$cac1], a
     ld hl, wPlayerInvincible
@@ -130,47 +133,19 @@ Jump_001_40a2:
     jp AdvanceToNextHandler
 
 
-    inc h
-    db $10
-    stop
-    nop
-    jr nz, jr_001_40fc
+DestructorInitTemplate:
+    db $24, $10, $10, $00, $00, $20, $20, $70
 
-    ld [hl], b
-    ld l, h
-    nop
-    ld l, [hl]
-    nop
-    ld l, [hl]
-    jr nz, jr_001_4150
+DestructorBaseGraphics:
+    db $6c, $00, $6e, $00, $6e, $20, $6c, $20
+    db $70, $00, $72, $00, $72, $20, $70, $20
 
-    jr nz, jr_001_4156
+DestructorDamageGraphics:
+    db $6c, $10, $6e, $10, $6e, $30, $6c, $30
+    db $70, $10, $72, $10, $72, $30, $70, $30
 
-    nop
-    ld [hl], d
-    nop
-    ld [hl], d
-    jr nz, @+$72
-
-    jr nz, @+$6e
-
-    db $10
-    ld l, [hl]
-    db $10
-    ld l, [hl]
-    jr nc, @+$6e
-
-    jr nc, @+$72
-
-    db $10
-    ld [hl], d
-    db $10
-    ld [hl], d
-    jr nc, jr_001_416c
-
-jr_001_40fc:
-    jr nc, @-$4f
-
+    ; 40FD
+    xor a
     ld hl, $cac0
     ld b, $10
 

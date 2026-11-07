@@ -2770,7 +2770,7 @@ StageEventHandlerTable:
     dw InitializeArrowhead ; event type $09
     dw InitializeHarrier ; event type $0a
     dw InitializePowerUpContainer ; event type $0b
-    dw $4000 ; event type $0c
+    dw InitializeDestructor ; event type $0c
     dw $20c7 ; event type $0d
     dw InitializeEpikhan ; event type $0e
     dw $42b5 ; event type $0f
@@ -6783,6 +6783,7 @@ jr_000_262a:
     jp SetCurrentHandlerAddress
 
 
+TryFireDestructorOrb:
     ld a, [$cac1]
     or a
     jp nz, RemoveCurrentHandler
@@ -6795,12 +6796,12 @@ jr_000_262a:
     ld [hl], a
     jp nz, AdvanceToNextHandler
 
-    ld de, $264c
+    ld de, InitializeDestructorOrb
     call StoreAddressInFreeWramSlot
     jp AdvanceToNextHandler
 
-
-    ld bc, $26f4
+InitializeDestructorOrb:
+    ld bc, DestructorOrbInitTemplate
     xor a
     ld d, a
     ld e, a
@@ -6814,10 +6815,10 @@ jr_000_262a:
     ld l, a
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
-    ld de, $266b
+    ld de, ConfigureDestructorOrb
     jp SetCurrentHandlerAddress
 
-
+ConfigureDestructorOrb:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0004
@@ -6833,7 +6834,7 @@ jr_000_262a:
     add a
     ld l, a
     ld h, $00
-    ld de, $26ec
+    ld de, DestructorOrbMovementTable
     add hl, de
     ld a, [hl+]
     ld [bc], a
@@ -6844,9 +6845,9 @@ jr_000_262a:
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    ld bc, $26f4
+    ld bc, DestructorOrbInitTemplate
     call ResetObjectAttributes
-    ld de, $26fc
+    ld de, DestructorOrbGraphics
     call SetObjectGraphicsPointer
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -6856,10 +6857,11 @@ jr_000_262a:
     add hl, de
     xor a
     ld [hl], a
-    ld de, $26b1
+    ld de, UpdateDestructorOrbMovement
     jp SetCurrentHandlerAddress
 
-
+    ; 26b1
+UpdateDestructorOrbMovement:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0005
@@ -6868,10 +6870,10 @@ jr_000_262a:
     ld e, [hl]
     ld d, a
     call MoveObject
-    ld de, $26c5
+    ld de, UpdateDestructorOrbStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateDestructorOrbStatus:
     call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
@@ -6887,36 +6889,32 @@ jr_000_262a:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, $26e3
+    ld de, CheckDestructorOrbCollision
     jp SetCurrentHandlerAddress
 
-
+CheckDestructorOrbCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $26b1
+    ld de, UpdateDestructorOrbMovement
     jp SetCurrentHandlerAddress
 
 
-    db $fc
-    db $fc
-    inc b
-    db $fc
-    inc b
-    inc b
-    db $fc
-    inc b
-    ld [de], a
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
+DestructorOrbMovementTable:
+    db $fc, $fc ; -4, -4: up-left
+    db $04, $fc ; +4, -4: down-left
+    db $04, $04 ; +4, +4: down-right
+    db $fc, $04 ; -4, +4: up-right
 
-jr_000_26fb:
-    ld bc, $007a
-    ld a, d
-    jr nz, jr_000_26fb
+    ; $26F4
+DestructorOrbInitTemplate:
+    db $12, $08, $08, $00, $00, $10, $10, $01
 
-    jp z, $b7ca
+    ; $26FC
+DestructorOrbGraphics:
+    db $7a, $00, $7a, $20
 
+    ; $2700
+    ld a, [$caca]
+    or a
     jp z, AdvanceToNextHandler
 
     ld hl, $0016
@@ -9736,96 +9734,19 @@ PincherMovementScriptB: ; $35C3
     inc a
     sub c
     inc a
-    ld c, l
-    dec a
-    ld b, l
-    dec a
-    ld l, a
-    ld a, $7a
-    ld a, $91
-    inc a
-    ld b, e
-    ld a, $4e
-    ld a, $a1
-    inc a
-    ld e, c
-    ld a, $64
-    ld a, $91
-    inc a
-    add l
-    ld a, $90
-    ld a, $a1
-    inc a
-    ld l, a
-    ld a, $7a
-    ld a, $91
-    inc a
-    ld b, e
-    ld a, $4e
-    ld a, $a1
-    inc a
-    ld e, c
-    ld a, $64
-    ld a, $91
-    inc a
-    add l
-    ld a, $90
-    ld a, $a1
-    inc a
-    ld l, a
-    ld a, $7a
-    ld a, $91
-    inc a
-    ld b, e
-    ld a, $4e
-    ld a, $a1
-    inc a
-    ld e, c
-    ld a, $64
-    ld a, $91
-    inc a
-    add l
-    ld a, $90
-    ld a, $a1
-    inc a
-    ld l, a
-    ld a, $7a
-    ld a, $91
-    inc a
-    ld b, e
-    ld a, $4e
-    ld a, $a1
-    inc a
-    ld e, c
-    ld a, $64
-    ld a, $91
-    inc a
-    add l
-    ld a, $90
-    ld a, $a1
-    inc a
-    ld l, a
-    ld a, $7a
-    ld a, $91
-    inc a
-    ld b, e
-    ld a, $4e
-    ld a, $a1
-    inc a
-    ld e, c
-    ld a, $64
-    ld a, $91
-    inc a
-    add l
-    ld a, $90
-    ld a, $45
-    dec a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+DestructorMovementScript: ; $373D
+    dw $3d4d, $3d45, $3e6f, $3e7a, $3c91, $3e43
+    dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
+    dw $3e90, $3ca1, $3e6f, $3e7a, $3c91, $3e43
+    dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
+    dw $3e90, $3ca1, $3e6f, $3e7a, $3c91, $3e43
+    dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
+    dw $3e90, $3ca1, $3e6f, $3e7a, $3c91, $3e43
+    dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
+    dw $3e90, $3ca1, $3e6f, $3e7a, $3c91, $3e43
+    dw $3e4e, $3ca1, $3e59, $3e64, $3c91, $3e85
+    dw $3e90, $3d45, $3cb1, $3cb1, $3cb1
+
     ld c, l
     dec a
     or c

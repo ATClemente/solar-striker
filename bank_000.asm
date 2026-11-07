@@ -2791,7 +2791,7 @@ StageEventHandlerTable:
     dw $0dba ; event type $1e
     dw $2ec9 ; event type $1f
     dw $1b18 ; event type $20
-    dw $1b78 ; event type $21
+    dw InitializeZigzag ; event type $21
     dw $1ba8 ; event type $22
     dw $1ca9 ; event type $23
     dw $1fa6 ; event type $24
@@ -5047,41 +5047,35 @@ PincherInitTemplate:
 PincherGraphics:
     db $38, $00, $38, $20
 
-    ld bc, $1b9c
+InitializeZigzag:
+    ld bc, ZigzagInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1b88
+    ld de, ConfigureZigzag
     jp SetCurrentHandlerAddress
 
-
+ConfigureZigzag:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1b98
+    ld de, ZigzagMovementTable
     call InitializeMovementScriptFromTable
-    ld de, $1ba4
+    ld de, ZigzagGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    rst $20
-    dec [hl]
-    jp hl
+ZigzagMovementTable:
+    dw $35e7, $35e9
 
+ZigzagInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    dec [hl]
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $004a
-    ld c, d
-    jr nz, jr_000_1baa
+ZigzagGraphics:
+    db $4a, $00, $4a, $20
 
-    ld [de], a
-
-jr_000_1baa:
-    inc e
+    ; $1BA8: event $22 initializer
+    ld bc, $1c12
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler

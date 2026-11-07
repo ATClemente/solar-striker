@@ -2778,7 +2778,7 @@ StageEventHandlerTable:
     dw $44e6 ; event type $11
     dw $0da6 ; event type $12
     dw SetStageReady ; event type $13
-    dw $202e ; event type $14
+    dw InitializeTerraCannon ; event type $14
     dw $0d97 ; event type $15
     dw InitializeSkimbot ; event type $16
     dw $2322 ; event type $17
@@ -5781,90 +5781,88 @@ jr_000_200f:
     jp SetCurrentHandlerAddress
 
 
-    add hl, hl
-    ld [hl], $3f
-    ld [hl], $12
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $0046
-    ld b, [hl]
-    jr nz, jr_000_2030
+    ; $201E: movement script pointers
+    dw $3629, $363f
 
-    cp e
+    ; $2022: initialization template
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-jr_000_2030:
-    jr nz, jr_000_1fff
+    ; $202A: graphics (tile, attributes)
+    db $46, $00, $46, $20
 
-    ld b, a
-    add hl, bc
+InitializeTerraCannon:
+    ld bc, TerraCannonInitTemplate
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $203e
+    ld de, ConfigureTerraCannon
     jp SetCurrentHandlerAddress
 
-
+ConfigureTerraCannon:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $20c3
+    ld de, TerraCannonGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_2055
+    jr z, .setPositionHandler
 
-    ld de, $209f
+    ld de, UpdateTerraCannonStatus
     jp SetCurrentHandlerAddress
 
 
-jr_000_2055:
-    ld de, $205b
+.setPositionHandler
+    ld de, UpdateTerraCannonPosition
     jp SetCurrentHandlerAddress
 
 
+UpdateTerraCannonPosition:
     ld a, [bc]
     call SetObjectPointer
     ld a, [$ca81]
     or a
-    jr nz, jr_000_206f
+    jr nz, .stopMovement
 
     ld a, $08
     call CalculateYMovement
     ld a, [$ca16]
-    jr jr_000_2070
+    jr .applyMovement
 
-jr_000_206f:
+.stopMovement
     xor a
 
-jr_000_2070:
+.applyMovement
     ld d, a
     ld e, $00
     call MoveObject
-    ld de, $207c
+    ld de, TryFireTerraCannonShot
     jp SetCurrentHandlerAddress
 
 
+TryFireTerraCannonShot:
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_000_2099
+    jr nz, .setStatusUpdateHandler
 
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_2099
+    jr nz, .setStatusUpdateHandler
 
     ld bc, $0804
     call StoreOffsetObjectPosition
     ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_2099:
-    ld de, $209f
+.setStatusUpdateHandler
+    ld de, UpdateTerraCannonStatus
     jp SetCurrentHandlerAddress
 
 
+UpdateTerraCannonStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5879,27 +5877,19 @@ jr_000_2099:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, $205b
+    ld de, UpdateTerraCannonPosition
     jp SetCurrentHandlerAddress
 
 
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    jr jr_000_2114
+TerraCannonInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $18
 
-    nop
-    ld d, b
-    jr nz, jr_000_20c9
+TerraCannonGraphics:
+    db $50, $00, $50, $20
 
-    db $eb
-
-jr_000_20c9:
-    jr nz, @-$31
-
-    ld b, a
-    add hl, bc
+    ; $20C7: event $0D initializer
+    ld bc, $20eb
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 

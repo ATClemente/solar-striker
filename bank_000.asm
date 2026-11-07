@@ -2766,7 +2766,7 @@ StageEventHandlerTable:
     dw InitializeCruiser ; event type $06
     dw InitializeRotomech ; event type $07
     dw InitializePincher ; event type $08
-    dw $1c1e ; event type $09
+    dw InitializeArrowhead ; event type $09
     dw InitializeHarrier ; event type $0a
     dw InitializePowerUpContainer ; event type $0b
     dw $4000 ; event type $0c
@@ -5150,36 +5150,38 @@ jr_000_1bdb:
     ld b, h
     db $20
 
-    ld bc, $1c9d
+InitializeArrowhead:
+    ld bc, ArrowheadInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1c2e
+    ld de, ConfigureArrowhead
     jp SetCurrentHandlerAddress
 
-
+ConfigureArrowhead:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0010
     add hl, bc
     ld a, $20
     ld [hl], a
-    ld de, $1ca5
+    ld de, ArrowheadGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1c4c
+    jr z, .arrowheadMovementHandler
 
-    ld de, $1c94
+    ld de, CheckArrowheadCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_1c4c:
-    ld de, $1c52
+.arrowheadMovementHandler
+    ld de, UpdateArrowheadMovement
     jp SetCurrentHandlerAddress
 
 
+UpdateArrowheadMovement:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5190,12 +5192,12 @@ jr_000_1c4c:
     jp nc, FreeObjectAndRemoveHandler
 
     cp $30
-    jr c, jr_000_1c67
+    jr c, .applyArrowheadMovement
 
     inc [hl]
     inc [hl]
 
-jr_000_1c67:
+.applyArrowheadMovement
     ld a, [hl]
     call CalculateYMovement
     ld a, [$ca16]
@@ -5213,21 +5215,25 @@ jr_000_1c67:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, $1c8b
+    ld de, TryFireArrowheadShot
     jp SetCurrentHandlerAddress
 
-
+TryFireArrowheadShot:
     call TryScheduleEnemyShot
-    ld de, $1c94
+    ld de, CheckArrowheadCollision
     jp SetCurrentHandlerAddress
 
 
+CheckArrowheadCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1c52
+    ld de, UpdateArrowheadMovement
     jp SetCurrentHandlerAddress
 
+ArrowheadInitTemplate:
+    db $12, $08, $08, $00, $fe, $14, $12, $00
 
-    db $12, $08, $08, $00, $fe, $14, $12, $00, $3a, $00, $3a, $20
+ArrowheadGraphics:
+    db $3a, $00, $3a, $20
 
     ld bc, $1d28
     call TryInitializeObjectInFreeSlot

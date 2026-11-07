@@ -2780,7 +2780,7 @@ StageEventHandlerTable:
     dw SetStageReady ; event type $13
     dw $202e ; event type $14
     dw $0d97 ; event type $15
-    dw $20f7 ; event type $16
+    dw InitializeSkimbot ; event type $16
     dw $2322 ; event type $17
     dw $2457 ; event type $18
     dw $24ff ; event type $19
@@ -5920,51 +5920,44 @@ jr_000_20c9:
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    ld d, l
-    ld [hl], $69
-    ld [hl], $12
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $0052
-    ld d, d
-    jr nz, jr_000_20f9
+    ; $20E7: movement script pointers
+    dw $3655, $3669
 
-    rla
+    ; $20EB: initialization template
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-jr_000_20f9:
-    ld hl, $47cd
-    add hl, bc
+    ; $20F3: graphics (tile, attributes)
+    db $52, $00, $52, $20
+
+InitializeSkimbot:
+    ld bc, SkimbotInitTemplate
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2107
+    ld de, ConfigureSkimbot
     jp SetCurrentHandlerAddress
 
-
+ConfigureSkimbot:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $367d
+    ld de, SkimbotMovementScript
     call InitializeMovementScript
-    ld de, $211f
+    ld de, SkimbotGraphics
 
 jr_000_2114:
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $0054
-    ld d, h
-    jr nz, jr_000_2125
+SkimbotInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    ld b, e
+SkimbotGraphics:
+    db $54, $00, $54, $20
 
-jr_000_2125:
-    ld hl, $47cd
-    add hl, bc
+    ; $2123: event $26 initializer
+    ld bc, $2143
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -9567,16 +9560,10 @@ PincherMovementScriptB: ; $35C3
     inc a
     or c
     inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+
+SkimbotMovementScript: ; $367D
+    dw $3cb1, $3cb1, $3cb1, $3cb1, $3cb1
+
     ld c, [hl]
     ld a, $43
     ld a, $64

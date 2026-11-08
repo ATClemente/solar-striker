@@ -2802,7 +2802,7 @@ StageEventHandlerTable:
     dw InitializeScarab ; event type $27
     dw InitializeMack ; event type $28
     dw InitializeVexor ; event type $29
-    dw $2245 ; event type $2a
+    dw InitializeWarhawk ; event type $2a
     dw InitializeUltraCrusher ; event type $2b
 
 ; Preserve addresses referenced by disassembled data below.
@@ -6057,21 +6057,21 @@ VexorInitTemplate:
 VexorGraphics:
     db $56, $00, $56, $20
 
-    ; $2245: event $2A initializer
-    ld bc, $227c
+InitializeWarhawk:
+    ld bc, WarhawkInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2255
+    ld de, ConfigureWarhawk
     jp SetCurrentHandlerAddress
 
-
+ConfigureWarhawk:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $2278
+    ld de, WarhawkMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $2284
+    ld de, WarhawkGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
@@ -6086,13 +6086,13 @@ jr_000_2272:
     jp SetCurrentHandlerAddress
 
 
-    ; $2278: movement script pointers.
+WarhawkMovementScriptTable:
     dw $370d, $3725
 
-    ; $227C: eight-byte object initialization template.
+WarhawkInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $02
 
-    ; $2284: graphics (tile, attributes).
+WarhawkGraphics:
     db $58, $00, $58, $20
 
 RegisterAnthropMissileHandler:

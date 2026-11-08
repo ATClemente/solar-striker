@@ -2773,7 +2773,7 @@ StageEventHandlerTable:
     dw InitializeHarrier ; event type $0a
     dw InitializePowerUpContainer ; event type $0b
     dw InitializeDestructor ; event type $0c
-    dw $20c7 ; event type $0d
+    dw InitializeOctopod ; event type $0d
     dw InitializeEpikhan ; event type $0e
     dw InitializeOmniquad ; event type $0f
     dw InitializeXenocrypt ; event type $10
@@ -5839,31 +5839,31 @@ TerraCannonInitTemplate:
 TerraCannonGraphics:
     db $50, $00, $50, $20
 
-    ; $20C7: event $0D initializer
-    ld bc, $20eb
+InitializeOctopod:
+    ld bc, OctopodInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $20d7
+    ld de, ConfigureOctopod
     jp SetCurrentHandlerAddress
 
-
+ConfigureOctopod:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $20e7
+    ld de, OctopodMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $20f3
+    ld de, OctopodGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    ; $20E7: movement script pointers
+OctopodMovementScriptTable:
     dw $3655, $3669
 
-    ; $20EB: initialization template
+OctopodInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    ; $20F3: graphics (tile, attributes)
+OctopodGraphics:
     db $52, $00, $52, $20
 
 InitializeSkimbot:

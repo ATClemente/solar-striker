@@ -2796,7 +2796,7 @@ StageEventHandlerTable:
     dw InitializeZigzag ; event type $21
     dw InitializeBlazer ; event type $22
     dw $1ca9 ; event type $23
-    dw $1fa6 ; event type $24
+    dw InitializeAnthrop ; event type $24
     dw IncreaseScrollSpeed ; event type $25
     dw InitializeTwerk ; event type $26
     dw InitializeScarab ; event type $27
@@ -5658,34 +5658,35 @@ PowerUpGraphicsFrame0: ; $1F9E
 PowerUpGraphicsFrame1: ; $1FA2
     db $16, $00, $18, $00
 
-    ld bc, $2022
+InitializeAnthrop:
+    ld bc, AnthropInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1fb6
+    ld de, ConfigureAnthrop
     jp SetCurrentHandlerAddress
 
-
+ConfigureAnthrop:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $201e
+    ld de, AnthropMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $202a
+    ld de, AnthropGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1fd3
+    jr z, .setMovementHandler
 
-    ld de, $2015
+    ld de, CheckAnthropCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_1fd3:
-    ld de, $1fd9
+.setMovementHandler
+    ld de, UpdateAnthropMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateAnthropMovement:
     call UpdateScriptedEnemyMovement
     ld d, $52
     cp [hl]
@@ -5700,45 +5701,43 @@ jr_000_1fd3:
     cp $e0
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $1ff5
+    ld de, TryFireAnthropMissile
     jp SetCurrentHandlerAddress
 
-
+TryFireAnthropMissile:
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_000_200f
+    jr nz, .setCollisionHandler
 
-jr_000_1fff:
     ld de, wEnemyShotSpawnY
     ld a, [de]
-
-Call_000_2003:
     or a
-    jr nz, jr_000_200f
+    jr nz, .setCollisionHandler
 
     ld bc, $0800
     call StoreOffsetObjectPosition
-    call $2288
+    call RegisterAnthropMissileHandler
 
-jr_000_200f:
-    ld de, $2015
+.setCollisionHandler
+    ld de, CheckAnthropCollision
     jp SetCurrentHandlerAddress
 
 
+CheckAnthropCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1fd9
+    ld de, UpdateAnthropMovement
     jp SetCurrentHandlerAddress
 
 
-    ; $201E: movement script pointers
+AnthropMovementScriptTable:
     dw $3629, $363f
 
-    ; $2022: initialization template
+AnthropInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    ; $202A: graphics (tile, attributes)
+AnthropGraphics:
     db $46, $00, $46, $20
 
 InitializeTerraCannon:
@@ -6085,27 +6084,23 @@ jr_000_2272:
     jp SetCurrentHandlerAddress
 
 
-    dec c
-    scf
-    dec h
-    scf
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld [bc], a
-    ld e, b
-    nop
-    ld e, b
-    jr nz, @+$13
+    ; $2278: movement script pointers.
+    dw $370d, $3725
 
-    adc a
-    ld [hl+], a
+    ; $227C: eight-byte object initialization template.
+    db $12, $08, $08, $00, $fe, $10, $12, $02
+
+    ; $2284: graphics (tile, attributes).
+    db $58, $00, $58, $20
+
+RegisterAnthropMissileHandler:
+    ld de, InitializeAnthropMissile
     call StoreAddressInFreeWramSlot
     ret
 
 
-    ld bc, $2316
+InitializeAnthropMissile:
+    ld bc, AnthropMissileInitTemplate
     ld hl, wEnemyShotSpawnY
     ld a, [hl+]
     ld e, [hl]
@@ -6125,29 +6120,26 @@ jr_000_2272:
     ld hl, wEnemyShotSpawnY
     ld [hl+], a
     ld [hl+], a
-    ld de, $22b8
+    ld de, ConfigureAnthropMissile
     jp SetCurrentHandlerAddress
 
-
+ConfigureAnthropMissile:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $231e
+    ld de, AnthropMissileGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_22cf
+    jr z, .setMovementHandler
 
-    ld de, $230d
+    ld de, CheckAnthropMissileCollision
     jp SetCurrentHandlerAddress
 
-
-jr_000_22cf:
-    ld de, $22d5
-
-jr_000_22d2:
+.setMovementHandler
+    ld de, UpdateAnthropMissileMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateAnthropMissileMovement:
     ld a, [bc]
     call SetObjectPointer
     push hl
@@ -6162,35 +6154,35 @@ jr_000_22d2:
     cp [hl]
     jp c, Jump_000_0bbb
 
-    ld de, $22f3
+    ld de, CheckAnthropMissileOutOfBounds
     jp SetCurrentHandlerAddress
 
-
+CheckAnthropMissileOutOfBounds:
     call CheckObjectOutOfBounds
     or a
     jp nz, FreeObjectAndRemoveHandler
 
-    ld de, $2300
+    ld de, TryFireAnthropMissileShot
     jp SetCurrentHandlerAddress
 
-
+TryFireAnthropMissileShot:
     call TryScheduleEnemyShot
     or a
     jp z, FreeObjectAndRemoveHandler
 
-    ld de, $230d
+    ld de, CheckAnthropMissileCollision
     jp SetCurrentHandlerAddress
 
-
+CheckAnthropMissileCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $22d5
+    ld de, UpdateAnthropMissileMovement
     jp SetCurrentHandlerAddress
 
 
-    ; $2316: initialization template
+AnthropMissileInitTemplate:
     db $12, $08, $08, $00, $00, $10, $10, $02
 
-    ; $231E: graphics (tile, attributes)
+AnthropMissileGraphics:
     db $12, $00, $12, $20
 
 InitializeStageFourBoss:

@@ -128,7 +128,7 @@ HandleDestructorExit:
     cp $05
     jp z, Jump_001_46ea
 
-    ld hl, $4686
+    ld hl, BossPartDestructionSmokeOffsets
     call Call_001_465d
     jp AdvanceToNextHandler
 
@@ -734,29 +734,29 @@ XenocryptPartBaseGraphics:
 XenocryptPartDamageGraphics:
     db $78, $10, $78, $50
 
-    ; $44E6: event $11 initializer.
+InitializeQuasiObliterator:
     xor a
     ld hl, $cac0
     ld [hl+], a
     ld [hl], a
     ld b, $02
 
-jr_001_44ee:
+.registerPartHandlers
     push bc
-    ld de, $44fc
+    ld de, InitializeQuasiObliteratorPart
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_001_44ee
+    jr nz, .registerPartHandlers
 
     jp RemoveCurrentHandler
 
-
+InitializeQuasiObliteratorPart:
     ld de, $cac0
     ld a, [de]
     xor $07
     ld [wStageEventParams + 1], a
-    ld bc, $45ff
+    ld bc, QuasiObliteratorInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -772,76 +772,76 @@ jr_001_44ee:
     ld [hl], a
     inc a
     ld [de], a
-    ld de, $4526
+    ld de, ConfigureQuasiObliteratorPart
     jp SetCurrentHandlerAddress
 
-
+ConfigureQuasiObliteratorPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
     ld hl, $0011
     add hl, bc
-    ld de, $3c45
+    ld de, QuasiObliteratorLeftMovementScript
     ld a, [hl]
     or a
-    jr z, jr_001_4539
+    jr z, .setMovementScript
 
-    ld de, $3c67
+    ld de, QuasiObliteratorRightMovementScript
 
-jr_001_4539:
+.setMovementScript
     call InitializeMovementScript
     pop bc
     ld hl, $0011
     add hl, bc
     ld a, [hl]
     push af
-    ld hl, $0f2d
+    ld hl, QuasiObliteratorStartingXCoords
     call GetStartingXCoord
-    ld bc, $45ff
+    ld bc, QuasiObliteratorInitTemplate
     call ResetObjectAttributes
     pop af
-    ld de, $4607
+    ld de, QuasiObliteratorLeftPartBaseGraphics
     or a
-    jr z, jr_001_4559
+    jr z, .applyGraphics
 
-    ld de, $460f
+    ld de, QuasiObliteratorRightPartBaseGraphics
 
-jr_001_4559:
+.applyGraphics
     call SetObjectGraphicsPointer
-    ld de, $4562
+    ld de, UpdateQuasiObliteratorMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateQuasiObliteratorMovement:
     call Call_001_4627
     cp [hl]
-    jr c, jr_001_456e
+    jr c, HandleQuasiObliteratorPartDefeat
 
-    ld de, $4590
+    ld de, UpdateQuasiObliteratorPartStatus
     jp SetCurrentHandlerAddress
 
 
-jr_001_456e:
+HandleQuasiObliteratorPartDefeat:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
     ld bc, $0011
     add hl, bc
-    ld de, $460f
+    ld de, QuasiObliteratorRightPartBaseGraphics
     ld a, [hl]
     or a
-    jr nz, jr_001_4582
+    jr nz, .destroyPart
 
-    ld de, $4607
+    ld de, QuasiObliteratorLeftPartBaseGraphics
 
-jr_001_4582:
+.destroyPart
     call SetObjectGraphicsPointer
     ld a, $14
     call AddPlayerScore
-    ld de, $463d
+    ld de, UpdateQuasiObliteratorPartDestructionSequence
     jp SetCurrentHandlerAddress
 
-
+UpdateQuasiObliteratorPartStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -851,7 +851,7 @@ jr_001_4582:
 
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_001_45b6
+    jr nz, .setCollisionHandler
 
     ld de, $ca63
     ld bc, $1008
@@ -864,11 +864,12 @@ jr_001_4582:
     ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
-jr_001_45b6:
-    ld de, $45bc
+.setCollisionHandler
+    ld de, CheckQuasiObliteratorPartCollision
     jp SetCurrentHandlerAddress
 
 
+CheckQuasiObliteratorPartCollision:
     call CheckPlayerCenterInEnemyHitbox
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -876,22 +877,22 @@ jr_001_45b6:
     ld l, a
     ld bc, $0011
     add hl, bc
-    ld de, $460f
+    ld de, QuasiObliteratorRightPartBaseGraphics
     ld a, [hl]
     or a
-    jr nz, jr_001_45d3
+    jr nz, .applyGraphics
 
-    ld de, $4607
+    ld de, QuasiObliteratorLeftPartBaseGraphics
 
-jr_001_45d3:
+.applyGraphics
     call SetObjectGraphicsPointer
-    ld de, $45dc
+    ld de, HandleQuasiObliteratorPartHit
     jp SetCurrentHandlerAddress
 
-
+HandleQuasiObliteratorPartHit:
     call Call_000_0a0c
     or a
-    jr z, jr_001_45f9
+    jr z, .setMovementHandler
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -899,61 +900,35 @@ jr_001_45d3:
     ld l, a
     ld bc, $0011
     add hl, bc
-    ld de, $461f
+    ld de, QuasiObliteratorRightPartDamageGraphics
     ld a, [hl]
     or a
-    jr nz, jr_001_45f6
+    jr nz, .applyGraphics
 
-    ld de, $4617
+    ld de, QuasiObliteratorLeftPartDamageGraphics
 
-jr_001_45f6:
+.applyGraphics
     call SetObjectGraphicsPointer
 
-jr_001_45f9:
-    ld de, $4562
+.setMovementHandler
+    ld de, UpdateQuasiObliteratorMovement
     jp SetCurrentHandlerAddress
 
 
-    ld [hl+], a
-    db $10
-    ld [$0000], sp
-    jr nz, jr_001_4616
+QuasiObliteratorInitTemplate:
+    db $22, $10, $08, $00, $00, $20, $10, $3c
 
-    inc a
-    ld a, h
-    nop
-    ld a, [hl]
-    nop
-    ld a, h
-    ld b, b
-    ld a, [hl]
-    ld b, b
-    ld a, [hl]
-    jr nz, @+$7e
+QuasiObliteratorLeftPartBaseGraphics:
+    db $7c, $00, $7e, $00, $7c, $40, $7e, $40
 
-    jr nz, @+$80
+QuasiObliteratorRightPartBaseGraphics:
+    db $7e, $20, $7c, $20, $7e, $60, $7c, $60
 
-    ld h, b
-    ld a, h
+QuasiObliteratorLeftPartDamageGraphics:
+    db $7c, $10, $7e, $10, $7c, $50, $7e, $50
 
-jr_001_4616:
-    ld h, b
-    ld a, h
-    db $10
-    ld a, [hl]
-    db $10
-    ld a, h
-    ld d, b
-    ld a, [hl]
-    ld d, b
-    ld a, [hl]
-    jr nc, jr_001_469e
-
-    jr nc, jr_001_46a2
-
-    ld [hl], b
-    ld a, h
-    ld [hl], b
+QuasiObliteratorRightPartDamageGraphics:
+    db $7e, $30, $7c, $30, $7e, $70, $7c, $70
 
 Call_001_4627:
     ld a, [bc]
@@ -969,7 +944,7 @@ Call_001_4627:
     ld a, [hl+]
     ret
 
-
+UpdateQuasiObliteratorPartDestructionSequence:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $001c
@@ -985,7 +960,7 @@ Call_001_4627:
     cp $05
     jp z, FreeObjectAndRemoveHandler
 
-    ld hl, $4686
+    ld hl, BossPartDestructionSmokeOffsets
     call Call_001_465d
     jp AdvanceToNextHandler
 
@@ -1019,7 +994,7 @@ Call_001_465d:
     call SetupAudioPlayback
     ret
 
-
+BossPartDestructionSmokeOffsets:
     db $08, $08, $10, $10, $10, $00, $00, $10, $00, $00
 
     ; 4690

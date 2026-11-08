@@ -2779,7 +2779,7 @@ StageEventHandlerTable:
     dw InitializeEpikhan ; event type $0e
     dw InitializeOmniquad ; event type $0f
     dw InitializeXenocrypt ; event type $10
-    dw $44e6 ; event type $11
+    dw InitializeQuasiObliterator ; event type $11
     dw ActivateBoss ; event type $12
     dw SetStageReady ; event type $13
     dw InitializeTerraCannon ; event type $14
@@ -2834,8 +2834,8 @@ XenocryptStartingXCoords: ; $0F29
     db $48, $50, $58, $60
 
 jr_000_0f2d:
-    ld c, b
-    ld e, b
+QuasiObliteratorStartingXCoords: ; $0F2D, left/right part X coordinates.
+    db $48, $58
 
 ApplyHorizontalScrollOffsetToCoordinatePair:
     add a
@@ -9924,74 +9924,16 @@ Call_000_3c10:
     inc a
     pop hl
     inc a
-    or c
-    inc a
-    and c
-    inc a
-    ld d, l
-    dec a
-    sub c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    ld d, l
-    dec a
-    and c
-    inc a
-    sub c
-    inc a
-    ld c, l
-    dec a
-    and c
-    inc a
-    ld d, l
-    dec a
-    sub c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    ld d, l
-    dec a
-    and c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    ld d, l
-    dec a
-    sub c
-    inc a
-    and c
-    inc a
-    ld c, l
-    dec a
-    sub c
-    inc a
-    ld d, l
-    dec a
-    and c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+QuasiObliteratorLeftMovementScript: ; $3C45
+    dw $3cb1, $3ca1, $3d55, $3c91, $3ca1, $3cb1
+    dw $3c91, $3d55, $3ca1, $3c91, $3d4d, $3ca1
+    dw $3d55, $3c91, $3cb1, $3cb1, $3cb1
+
+QuasiObliteratorRightMovementScript: ; $3C67
+    dw $3cb1, $3c91, $3d55, $3ca1, $3c91, $3cb1
+    dw $3ca1, $3d55, $3c91, $3ca1, $3d4d, $3c91
+    dw $3d55, $3ca1, $3cb1, $3cb1, $3cb1
+
 
     db $00, $00, $00, $00, $00, $00, $00, $08, $10, $10, $10, $10, $10, $10, $10, $10
     db $10, $10, $10, $10, $10, $10, $10, $18, $20, $20, $20, $20, $20, $20, $20, $20

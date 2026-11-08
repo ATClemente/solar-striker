@@ -32,6 +32,8 @@ DEF wStageEventParams EQU $CAB5
 DEF wStageTransitionActive EQU $CAC5
 DEF wStageReady EQU $CAC9
 
+DEF wBossActive EQU $CACA
+
 DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop
 DEF wScoreExtraLifeReady EQU $CF96
 DEF wNextStageRequested EQU $CF9B

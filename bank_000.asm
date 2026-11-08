@@ -2589,8 +2589,9 @@ DisableBackgroundScroll:
     jp RemoveCurrentHandler
 
 
+ActivateBoss:
     ld a, $01
-    ld [$caca], a
+    ld [wBossActive], a
     jp RemoveCurrentHandler
 
 SetStageReady:
@@ -2777,7 +2778,7 @@ StageEventHandlerTable:
     dw InitializeOmniquad ; event type $0f
     dw $43cf ; event type $10
     dw $44e6 ; event type $11
-    dw $0da6 ; event type $12
+    dw ActivateBoss ; event type $12
     dw SetStageReady ; event type $13
     dw InitializeTerraCannon ; event type $14
     dw $0d97 ; event type $15
@@ -6285,7 +6286,7 @@ ConfigureStageFourBoss:
     jp SetCurrentHandlerAddress
 
 CheckStageFourBossPartAndSetupHandler:
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 
@@ -6425,7 +6426,7 @@ jr_000_245d:
     jp SetCurrentHandlerAddress
 
 
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 
@@ -6524,7 +6525,7 @@ jr_000_2505:
     jp SetCurrentHandlerAddress
 
 
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 
@@ -6809,7 +6810,7 @@ DestructorOrbGraphics:
     db $7a, $00, $7a, $20
 
 WaitForBossFiringStart:
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 
@@ -6910,7 +6911,7 @@ BossFiringPositionSequence: ; $278D, 32 coordinate indices
     db $03, $02, $05, $01, $09, $0c, $0a, $04
     db $0b, $0f, $01, $09, $00, $0b, $06, $0f
 
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 
@@ -6980,7 +6981,7 @@ jr_000_2805:
 
     ld bc, $0102
     nop
-    ld a, [$caca]
+    ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
 

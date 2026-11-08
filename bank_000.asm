@@ -2773,7 +2773,7 @@ StageEventHandlerTable:
     dw InitializeDestructor ; event type $0c
     dw $20c7 ; event type $0d
     dw InitializeEpikhan ; event type $0e
-    dw $42b5 ; event type $0f
+    dw InitializeOmniquad ; event type $0f
     dw $43cf ; event type $10
     dw $44e6 ; event type $11
     dw $0da6 ; event type $12
@@ -2834,7 +2834,7 @@ jr_000_0f2d:
     ld c, b
     ld e, b
 
-Call_000_0f2f:
+ApplyHorizontalScrollOffsetToCoordinatePair:
     add a
     ld e, a
     ld d, $00
@@ -2847,16 +2847,13 @@ Call_000_0f2f:
     ret
 
 
-    db $10
-    ld d, b
-    jr nz, jr_000_0f90
+OmniquadStartingCoordinates:
+    db $10, $50 ; center
+    db $20, $50 ; below
+    db $10, $40 ; left
+    db $10, $60 ; right
+    db $00, $50 ; above
 
-    db $10
-    ld b, b
-    db $10
-    ld h, b
-    nop
-    ld d, b
     jr nz, jr_000_0f90
 
     jr @+$3a
@@ -6309,7 +6306,7 @@ jr_000_2374:
     ld a, [hl]
     push af
     ld hl, $0f4e
-    call Call_000_0f2f
+    call ApplyHorizontalScrollOffsetToCoordinatePair
     pop af
     ld bc, $2431
     or a
@@ -6476,7 +6473,7 @@ jr_000_245d:
     call SetObjectPointer
     xor a
     ld hl, $0f78
-    call Call_000_0f2f
+    call ApplyHorizontalScrollOffsetToCoordinatePair
     ld bc, $24f7
     call ResetObjectAttributes
     ld de, $249d
@@ -6575,7 +6572,7 @@ jr_000_2505:
     call SetObjectPointer
     xor a
     ld hl, $0fa0
-    call Call_000_0f2f
+    call ApplyHorizontalScrollOffsetToCoordinatePair
     ld bc, $25c9
     call ResetObjectAttributes
     ld de, $2545
@@ -6949,7 +6946,7 @@ Call_000_2769:
     and $0f
     ld h, b
     ld l, c
-    call Call_000_0f2f
+    call ApplyHorizontalScrollOffsetToCoordinatePair
     ld hl, wEnemyShotSpawnY
     ld a, d
     ld [hl+], a
@@ -7033,7 +7030,7 @@ jr_000_27d3:
     ld a, [hl]
     and $03
     ld hl, $0f7a
-    call Call_000_0f2f
+    call ApplyHorizontalScrollOffsetToCoordinatePair
     ld hl, wEnemyShotSpawnY
     ld a, d
     ld [hl+], a
@@ -9682,332 +9679,57 @@ EpikhanMovementScript: ; $38C9
     dw $3d83, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83, $3d83
 
-    or c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $90
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld a, l
-    dec a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld a, l
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    or c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $90
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    daa
-    dec a
-    adc c
-    inc a
-    pop af
-    inc a
-    adc c
-    inc a
-    inc e
-    dec a
-    adc c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    ld de, $893d
-    inc a
-    ld bc, $893d
-    inc a
-    daa
-    dec a
-    adc c
-    inc a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    or c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $90
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    inc e
-    dec a
-    adc c
-    inc a
-    pop de
-    inc a
-    adc c
-    inc a
-    ld [hl-], a
-    dec a
-    adc c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    daa
-    dec a
-    adc c
-    inc a
-    pop af
-    inc a
-    adc c
-    inc a
-    inc e
-    dec a
-    adc c
-    inc a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    or c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $90
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    ld de, $893d
-    inc a
-    ld bc, $893d
-    inc a
-    daa
-    dec a
-    adc c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    ld [hl-], a
-    dec a
-    adc c
-    inc a
-    pop hl
-    inc a
-    adc c
-    inc a
-    ld de, $893d
-    inc a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    or c
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $90
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    ld [hl-], a
-    dec a
-    adc c
-    inc a
-    pop hl
-    inc a
-    adc c
-    inc a
-    ld de, $893d
-    inc a
-    sub b
-    ld a, $6f
-    ld a, $7a
-    ld a, $85
-    ld a, $64
-    ld a, $43
-    ld a, $4e
-    ld a, $59
-    ld a, $89
-    inc a
-    inc e
-    dec a
-    adc c
-    inc a
-    pop de
-    inc a
-    adc c
-    inc a
-    ld [hl-], a
-    dec a
-    adc c
-    inc a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
-    add e
-    dec a
+OmniquadCenterMovementScript: ; $3955
+    dw $3cb1, $3e90, $3e6f, $3e7a, $3e85, $3e64
+    dw $3e43, $3e4e, $3e59, $3e90, $3e6f, $3e7a
+    dw $3e85, $3e64, $3e43, $3e4e, $3e59, $3c89
+    dw $3c89, $3c89, $3c89, $3c89, $3c89, $3c89
+    dw $3c89, $3d7d, $3e90, $3e6f, $3e7a, $3e85
+    dw $3e64, $3e43, $3e4e, $3e59, $3c89, $3c89
+    dw $3c89, $3c89, $3c89, $3c89, $3c89, $3c89
+    dw $3d7d, $3d83, $3d83, $3d83, $3d83, $3d83
+    dw $3d83
+
+OmniquadOuterMovementScript1: ; $39B7
+    dw $3cb1, $3e90, $3e6f, $3e7a, $3e85, $3e64
+    dw $3e43, $3e4e, $3e59, $3e90, $3e6f, $3e7a
+    dw $3e85, $3e64, $3e43, $3e4e, $3e59, $3c89
+    dw $3d27, $3c89, $3cf1, $3c89, $3d1c, $3c89
+    dw $3e90, $3e6f, $3e7a, $3e85, $3e64, $3e43
+    dw $3e4e, $3e59, $3c89, $3d11, $3c89, $3d01
+    dw $3c89, $3d27, $3c89, $3d83, $3d83, $3d83
+    dw $3d83, $3d83, $3d83
+
+OmniquadOuterMovementScript2: ; $3A11
+    dw $3cb1, $3e90, $3e6f, $3e7a, $3e85, $3e64
+    dw $3e43, $3e4e, $3e59, $3e90, $3e6f, $3e7a
+    dw $3e85, $3e64, $3e43, $3e4e, $3e59, $3c89
+    dw $3d1c, $3c89, $3cd1, $3c89, $3d32, $3c89
+    dw $3e90, $3e6f, $3e7a, $3e85, $3e64, $3e43
+    dw $3e4e, $3e59, $3c89, $3d27, $3c89, $3cf1
+    dw $3c89, $3d1c, $3c89, $3d83, $3d83, $3d83
+    dw $3d83, $3d83, $3d83
+
+OmniquadOuterMovementScript3: ; $3A6B
+    dw $3cb1, $3e90, $3e6f, $3e7a, $3e85, $3e64
+    dw $3e43, $3e4e, $3e59, $3e90, $3e6f, $3e7a
+    dw $3e85, $3e64, $3e43, $3e4e, $3e59, $3c89
+    dw $3d11, $3c89, $3d01, $3c89, $3d27, $3c89
+    dw $3e90, $3e6f, $3e7a, $3e85, $3e64, $3e43
+    dw $3e4e, $3e59, $3c89, $3d32, $3c89, $3ce1
+    dw $3c89, $3d11, $3c89, $3d83, $3d83, $3d83
+    dw $3d83, $3d83, $3d83
+
+OmniquadOuterMovementScript4: ; $3AC5
+    dw $3cb1, $3e90, $3e6f, $3e7a, $3e85, $3e64
+    dw $3e43, $3e4e, $3e59, $3e90, $3e6f, $3e7a
+    dw $3e85, $3e64, $3e43, $3e4e, $3e59, $3c89
+    dw $3d32, $3c89, $3ce1, $3c89, $3d11, $3c89
+    dw $3e90, $3e6f, $3e7a, $3e85, $3e64, $3e43
+    dw $3e4e, $3e59, $3c89, $3d1c, $3c89, $3cd1
+    dw $3c89, $3d32, $3c89, $3d83, $3d83, $3d83
+    dw $3d83, $3d83, $3d83
+
     ld c, l
     dec a
     adc c

@@ -387,24 +387,25 @@ EpikhanDamageGraphics:
     db $64, $10, $66, $10, $66, $30, $64, $30
     db $68, $10, $6a, $10, $6a, $30, $68, $30
 
+InitializeOmniquad:
     xor a
     ld hl, $cac0
     ld [hl+], a
     ld [hl], a
     ld b, $05
 
-jr_001_42bd:
+.registerPartHandlers
     push bc
-    ld de, $42cb
+    ld de, InitializeOmniquadPart
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_001_42bd
+    jr nz, .registerPartHandlers
 
     jp RemoveCurrentHandler
 
-
-    ld bc, $43b7
+InitializeOmniquadPart:
+    ld bc, OmniquadInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -420,10 +421,10 @@ jr_001_42bd:
     ld [hl], a
     inc a
     ld [de], a
-    ld de, $42ec
+    ld de, ConfigureOmniquadPart
     jp SetCurrentHandlerAddress
 
-
+ConfigureOmniquadPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
@@ -433,7 +434,7 @@ jr_001_42bd:
     add a
     ld l, a
     ld h, $00
-    ld de, $43ad
+    ld de, OmniquadMovementScriptTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -444,36 +445,35 @@ jr_001_42bd:
     add hl, bc
     ld a, [hl]
     push af
-    ld hl, $0f3c
-    call Call_000_0f2f
-    ld bc, $43b7
+    ld hl, OmniquadStartingCoordinates
+    call ApplyHorizontalScrollOffsetToCoordinatePair
+    ld bc, OmniquadInitTemplate
     call ResetObjectAttributes
     pop af
-    ld de, $43bf
+    ld de, OmniquadOuterBaseGraphics
     or a
-    jr nz, jr_001_4321
+    jr nz, .applyGraphics
 
-    ld de, $43c3
+    ld de, OmniquadCenterBaseGraphics ; index 0 is the center
 
-jr_001_4321:
+.applyGraphics
     call SetObjectGraphicsPointer
-    ld de, $432a
+    ld de, UpdateOmniquadMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateOmniquadMovement:
     call Call_001_4627
     cp [hl]
-    jr c, jr_001_433d
+    jr c, HandleOmniquadPartDefeat
 
     ld a, [$cac1]
     or a
     jp nz, Jump_000_0bbb
 
-    ld de, $4355
+    ld de, CheckOmniquadCollision
     jp SetCurrentHandlerAddress
 
-
-jr_001_433d:
+HandleOmniquadPartDefeat:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -489,7 +489,7 @@ jr_001_433d:
     ld [$cac1], a
     jp Jump_000_0bbb
 
-
+CheckOmniquadCollision:
     call CheckPlayerCenterInEnemyHitbox
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -499,33 +499,31 @@ jr_001_433d:
     add hl, bc
     ld a, [hl]
     or a
-    jr nz, jr_001_436e
+    jr nz, .applyOuterBaseGraphics
 
-    ld de, $43c3
+    ld de, OmniquadCenterBaseGraphics
     call SetObjectGraphicsPointer
-    jr jr_001_4374
+    jr .setStatusHandler
 
-jr_001_436e:
-    ld de, $43bf
+.applyOuterBaseGraphics
+    ld de, OmniquadOuterBaseGraphics
     call SetObjectGraphicsPointer
 
-jr_001_4374:
-    ld de, $437a
+.setStatusHandler
+    ld de, UpdateOmniquadStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateOmniquadStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
-
-jr_001_437f:
     ld a, [hl]
     cp $a0
     jp nc, FreeObjectAndRemoveHandler
 
     call Call_000_0a0c
     or a
-    jr z, jr_001_43a7
+    jr z, .setMovementHandler
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -535,52 +533,44 @@ jr_001_437f:
     add hl, bc
     ld a, [hl]
     or a
-    jr nz, jr_001_43a1
+    jr nz, .setOuterDamageGraphics
 
-    ld de, $43cb
+    ld de, OmniquadCenterDamageGraphics
     call SetObjectGraphicsPointer
-    jr jr_001_43a7
+    jr .setMovementHandler
 
-jr_001_43a1:
-    ld de, $43c7
+.setOuterDamageGraphics
+    ld de, OmniquadOuterDamageGraphics
     call SetObjectGraphicsPointer
 
-jr_001_43a7:
-    ld de, $432a
+.setMovementHandler
+    ld de, UpdateOmniquadMovement
     jp SetCurrentHandlerAddress
 
+OmniquadMovementScriptTable:
+    dw OmniquadCenterMovementScript ; center
+    dw OmniquadOuterMovementScript1 ; outer part 1
+    dw OmniquadOuterMovementScript2 ; outer part 2
+    dw OmniquadOuterMovementScript3 ; outer part 3
+    dw OmniquadOuterMovementScript4 ; outer part 4
 
-    ld d, l
-    add hl, sp
-    or a
-    add hl, sp
-    ld de, $6b3a
-    ld a, [hl-]
-    push bc
-    ld a, [hl-]
-    ld [de], a
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    jr c, @+$78
+OmniquadInitTemplate:
+    db $12, $08, $08, $00, $00, $10, $10, $38
 
-    nop
-    halt
-    jr nz, jr_001_4438
+OmniquadOuterBaseGraphics:
+    db $76, $00, $76, $20
 
-    nop
-    ld [hl], h
-    jr nz, jr_001_443e
+OmniquadCenterBaseGraphics:
+    db $74, $00, $74, $20
 
-    db $10
-    halt
-    jr nc, @+$76
+OmniquadOuterDamageGraphics:
+    db $76, $10, $76, $30
 
-    db $10
-    ld [hl], h
-    jr nc, jr_001_437f
+OmniquadCenterDamageGraphics:
+    db $74, $10, $74, $30
 
+    ; $43CF: event $10 initializer
+    xor a
     ld hl, $cac0
     ld [hl+], a
     ld [hl], a

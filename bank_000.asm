@@ -2603,6 +2603,7 @@ SetStageReady:
     jp RemoveCurrentHandler
 
 
+StartAlternateBossAudio:
     ld hl, $cfa1
     inc [hl]
     ld hl, $5f23
@@ -2791,7 +2792,7 @@ StageEventHandlerTable:
     dw RemoveCurrentHandler ; event type $1b
     dw StartBossAudio ; event type $1c
     dw StopStageAudio ; event type $1d
-    dw $0dba ; event type $1e
+    dw StartAlternateBossAudio ; event type $1e
     dw $2ec9 ; event type $1f
     dw InitializeBatwing ; event type $20
     dw InitializeZigzag ; event type $21

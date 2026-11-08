@@ -2579,6 +2579,7 @@ DisableBackgroundScroll:
     jp RemoveCurrentHandler
 
 
+EnableBackgroundScroll:
     xor a
     ld [$ca81], a
     jp RemoveCurrentHandler
@@ -2781,7 +2782,7 @@ StageEventHandlerTable:
     dw ActivateBoss ; event type $12
     dw SetStageReady ; event type $13
     dw InitializeTerraCannon ; event type $14
-    dw $0d97 ; event type $15
+    dw EnableBackgroundScroll ; event type $15
     dw InitializeSkimbot ; event type $16
     dw InitializeStageFourBoss ; event type $17
     dw InitializeStageFiveBoss ; event type $18

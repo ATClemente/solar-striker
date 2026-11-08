@@ -2784,7 +2784,7 @@ StageEventHandlerTable:
     dw $0d97 ; event type $15
     dw InitializeSkimbot ; event type $16
     dw InitializeStageFourBoss ; event type $17
-    dw $2457 ; event type $18
+    dw InitializeStageFiveBoss ; event type $18
     dw $24ff ; event type $19
     dw $2d09 ; event type $1a
     dw RemoveCurrentHandler ; event type $1b
@@ -2888,8 +2888,13 @@ StageFourBossShotCoordinates: ; $0F58, (Y, X) pairs
     db $18, $40
     db $18, $58
 
-    ; $0F78: neighboring coordinate data
-    db $18, $50, $28, $1c, $40, $54, $28, $8c
+StageFiveBossStartingCoordinates: ; $0F78, (Y, X)
+    db $18, $50
+
+StageFiveBossAlternateShotCoordinates: ; $0F7A, (Y, X) pairs
+    db $28, $1c ; index 0
+    db $40, $54 ; index 1
+    db $28, $8c ; index 2
 
 StageFiveBossShotCoordinates: ; $0F80, (Y, X) pairs
     db $1c, $08
@@ -6224,7 +6229,7 @@ InitializeStageFourBossCenter:
     or a
     jp z, RemoveCurrentHandler
 
-    jr RegisterPartIndex
+    jr RegisterStageFourBossPart
 
 InitializeStageFourBossVerticalPart:
     ld bc, StageFourBossVerticalInitTemplate
@@ -6232,7 +6237,7 @@ InitializeStageFourBossVerticalPart:
     or a
     jp z, RemoveCurrentHandler
 
-    jr RegisterPartIndex
+    jr RegisterStageFourBossPart
 
 InitializeStageFourBossHorizontalPart:
     ld bc, StageFourBossHorizontalInitTemplate
@@ -6240,7 +6245,7 @@ InitializeStageFourBossHorizontalPart:
     or a
     jp z, RemoveCurrentHandler
 
-RegisterPartIndex:
+RegisterStageFourBossPart:
     call $4690
     ld de, ConfigureStageFourBoss
     jp SetCurrentHandlerAddress
@@ -6372,45 +6377,45 @@ StageFourBossHorizontalInitTemplate:
     db $00, $20
     db $00, $e0
 
-    ; $2457: event $18 initializer
+InitializeStageFiveBoss:
     xor a
     ld hl, $cac0
     ld b, $10
 
-jr_000_245d:
+.clearStateBytes
     ld [hl+], a
     dec b
-    jr nz, jr_000_245d
+    jr nz, .clearStateBytes
 
-    ld de, $2473
+    ld de, InitializeStageFiveBossCenter
     call StoreAddressInFreeWramSlot
     ld de, WaitForBossFiringStart
     call StoreAddressInFreeWramSlot
-    ld de, $27ad
+    ld de, WaitForBossAlternateFiringStart
     jp SetCurrentHandlerAddress
 
-
-    ld bc, $24f7
+InitializeStageFiveBossCenter:
+    ld bc, StageFiveBossCenterInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
     call $4690
-    ld de, $2486
+    ld de, ConfigureStageFiveBossCenter
     jp SetCurrentHandlerAddress
 
-
+ConfigureStageFiveBossCenter:
     ld a, [bc]
     call SetObjectPointer
     xor a
-    ld hl, $0f78
+    ld hl, StageFiveBossStartingCoordinates
     call ApplyHorizontalScrollOffsetToCoordinatePair
-    ld bc, $24f7
+    ld bc, StageFiveBossCenterInitTemplate
     call ResetObjectAttributes
-    ld de, $249d
+    ld de, HandleStageFiveBossActivation
     jp SetCurrentHandlerAddress
 
-
+HandleStageFiveBossActivation:
     ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
@@ -6421,10 +6426,10 @@ jr_000_245d:
     add hl, de
     xor a
     ld [hl], a
-    ld de, $24b4
+    ld de, UpdateStageFiveBossStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateStageFiveBossStatus:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000c
@@ -6437,41 +6442,40 @@ jr_000_245d:
     call MoveObject
     ld a, $05
     ld [$ca2c], a
-    ld de, $24d2
+    ld de, CheckStageFiveBossCollision
     jp SetCurrentHandlerAddress
 
-
+CheckStageFiveBossCollision:
     call CheckPlayerCenterInEnemyHitbox
-    ld de, $24db
+    ld de, CheckForStageFiveBossHit
     jp SetCurrentHandlerAddress
 
-
+CheckForStageFiveBossHit:
     call Call_000_0a0c
     or a
-    jr z, jr_000_24e4
+    jr z, .checkPlayerAboveBossBoundary
 
     ld [wScreenShakeRequested], a
 
-jr_000_24e4:
+.checkPlayerAboveBossBoundary
     ld hl, $c781
     ld a, [hl]
     cp $34
-    jr nc, jr_000_24f1
+    jr nc, .setStatusHandler
 
     ld a, $01
     ld [wPlayerDeathRequested], a
 
-jr_000_24f1:
-    ld de, $24b4
+.setStatusHandler
+    ld de, UpdateStageFiveBossStatus
     jp SetCurrentHandlerAddress
 
 
-    ld [de], a
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    ld [hl], b
+    ; $24F7: eight-byte object initialization template.
+StageFiveBossCenterInitTemplate:
+    db $12, $08, $08, $00, $00, $10, $10, $70
+
+    ; $24FF: event $19 initializer.
     xor a
     ld hl, $cac0
     ld b, $10
@@ -6896,6 +6900,7 @@ BossFiringPositionSequence: ; $278D, 32 coordinate indices
     db $03, $02, $05, $01, $09, $0c, $0a, $04
     db $0b, $0f, $01, $09, $00, $0b, $06, $0f
 
+WaitForBossAlternateFiringStart:
     ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
@@ -6905,44 +6910,44 @@ BossFiringPositionSequence: ; $278D, 32 coordinate indices
     xor a
     ld [hl], a
     ld [$cfa4], a
-    ld de, $27c3
+    ld de, UpdateBossAlternateFiringTimer
     jp SetCurrentHandlerAddress
 
-
+UpdateBossAlternateFiringTimer:
     ld hl, $0016
     add hl, bc
     inc [hl]
     ld a, [hl]
     cp $0d
-    jr z, jr_000_27d3
+    jr z, .firingTimerComplete
 
-    ld de, $280b
+    ld de, CheckBossAlternateFiringActive
     jp SetCurrentHandlerAddress
 
 
-jr_000_27d3:
+.firingTimerComplete
     xor a
     ld [hl], a
-    ld de, $27db
+    ld de, TryFireBossAlternateShot
     jp SetCurrentHandlerAddress
 
-
+TryFireBossAlternateShot:
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_2805
+    jr nz, .setFiringActiveHandler
 
     ld hl, $cfa4
     ld a, [hl]
     and $03
     inc [hl]
-    ld de, $2818
+    ld de, BossAlternateShotCoordinateIndices
     ld l, a
     ld h, $00
     add hl, de
     ld a, [hl]
     and $03
-    ld hl, $0f7a
+    ld hl, StageFiveBossAlternateShotCoordinates
     call ApplyHorizontalScrollOffsetToCoordinatePair
     ld hl, wEnemyShotSpawnY
     ld a, d
@@ -6951,21 +6956,23 @@ jr_000_27d3:
     ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_2805:
-    ld de, $280b
+.setFiringActiveHandler
+    ld de, CheckBossAlternateFiringActive
     jp SetCurrentHandlerAddress
 
-
+CheckBossAlternateFiringActive:
     ld a, [$cac1]
     or a
     jp nz, RemoveCurrentHandler
 
-    ld de, $27c3
+    ld de, UpdateBossAlternateFiringTimer
     jp SetCurrentHandlerAddress
 
 
-    ld bc, $0102
-    nop
+BossAlternateShotCoordinateIndices:
+    db $01, $02, $01, $00
+
+    ; $281C: wait for boss activation.
     ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler

@@ -1037,6 +1037,7 @@ Call_001_465d:
 
     db $08, $08, $10, $10, $10, $00, $00, $10, $00, $00
 
+    ; 4690
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -1063,26 +1064,27 @@ jr_001_46a2:
     ret
 
 
+UpdateStageFourBossPartStatus:
     ld a, [bc]
     call SetObjectPointer
     ld a, [$cac1]
     or a
     jp nz, FreeObjectAndRemoveHandler
 
-    ld de, $46be
+    ld de, UpdateStageFourBossPartPosition
     jp SetCurrentHandlerAddress
 
-
+UpdateStageFourBossPartPosition:
     ld a, [bc]
     call SetObjectPointer
     ld de, $0000
     call MoveObject
-    ld de, $46ce
+    ld de, CheckStageFourBossPartCollision
     jp SetCurrentHandlerAddress
 
-
+CheckStageFourBossPartCollision:
     call CheckPlayerCenterInEnemyHitbox
-    ld de, $46ad
+    ld de, UpdateStageFourBossPartStatus
     jp SetCurrentHandlerAddress
 
 DelayThenHideBackground:

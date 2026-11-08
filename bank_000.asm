@@ -2781,7 +2781,7 @@ StageEventHandlerTable:
     dw InitializeTerraCannon ; event type $14
     dw $0d97 ; event type $15
     dw InitializeSkimbot ; event type $16
-    dw $2322 ; event type $17
+    dw InitializeStageFourBoss ; event type $17
     dw $2457 ; event type $18
     dw $24ff ; event type $19
     dw $2d09 ; event type $1a
@@ -2862,94 +2862,54 @@ OmniquadStartingCoordinates:
 
     jr nc, jr_000_0f9e
 
-    jr c, jr_000_0f98
+StageFourBossStartingCoordinates:
+    db $38, $48 ; center
+    db $28, $38 ; left vertical part
+    db $28, $58 ; right vertical part
+    db $38, $18 ; left horizontal part
+    db $38, $68 ; right horizontal part
 
-    jr z, jr_000_0f8a
+StageFourBossShotCoordinates: ; $0F58, (Y, X) pairs
+    db $60, $40
+    db $60, $58
+    db $58, $30
+    db $58, $68
+    db $50, $18
+    db $50, $80
+    db $48, $08
+    db $48, $90
+    db $30, $08
+    db $30, $90
+    db $28, $18
+    db $28, $80
+    db $20, $30
+    db $20, $68
+    db $18, $40
+    db $18, $58
 
-    jr z, @+$5a
+    ; $0F78: neighboring coordinate data
+    db $18, $50, $28, $1c, $40, $54, $28, $8c
 
-    jr c, jr_000_0f6e
-
-    jr c, GetCurrentGameMode
-
-    ld h, b
-    ld b, b
-    ld h, b
-    ld e, b
-    ld e, b
-    jr nc, @+$5a
-
-    ld l, b
-    ld d, b
-    jr SetupDataPairOffset
-
-    add b
-    ld c, b
-    ld [$9048], sp
-    jr nc, jr_000_0f72
-
-    jr nc, jr_000_0efc
-
-    jr z, @+$1a
-
-jr_000_0f6e:
-    jr z, @-$7e
-
-    jr nz, jr_000_0fa2
-
-jr_000_0f72:
-    jr nz, @+$6a
-
-    jr WriteDataPairBytes
-
-    jr @+$5a
-
-    jr @+$52
-
-    jr z, jr_000_0f98
-
-    ld b, b
-    ld d, h
-    jr z, jr_000_0f0c
-
-    inc e
-    ld [$101c], sp
-    inc [hl]
-    jr nc, SetupDataPairOffset
-
-    ld b, b
-    inc l
-    ld c, b
-
-jr_000_0f8a:
-    inc l
-    ld h, b
-    inc l
-    ld l, b
-    inc [hl]
-    ld a, b
-
+StageFiveBossShotCoordinates: ; $0F80, (Y, X) pairs
+    db $1c, $08
+    db $1c, $10
+    db $34, $30
+    db $2c, $40
+    db $2c, $48
+    db $2c, $60
+    db $2c, $68
+    db $34, $78
 jr_000_0f90:
-    inc e
-    sbc b
-    inc e
-    and b
-    inc [hl]
-    jr nc, TryApplyHardModeOverrides
-
-    ld b, b
-
-jr_000_0f98:
-    inc l
-    ld c, b
-    inc l
-    ld h, b
-    inc l
-    ld l, b
-
+    db $1c, $98
+    db $1c, $a0
+    db $34, $30
+    db $2c, $40
+    db $2c, $48
+    db $2c, $60
+    db $2c, $68
 jr_000_0f9e:
-    inc [hl]
-    ld a, b
+    db $34, $78
+
     jr jr_000_0ff2
 
 jr_000_0fa2:
@@ -6229,101 +6189,101 @@ jr_000_22d2:
     jp SetCurrentHandlerAddress
 
 
-    ld [de], a
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    ld [bc], a
-    ld [de], a
-    nop
-    ld [de], a
-    jr nz, jr_000_22d2
+    ; $2316: initialization template
+    db $12, $08, $08, $00, $00, $10, $10, $02
 
+    ; $231E: graphics (tile, attributes)
+    db $12, $00, $12, $20
+
+InitializeStageFourBoss:
+    xor a
     ld hl, $cac0
     ld b, $10
 
-jr_000_2328:
+.clearStateBytes
     ld [hl+], a
     dec b
-    jr nz, jr_000_2328
+    jr nz, .clearStateBytes
 
-    ld de, $2352
+    ld de, InitializeStageFourBossCenter
     call StoreAddressInFreeWramSlot
     ld b, $02
 
-jr_000_2334:
+.verticalInitHandlers
     push bc
-    ld de, $235e
+    ld de, InitializeStageFourBossVerticalPart
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_000_2334
+    jr nz, .verticalInitHandlers
 
     ld b, $02
 
-jr_000_2341:
+.horizontalInitHandlers
     push bc
-    ld de, $236a
+    ld de, InitializeStageFourBossHorizontalPart
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_000_2341
+    jr nz, .horizontalInitHandlers
 
-    ld de, $2700
+    ld de, WaitForBossFiringStart
     jp SetCurrentHandlerAddress
 
 
-    ld bc, $2431
+InitializeStageFourBossCenter:
+    ld bc, StageFourBossCenterInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    jr jr_000_2374
+    jr RegisterPartIndex
 
-    ld bc, $2439
+InitializeStageFourBossVerticalPart:
+    ld bc, StageFourBossVerticalInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    jr jr_000_2374
+    jr RegisterPartIndex
 
-    ld bc, $2441
+InitializeStageFourBossHorizontalPart:
+    ld bc, StageFourBossHorizontalInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-jr_000_2374:
+RegisterPartIndex:
     call $4690
-    ld de, $237d
+    ld de, ConfigureStageFourBoss
     jp SetCurrentHandlerAddress
 
-
+ConfigureStageFourBoss:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0011
     add hl, bc
     ld a, [hl]
     push af
-    ld hl, $0f4e
+    ld hl, StageFourBossStartingCoordinates
     call ApplyHorizontalScrollOffsetToCoordinatePair
     pop af
-    ld bc, $2431
+    ld bc, StageFourBossCenterInitTemplate
     or a
-    jr z, jr_000_239e
+    jr z, .applyTemplate
 
-    ld bc, $2439
+    ld bc, StageFourBossVerticalInitTemplate
     cp $03
-    jr c, jr_000_239e
+    jr c, .applyTemplate
 
-    ld bc, $2441
+    ld bc, StageFourBossHorizontalInitTemplate
 
-jr_000_239e:
+.applyTemplate
     call ResetObjectAttributes
-    ld de, $23a7
+    ld de, CheckStageFourBossPartAndSetupHandler
     jp SetCurrentHandlerAddress
 
-
+CheckStageFourBossPartAndSetupHandler:
     ld a, [$caca]
     or a
     jp z, AdvanceToNextHandler
@@ -6338,17 +6298,16 @@ jr_000_239e:
     add hl, bc
     ld a, [hl]
     or a
-    jr nz, jr_000_23c6
+    jr nz, .setPartHandler
 
-    ld de, $23cc
+    ld de, UpdateStageFourBossStatus
     jp SetCurrentHandlerAddress
 
-
-jr_000_23c6:
-    ld de, $46ad
+.setPartHandler
+    ld de, UpdateStageFourBossPartStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateStageFourBossStatus:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000c
@@ -6359,7 +6318,7 @@ jr_000_23c6:
 
     ld de, $0000
     call MoveObject
-    ld de, $23fd
+    ld de, CheckStageFourBossCollision
     jp SetCurrentHandlerAddress
 
 
@@ -6375,23 +6334,23 @@ jr_000_23e4:
     ld de, $2415
     jp SetCurrentHandlerAddress
 
-
+CheckStageFourBossCollision:
     call CheckPlayerCenterInEnemyHitbox
-    ld de, $2406
+    ld de, CheckForStageFourBossHit
     jp SetCurrentHandlerAddress
 
-
+CheckForStageFourBossHit:
     call Call_000_0a0c
     or a
-    jr z, jr_000_240f
+    jr z, .setStatusHandler
 
     ld [wScreenShakeRequested], a
 
-jr_000_240f:
-    ld de, $23cc
+.setStatusHandler
+    ld de, UpdateStageFourBossStatus
     jp SetCurrentHandlerAddress
 
-
+    ; 2415
     ld hl, $0018
     add hl, bc
     ld a, [hl]
@@ -6408,41 +6367,26 @@ jr_000_240f:
     jp AdvanceToNextHandler
 
 
-    ld [de], a
-    ld [$fe08], sp
-    cp $12
-    inc d
-    ld h, b
+StageFourBossCenterInitTemplate:
+    db $12, $08, $08, $fe, $fe, $12, $14, $60
 
-jr_000_2439:
-    ld [hl-], a
-    jr @+$0a
+StageFourBossVerticalInitTemplate:
+    db $32, $18, $08, $00, $00, $30, $10, $f0
 
-    nop
-    nop
-    jr nc, jr_000_2450
+StageFourBossHorizontalInitTemplate:
+    db $14, $08, $10, $00, $00, $10, $20, $f0
 
-    ldh a, [rNR14]
-    ld [$0010], sp
-    nop
-    db $10
-    jr nz, jr_000_2439
+    ; $2449: smoke spawn offsets (Y, X)
+    db $00, $00
+    db $10, $10
+    db $10, $f0
+    db $f0, $10
+    db $f0, $f0
+    db $00, $20
+    db $00, $e0
 
-    nop
-    nop
-    db $10
-    db $10
-    db $10
-    ldh a, [$fff0]
-
-jr_000_2450:
-    db $10
-    ldh a, [$fff0]
-    nop
-    jr nz, jr_000_2456
-
-jr_000_2456:
-    ldh [$ffaf], a
+    ; $2457: event $18 initializer
+    xor a
     ld hl, $cac0
     ld b, $10
 
@@ -6453,7 +6397,7 @@ jr_000_245d:
 
     ld de, $2473
     call StoreAddressInFreeWramSlot
-    ld de, $2700
+    ld de, WaitForBossFiringStart
     call StoreAddressInFreeWramSlot
     ld de, $27ad
     jp SetCurrentHandlerAddress
@@ -6863,7 +6807,7 @@ DestructorOrbInitTemplate:
 DestructorOrbGraphics:
     db $7a, $00, $7a, $20
 
-    ; $2700
+WaitForBossFiringStart:
     ld a, [$caca]
     or a
     jp z, AdvanceToNextHandler
@@ -6872,69 +6816,69 @@ DestructorOrbGraphics:
     add hl, bc
     xor a
     ld [hl], a
-    ld de, $2713
+    ld de, UpdateBossFiringTimer
     jp SetCurrentHandlerAddress
 
 
+UpdateBossFiringTimer:
     ld hl, $0016
     add hl, bc
     inc [hl]
     ld a, [hl]
     and $07
-    jr z, jr_000_2723
+    jr z, .firingTimerComplete
 
-    ld de, $275c
+    ld de, CheckBossFiringActive
     jp SetCurrentHandlerAddress
 
 
-jr_000_2723:
+.firingTimerComplete
     xor a
     ld b, a
     ld a, [wCurrentStage]
     cp $05
-    jr z, jr_000_272e
+    jr z, .updateTimer
 
-    ld b, $03
+    ld b, $03 ; not stage 5
 
-jr_000_272e:
+.updateTimer
     ld a, b
     ld [hl], a
-    ld de, $2736
+    ld de, TryFireBossShot
     jp SetCurrentHandlerAddress
 
-
+TryFireBossShot:
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_2756
+    jr nz, .setFiringActiveHandler
 
-    ld de, $278d
-    ld bc, $0f58
+    ld de, BossFiringPositionSequence
+    ld bc, StageFourBossShotCoordinates
     ld a, [wCurrentStage]
     cp $05
-    jr nz, jr_000_274d
+    jr nz, .scheduleProjectile
 
-    ld bc, $0f80
+    ld bc, StageFiveBossShotCoordinates
 
-jr_000_274d:
-    call Call_000_2769
+.scheduleProjectile:
+    call PrepareBossProjectileSpawn
     ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_2756:
-    ld de, $275c
+.setFiringActiveHandler
+    ld de, CheckBossFiringActive
     jp SetCurrentHandlerAddress
 
-
+CheckBossFiringActive:
     ld a, [$cac1]
     or a
     jp nz, RemoveCurrentHandler
 
-    ld de, $2713
+    ld de, UpdateBossFiringTimer
     jp SetCurrentHandlerAddress
 
-
-Call_000_2769:
+PrepareBossProjectileSpawn:
     ld hl, $cf99
     ld a, [hl]
     and $1f
@@ -6959,30 +6903,12 @@ Call_000_2769:
     ret
 
 
-    dec b
-    ld b, $03
-    inc c
-    ld a, [bc]
-    ld [bc], a
-    rrca
-    rlca
-    inc c
-    inc b
-    nop
-    ld [bc], a
-    ld [$0e0d], sp
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    dec b
-    ld bc, $0c09
-    ld a, [bc]
-    inc b
-    dec bc
-    rrca
-    ld bc, $0009
-    dec bc
-    ld b, $0f
+BossFiringPositionSequence: ; $278D, 32 coordinate indices
+    db $05, $06, $03, $0c, $0a, $02, $0f, $07
+    db $0c, $04, $00, $02, $08, $0d, $0e, $02
+    db $03, $02, $05, $01, $09, $0c, $0a, $04
+    db $0b, $0f, $01, $09, $00, $0b, $06, $0f
+
     ld a, [$caca]
     or a
     jp z, AdvanceToNextHandler
@@ -7090,7 +7016,7 @@ jr_000_2843:
 
     ld de, $2872
     ld bc, $0fa2
-    call Call_000_2769
+    call PrepareBossProjectileSpawn
     ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 

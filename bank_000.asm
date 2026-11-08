@@ -2796,7 +2796,7 @@ StageEventHandlerTable:
     dw $1ca9 ; event type $23
     dw $1fa6 ; event type $24
     dw IncreaseScrollSpeed ; event type $25
-    dw $2123 ; event type $26
+    dw InitializeTwerk ; event type $26
     dw $214f ; event type $27
     dw InitializeMack ; event type $28
     dw InitializeVexor ; event type $29
@@ -5937,37 +5937,33 @@ SkimbotInitTemplate:
 SkimbotGraphics:
     db $54, $00, $54, $20
 
-    ; $2123: event $26 initializer
-    ld bc, $2143
+InitializeTwerk:
+    ld bc, TwerkInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2133
+    ld de, ConfigureTwerk
     jp SetCurrentHandlerAddress
 
-
+ConfigureTwerk:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $3687
+    ld de, TwerkMovementScript
     call InitializeMovementScript
-    ld de, $214b
+    ld de, TwerkGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $0040
-    ld b, b
-    jr nz, jr_000_2151
+TwerkInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    ld [hl], e
+TwerkGraphics:
+    db $40, $00, $40, $20
 
-jr_000_2151:
-    ld hl, $47cd
-    add hl, bc
+    ; $214F: event $27 initializer
+    ld bc, $2173
+    call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
@@ -9529,24 +9525,11 @@ PincherMovementScriptB: ; $35C3
 SkimbotMovementScript: ; $367D
     dw $3cb1, $3cb1, $3cb1, $3cb1, $3cb1
 
-    ld c, [hl]
-    ld a, $43
-    ld a, $64
-    ld a, $59
-    ld a, $b1
-    inc a
-    ld c, [hl]
-    ld a, $43
-    ld a, $64
-    ld a, $59
-    ld a, $b1
-    inc a
-    ld c, [hl]
-    ld a, $43
-    ld a, $64
-    ld a, $59
-    ld a, $b1
-    inc a
+TwerkMovementScript: ; $3687
+    dw $3e4e, $3e43, $3e64, $3e59, $3cb1
+    dw $3e4e, $3e43, $3e64, $3e59, $3cb1
+    dw $3e4e, $3e43, $3e64, $3e59, $3cb1
+
     ld bc, $0c3e
     ld a, $eb
     dec a

@@ -2776,7 +2776,7 @@ StageEventHandlerTable:
     dw $20c7 ; event type $0d
     dw InitializeEpikhan ; event type $0e
     dw InitializeOmniquad ; event type $0f
-    dw $43cf ; event type $10
+    dw InitializeXenocrypt ; event type $10
     dw $44e6 ; event type $11
     dw ActivateBoss ; event type $12
     dw SetStageReady ; event type $13
@@ -2827,10 +2827,9 @@ EnemySpawnXCoords:
 jr_000_0f27:
     sbc b
     and b
-    ld c, b
-    ld d, b
-    ld e, b
-    ld h, b
+
+XenocryptStartingXCoords: ; $0F29
+    db $48, $50, $58, $60
 
 jr_000_0f2d:
     ld c, b

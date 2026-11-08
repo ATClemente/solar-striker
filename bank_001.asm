@@ -569,30 +569,30 @@ OmniquadOuterDamageGraphics:
 OmniquadCenterDamageGraphics:
     db $74, $10, $74, $30
 
-    ; $43CF: event $10 initializer
+InitializeXenocrypt:
     xor a
     ld hl, $cac0
     ld [hl+], a
     ld [hl], a
-    ld b, $04
+    ld b, $04 ; 4 parts
 
-jr_001_43d7:
+.registerPartHandlers
     push bc
-    ld de, $43e5
+    ld de, InitializeXenocryptPart
     call StoreAddressInFreeWramSlot
     pop bc
     dec b
-    jr nz, jr_001_43d7
+    jr nz, .registerPartHandlers
 
     jp RemoveCurrentHandler
 
-
+InitializeXenocryptPart:
     ld de, $cac0
     ld a, [de]
     xor $07
     add $02
     ld [wStageEventParams + 1], a
-    ld bc, $44d6
+    ld bc, XenocryptPartInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -608,10 +608,10 @@ jr_001_43d7:
     ld [hl], a
     inc a
     ld [de], a
-    ld de, $4411
+    ld de, ConfigureXenocryptPart
     jp SetCurrentHandlerAddress
 
-
+ConfigureXenocryptPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
@@ -621,7 +621,7 @@ jr_001_43d7:
     add a
     ld l, a
     ld h, $00
-    ld de, $44ce
+    ld de, XenocryptMovementScriptTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -631,35 +631,31 @@ jr_001_43d7:
     ld hl, $0011
     add hl, bc
     ld a, [hl]
-    ld hl, $0f29
+    ld hl, XenocryptStartingXCoords
     call GetStartingXCoord
-    ld bc, $44d6
-
-jr_001_4438:
+    ld bc, XenocryptPartInitTemplate
     call ResetObjectAttributes
-    ld de, $44de
-
-jr_001_443e:
+    ld de, XenocryptPartBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4447
+    ld de, UpdateXenocryptMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateXenocryptMovement:
     call Call_001_4627
     cp [hl]
-    jr c, jr_001_4453
+    jr c, HandleXenocryptPartDefeat
 
-    ld de, $445f
+    ld de, UpdateXenocryptPartStatus
     jp SetCurrentHandlerAddress
 
 
-jr_001_4453:
-    ld de, $44de
+HandleXenocryptPartDefeat:
+    ld de, XenocryptPartBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $44ac
+    ld de, DestroyXenocryptPart
     jp SetCurrentHandlerAddress
 
-
+UpdateXenocryptPartStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -673,40 +669,40 @@ jr_001_4453:
     ld [hl], a
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_001_4489
+    jr nz, .setCollisionHandler
 
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_001_4489
+    jr nz, .setCollisionHandler
 
     ld bc, $1c00
     call StoreOffsetObjectPosition
     ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_001_4489:
-    ld de, $44de
+.setCollisionHandler
+    ld de, XenocryptPartBaseGraphics
     call SetObjectGraphicsPointer
-    ld de, $4495
+    ld de, CheckXenocryptPartCollision
     jp SetCurrentHandlerAddress
 
-
+CheckXenocryptPartCollision:
     push bc
     call CheckEnemyCollisionWithPlayer
     pop bc
     call Call_000_0a0c
     or a
-    jr z, jr_001_44a6
+    jr z, .setMovementHandler
 
-    ld de, $44e2
+    ld de, XenocryptPartDamageGraphics
     call SetObjectGraphicsPointer
 
-jr_001_44a6:
-    ld de, $4447
+.setMovementHandler
+    ld de, UpdateXenocryptMovement
     jp SetCurrentHandlerAddress
 
-
+DestroyXenocryptPart:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -726,30 +722,19 @@ jr_001_44a6:
     jp Jump_000_0bbb
 
 
-    rra
-    dec sp
-    ld h, a
-    dec sp
-    or l
-    dec sp
-    ld bc, $213c
-    db $10
-    inc b
-    nop
-    nop
-    jr nz, jr_001_44e5
+XenocryptMovementScriptTable:
+    dw $3b1f, $3b67, $3bb5, $3c01
 
-    jr nz, @+$7a
+XenocryptPartInitTemplate:
+    db $21, $10, $04, $00, $00, $20, $08, $20
 
-    nop
-    ld a, b
-    ld b, b
-    ld a, b
-    db $10
-    ld a, b
+XenocryptPartBaseGraphics:
+    db $78, $00, $78, $40
 
-jr_001_44e5:
-    ld d, b
+XenocryptPartDamageGraphics:
+    db $78, $10, $78, $50
+
+    ; $44E6: event $11 initializer.
     xor a
     ld hl, $cac0
     ld [hl+], a

@@ -2794,7 +2794,7 @@ StageEventHandlerTable:
     dw $2ec9 ; event type $1f
     dw InitializeBatwing ; event type $20
     dw InitializeZigzag ; event type $21
-    dw $1ba8 ; event type $22
+    dw InitializeBlazer ; event type $22
     dw $1ca9 ; event type $23
     dw $1fa6 ; event type $24
     dw IncreaseScrollSpeed ; event type $25
@@ -5031,38 +5031,38 @@ ZigzagInitTemplate:
 ZigzagGraphics:
     db $4a, $00, $4a, $20
 
-    ; $1BA8: event $22 initializer
-    ld bc, $1c12
+InitializeBlazer:
+    ld bc, BlazerInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1bb8
+    ld de, ConfigureBlazer
     jp SetCurrentHandlerAddress
 
-
+ConfigureBlazer:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $c782
     ld e, [hl]
     ld d, $00
-    ld bc, $1c12
+    ld bc, BlazerInitTemplate
     call ResetObjectAttributes
-    ld de, $1c1a
+    ld de, BlazerGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1bdb
+    jr z, .setStatusHandler
 
-    ld de, $1c04
+    ld de, TryFireBlazerShot
     jp SetCurrentHandlerAddress
 
 
-jr_000_1bdb:
-    ld de, $1be1
+.setStatusHandler
+    ld de, UpdateBlazerStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateBlazerStatus:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -5080,27 +5080,23 @@ jr_000_1bdb:
     ld d, $06
     ld e, $00
     call MoveObject
-    ld de, $1c04
+    ld de, TryFireBlazerShot
     jp SetCurrentHandlerAddress
 
-
+TryFireBlazerShot:
     push bc
     call TryScheduleEnemyShot
     pop bc
     call CheckEnemyCollisionWithPlayer
-    ld de, $1be1
+    ld de, UpdateBlazerStatus
     jp SetCurrentHandlerAddress
 
 
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld [de], a
-    ld b, h
-    nop
-    ld b, h
-    db $20
+BlazerInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $12
+
+BlazerGraphics:
+    db $44, $00, $44, $20
 
 InitializeArrowhead:
     ld bc, ArrowheadInitTemplate

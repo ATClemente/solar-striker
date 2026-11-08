@@ -2795,7 +2795,7 @@ StageEventHandlerTable:
     dw InitializeBatwing ; event type $20
     dw InitializeZigzag ; event type $21
     dw InitializeBlazer ; event type $22
-    dw $1ca9 ; event type $23
+    dw InitializeMiditron ; event type $23
     dw InitializeAnthrop ; event type $24
     dw IncreaseScrollSpeed ; event type $25
     dw InitializeTwerk ; event type $26
@@ -5182,20 +5182,21 @@ ArrowheadInitTemplate:
 ArrowheadGraphics:
     db $3a, $00, $3a, $20
 
-    ld bc, $1d28
+InitializeMiditron:
+    ld bc, MiditronInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1cb9
+    ld de, ConfigureMiditron
     jp SetCurrentHandlerAddress
 
-
+ConfigureMiditron:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1d24
+    ld de, MiditronMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1d30
+    ld de, MiditronGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
@@ -5255,18 +5256,14 @@ jr_000_1d15:
     jp SetCurrentHandlerAddress
 
 
-    db $fd
-    dec [hl]
-    inc de
-    ld [hl], $12
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld [bc], a
-    ld c, b
-    nop
-    ld c, b
-    db $20
+MiditronMovementScriptTable:
+    dw $35fd, $3613
+
+MiditronInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $02
+
+MiditronGraphics:
+    db $48, $00, $48, $20
 
 InitializeHarrier:
     ld bc, HarrierInitTemplate

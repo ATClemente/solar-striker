@@ -2790,7 +2790,7 @@ StageEventHandlerTable:
     dw StopStageAudio ; event type $1d
     dw $0dba ; event type $1e
     dw $2ec9 ; event type $1f
-    dw $1b18 ; event type $20
+    dw InitializeBatwing ; event type $20
     dw InitializeZigzag ; event type $21
     dw $1ba8 ; event type $22
     dw $1ca9 ; event type $23
@@ -4993,34 +4993,31 @@ RotomechGraphicsFrame1: ; $1B10
 RotomechGraphicsFrame3: ; $1B14
     db $36, $20,  $36, $40
 
-    ld bc, $1b3c
+InitializeBatwing:
+    ld bc, BatwingInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $1b28
+    ld de, ConfigureBatwing
     jp SetCurrentHandlerAddress
 
-
+ConfigureBatwing:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $1b38
+    ld de, BatwingMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $1b44
+    ld de, BatwingGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
+BatwingMovementScriptTable:
+    dw $358b, $3595
 
-    adc e
-    dec [hl]
-    sub l
-    dec [hl]
-    ld [de], a
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld bc, $0042
-    ld b, d
-    db $20
+BatwingInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $01
+
+BatwingGraphics:
+    db $42, $00, $42, $20
 
 InitializePincher:
     ld bc, PincherInitTemplate

@@ -2799,7 +2799,7 @@ StageEventHandlerTable:
     dw $1fa6 ; event type $24
     dw IncreaseScrollSpeed ; event type $25
     dw InitializeTwerk ; event type $26
-    dw $214f ; event type $27
+    dw InitializeScarab ; event type $27
     dw InitializeMack ; event type $28
     dw InitializeVexor ; event type $29
     dw $2245 ; event type $2a
@@ -5916,31 +5916,32 @@ TwerkInitTemplate:
 TwerkGraphics:
     db $40, $00, $40, $20
 
-    ; $214F: event $27 initializer
-    ld bc, $2173
+InitializeScarab:
+    ld bc, ScarabInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $215f
+    ld de, ConfigureScarab
     jp SetCurrentHandlerAddress
 
-
+ConfigureScarab:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $216f
+    ld de, ScarabMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $217b
+    ld de, ScarabGraphics
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
     ; $216F: movement script pointers
+ScarabMovementScriptTable:
     dw $36a5, $36bd
 
-    ; $2173: initialization template
+ScarabInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
 
-    ; $217B: graphics (tile, attributes)
+ScarabGraphics:
     db $4c, $00, $4c, $20
 
 InitializeMack:

@@ -2799,7 +2799,7 @@ StageEventHandlerTable:
     dw $2123 ; event type $26
     dw $214f ; event type $27
     dw InitializeMack ; event type $28
-    dw $21b2 ; event type $29
+    dw InitializeVexor ; event type $29
     dw $2245 ; event type $2a
     dw InitializeUltraCrusher ; event type $2b
 
@@ -3448,7 +3448,7 @@ FiringSequenceDirectionTable: ; $127E
     db $04, $04, $04, $04, $04, $04, $04, $04 ; Pattern $00
     db $02, $06, $02, $06, $02, $06, $02, $06 ; Pattern $01
     db $00, $04, $00, $04, $00, $04, $00, $04 ; Pattern $02
-    db $03, $04, $05, $03, $04, $05, $05, $07 ; Pattern $03 (Epikhan)
+    db $03, $04, $05, $03, $04, $05, $05, $07 ; Pattern $03 (Epikhan and Vexor)
 
     ld bc, $0503
     rlca
@@ -6020,35 +6020,36 @@ MackInitTemplate:
 MackGraphics:
     db $4e, $00, $4e, $20, $62, $00, $62, $20
 
-    ; $21B2: event $29 initializer
-    ld bc, $2239
+InitializeVexor:
+    ld bc, VexorInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $21c2
+    ld de, ConfigureVexor
     jp SetCurrentHandlerAddress
 
 
+ConfigureVexor:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $2235
+    ld de, VexorMovementScriptTable
     call InitializeMovementScriptFromTable
-    ld de, $2241
+    ld de, VexorGraphics
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_21df
+    jr z, .setMovementHandler
 
-    ld de, $222c
+    ld de, CheckVexorCollision
+    jp SetCurrentHandlerAddress
+
+.setMovementHandler
+    ld de, UpdateVexorMovement
     jp SetCurrentHandlerAddress
 
 
-jr_000_21df:
-    ld de, $21e5
-    jp SetCurrentHandlerAddress
-
-
+UpdateVexorMovement:
     call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
@@ -6063,21 +6064,20 @@ jr_000_21df:
     cp $90
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $2201
+    ld de, TryFireVexorShot
     jp SetCurrentHandlerAddress
 
-
+TryFireVexorShot:
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_000_2226
+    jr nz, .setCollisionHandler
 
     ld a, [$ca6b]
     or a
-    jr nz, jr_000_2226
+    jr nz, .setCollisionHandler
 
-jr_000_2211:
     ld de, $ca63
     ld bc, $0804
     call StoreOffsetObjectPosition
@@ -6089,32 +6089,27 @@ jr_000_2211:
     ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
-jr_000_2226:
-    ld de, $222c
+.setCollisionHandler
+    ld de, CheckVexorCollision
     jp SetCurrentHandlerAddress
 
-
+CheckVexorCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $21e5
+    ld de, UpdateVexorMovement
     jp SetCurrentHandlerAddress
 
 
-    db $ed
-    ld [hl], $fd
-    ld [hl], $12
-    ld [$0008], sp
-    cp $10
-    ld [de], a
-    ld [bc], a
-    ld d, [hl]
-    nop
-    ld d, [hl]
-    jr nz, jr_000_2247
+VexorMovementScriptTable:
+    dw VexorMovementScriptA, VexorMovementScriptB
 
-    ld a, h
+VexorInitTemplate:
+    db $12, $08, $08, $00, $fe, $10, $12, $02
 
-jr_000_2247:
-    ld [hl+], a
+VexorGraphics:
+    db $56, $00, $56, $20
+
+    ; $2245: event $2A initializer
+    ld bc, $227c
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -9600,37 +9595,14 @@ MackMovementScript: ; $36D5
     dw $3d4d, $3c89
     dw $3d4d, $3c89
 
-    or c
-    inc a
-    dec a
-    dec a
-    sub e
-    dec a
-    sbc [hl]
-    dec a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    ld b, l
-    dec a
-    db $eb
-    dec a
-    or $3d
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+VexorMovementScriptA: ; $36ED
+    dw $3cb1, $3d3d, $3d93, $3d9e
+    dw $3cb1, $3cb1, $3cb1, $3cb1
+
+VexorMovementScriptB: ; $36FD
+    dw $3cb1, $3d45, $3deb, $3df6
+    dw $3cb1, $3cb1, $3cb1, $3cb1
+
     or c
     inc a
     sub c

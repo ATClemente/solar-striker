@@ -2787,7 +2787,7 @@ StageEventHandlerTable:
     dw InitializeSkimbot ; event type $16
     dw InitializeStageFourBoss ; event type $17
     dw InitializeStageFiveBoss ; event type $18
-    dw $24ff ; event type $19
+    dw InitializeFinalBoss ; event type $19
     dw $2d09 ; event type $1a
     dw RemoveCurrentHandler ; event type $1b
     dw StartBossAudio ; event type $1c
@@ -2918,18 +2918,16 @@ jr_000_0f90:
 jr_000_0f9e:
     db $34, $78
 
-    jr jr_000_0ff2
+FinalBossStartingCoordinates: ; $0FA0, (Y, X)
+    db $18, $50
 
-jr_000_0fa2:
-    jr c, @+$2e
+FinalBossShotCoordinates:
+    db $38, $2c
 
 jr_000_0fa4:
-    jr c, @+$7e
-
-    adc b
-    inc e
-    adc b
-    adc h
+    db $38, $7c
+    db $88, $1c
+    db $88, $8c
 
 InitializeHandlerDataPair:
     ld de, $0008
@@ -6477,45 +6475,45 @@ CheckForStageFiveBossHit:
 StageFiveBossCenterInitTemplate:
     db $12, $08, $08, $00, $00, $10, $10, $70
 
-    ; $24FF: event $19 initializer.
+InitializeFinalBoss:
     xor a
     ld hl, $cac0
     ld b, $10
 
-jr_000_2505:
+.clearStateBytes:
     ld [hl+], a
     dec b
-    jr nz, jr_000_2505
+    jr nz, .clearStateBytes
 
     ld [$cf99], a
-    ld de, $251b
+    ld de, InitializeFinalBossCenter
     call StoreAddressInFreeWramSlot
-    ld de, $281c
+    ld de, WaitForFinalBossFiringStart
     call StoreAddressInFreeWramSlot
     jp RemoveCurrentHandler
 
-
-    ld bc, $25c9
+InitializeFinalBossCenter:
+    ld bc, FinalBossCenterInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
     call $4690
-    ld de, $252e
+    ld de, ConfigureFinalBossCenter
     jp SetCurrentHandlerAddress
 
-
+ConfigureFinalBossCenter:
     ld a, [bc]
     call SetObjectPointer
     xor a
-    ld hl, $0fa0
+    ld hl, FinalBossStartingCoordinates
     call ApplyHorizontalScrollOffsetToCoordinatePair
-    ld bc, $25c9
+    ld bc, FinalBossCenterInitTemplate
     call ResetObjectAttributes
-    ld de, $2545
+    ld de, HandleFinalBossActivation
     jp SetCurrentHandlerAddress
 
-
+HandleFinalBossActivation:
     ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
@@ -6526,25 +6524,25 @@ jr_000_2505:
     add hl, de
     xor a
     ld [hl], a
-    ld de, $255c
+    ld de, UpdateFinalBossStatus
     jp SetCurrentHandlerAddress
 
-
+UpdateFinalBossStatus:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000c
     add hl, de
     ld a, [hl+]
     cp [hl]
-    jr c, jr_000_2574
+    jr c, HandleFinalBossDefeat
 
     ld de, $0000
     call MoveObject
-    ld de, $2590
+    ld de, CheckFinalBossCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_2574:
+HandleFinalBossDefeat:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
@@ -6556,26 +6554,26 @@ jr_000_2574:
     ld de, $2415
     jp SetCurrentHandlerAddress
 
-
+CheckFinalBossCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
     call Call_000_0a0c
     or a
-    jr z, jr_000_259e
+    jr z, .tryShot
 
     ld [wScreenShakeRequested], a
 
-jr_000_259e:
-    ld de, $25a4
+.tryShot
+    ld de, TryFireFinalBossSpread
     jp SetCurrentHandlerAddress
 
-
+TryFireFinalBossSpread:
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_000_25c3
+    jr nz, .setStatusHandler
 
     ld de, $ca63
     ld bc, $0804
@@ -6588,26 +6586,17 @@ jr_000_259e:
     ld de, UpdateEnemyFiringSequence
     call StoreAddressInFreeWramSlot
 
-jr_000_25c3:
-    ld de, $255c
+.setStatusHandler
+    ld de, UpdateFinalBossStatus
     jp SetCurrentHandlerAddress
 
 
-    ld [de], a
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    add b
-    inc hl
-    db $10
-    inc c
-    nop
-    nop
-    jr nz, jr_000_25f0
+    ; $25C9: eight-byte object initialization template.
+FinalBossCenterInitTemplate:
+    db $12, $08, $08, $00, $00, $10, $10, $80
 
-    ; $25D8: final byte of preceding data
-    db $e0
+    ; $25D1: eight-byte object initialization template (two rows, three columns).
+    db $23, $10, $0c, $00, $00, $20, $18, $e0
 
 UpdateUltraCrusherShotTimer:
     ld a, [$cac1]
@@ -6974,7 +6963,7 @@ CheckBossAlternateFiringActive:
 BossAlternateShotCoordinateIndices:
     db $01, $02, $01, $00
 
-    ; $281C: wait for boss activation.
+WaitForFinalBossFiringStart:
     ld a, [wBossActive]
     or a
     jp z, AdvanceToNextHandler
@@ -6984,71 +6973,58 @@ BossAlternateShotCoordinateIndices:
     xor a
     ld [hl], a
     ld [$cf99], a
-    ld de, $2832
+    ld de, UpdateFinalBossFiringTimer
     jp SetCurrentHandlerAddress
 
-
+UpdateFinalBossFiringTimer:
     ld hl, $0016
     add hl, bc
     ld a, [hl]
     inc a
     and $0f
     ld [hl], a
-    jr z, jr_000_2843
+    jr z, .tryShot
 
-    ld de, $2865
+    ld de, CheckFinalBossFiringActive
     jp SetCurrentHandlerAddress
 
 
-jr_000_2843:
-    ld de, $2849
+.tryShot
+    ld de, TryFireFinalBossAimedShot
     jp SetCurrentHandlerAddress
 
-
+TryFireFinalBossAimedShot:
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_285f
+    jr nz, .setFiringHandler
 
-    ld de, $2872
-    ld bc, $0fa2
+    ld de, FinalBossFiringPositionSequence
+    ld bc, FinalBossShotCoordinates
     call PrepareBossProjectileSpawn
     ld de, TrySpawnEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_285f:
-    ld de, $2865
+.setFiringHandler
+    ld de, CheckFinalBossFiringActive
     jp SetCurrentHandlerAddress
 
-
+CheckFinalBossFiringActive:
     ld a, [$cac1]
     or a
     jp nz, RemoveCurrentHandler
 
-    ld de, $2832
+    ld de, UpdateFinalBossFiringTimer
     jp SetCurrentHandlerAddress
 
 
-    inc bc
-    ld bc, $0002
-    ld bc, $0302
-    nop
-    inc bc
-    ld [bc], a
-    nop
-    ld bc, $0301
-    ld [bc], a
-    nop
-    ld [bc], a
-    nop
-    nop
-    ld [bc], a
-    inc bc
-    ld bc, $0103
-    ld bc, $0302
-    ld [bc], a
-    ld bc, $0300
-    nop
+FinalBossFiringPositionSequence:
+    db $03, $01, $02, $00, $01, $02, $03, $00
+    db $03, $02, $00, $01, $01, $03, $02, $00
+    db $02, $00, $00, $02, $03, $01, $03, $01
+    db $01, $02, $03, $02, $01, $00, $03, $00
+
+    ; $2892: following routine.
     ld a, [$cac8]
     or a
     jp z, AdvanceToNextHandler

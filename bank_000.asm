@@ -1060,6 +1060,7 @@ RunStageTransition:
     cp $08
     jr nz, SetupNextStage
 
+    ; This runs for stage 8
     ld a, $02
     ld [$2100], a
     ld hl, $7950
@@ -1100,7 +1101,7 @@ SetupNextStage:
     ld [wScreenShakeOffset], a
     ld a, [wCurrentStage]
     cp $07
-    jr nc, jr_000_067b
+    jr nc, .postGame ; stage is >= 7
 
     ld a, $30
     ldh [rSCX], a
@@ -1121,7 +1122,7 @@ SetupNextStage:
     ldh [rLCDC], a
     jr StartStageMusic
 
-jr_000_067b:
+.postGame
     ld a, $50
     ldh [rSCX], a
     ld a, $60
@@ -1129,12 +1130,12 @@ jr_000_067b:
     ld d, $88
     ld a, [wCurrentStage]
     cp $07
-    jr z, jr_000_0691
+    jr z, .setWindowPosition ; stage is 7
 
     call ClearTileMap9C00
     ld d, $68
 
-jr_000_0691:
+.setWindowPosition
     ld hl, rWY
     ld a, d
     ld [hl+], a
@@ -1146,26 +1147,26 @@ jr_000_0691:
     call StoreAddressInFreeWramSlot
     ld a, [wCurrentStage]
     cp $08
-    jr z, jr_000_06b2
+    jr z, .setupStageEight ; stage is 8
 
-    ld de, $2d09
+    ld de, InitializeStageSevenCutscene ; stage 7
     call StoreAddressInFreeWramSlot
-    jr jr_000_06c2
+    jr .finishSetup
 
-jr_000_06b2:
+.setupStageEight
     xor a
     ld hl, $9c00
     ld b, $1f
 
-jr_000_06b8:
+.clearWindowMapBytes
     ld [hl+], a
     dec b
-    jr nz, jr_000_06b8
+    jr nz, .clearWindowMapBytes
 
-    ld de, $2ec9
+    ld de, $2ec9 ; stage 8
     call StoreAddressInFreeWramSlot
 
-jr_000_06c2:
+.finishSetup
     ld a, $07
     ldh [rTAC], a
     ld [$ca81], a
@@ -2220,8 +2221,7 @@ jr_000_0bed:
     ld de, AssignSmokeGraphics
     jp SetCurrentHandlerAddress
 
-
-Call_000_0bf3:
+MoveObjectWithFractionalVelocity:
     ld a, d
     call CalculateYMovement
     ld a, e
@@ -2788,7 +2788,7 @@ StageEventHandlerTable:
     dw InitializeStageFourBoss ; event type $17
     dw InitializeStageFiveBoss ; event type $18
     dw InitializeFinalBoss ; event type $19
-    dw $2d09 ; event type $1a
+    dw InitializeStageSevenCutscene ; event type $1a ; not used via this table
     dw RemoveCurrentHandler ; event type $1b
     dw StartBossAudio ; event type $1c
     dw StopStageAudio ; event type $1d
@@ -4383,7 +4383,7 @@ jr_000_17b6:
     or e
     jr z, jr_000_17c0
 
-    call Call_000_0bf3
+    call MoveObjectWithFractionalVelocity
     jp AdvanceToNextHandler
 
 
@@ -7040,7 +7040,7 @@ FinalBossFiringPositionSequence:
     ld a, [bc]
     call SetObjectPointer
     ld de, $f800
-    call Call_000_0bf3
+    call MoveObjectWithFractionalVelocity
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7061,7 +7061,7 @@ FinalBossFiringPositionSequence:
     ld a, [bc]
     call SetObjectPointer
     ld de, $08f8
-    call Call_000_0bf3
+    call MoveObjectWithFractionalVelocity
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7374,7 +7374,7 @@ Stage6AnnouncementGraphics: ; $2AD4
     ld c, a
     ld a, [bc]
     call SetObjectPointer
-    ld de, $0de6
+    ld de, RequestNextStage
     call StoreAddressInFreeWramSlot
     jp FreeObjectAndRemoveHandler
 
@@ -7668,31 +7668,33 @@ jr_000_2c94:
     ld c, a
     ld a, [bc]
     call SetObjectPointer
-    ld de, $0de6
+    ld de, RequestNextStage
     call StoreAddressInFreeWramSlot
     jp RemoveCurrentHandler
 
 
-    ld bc, $2f9b
+    ; 2D09
+InitializeStageSevenCutscene:
+    ld bc, FinalBossCutsceneInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2d19
+    ld de, ConfigureFinalBossCutsceneObject
     jp SetCurrentHandlerAddress
 
-
+ConfigureFinalBossCutsceneObject:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $2f9b
+    ld bc, FinalBossCutsceneInitTemplate
     ld de, $6872
     call ResetObjectAttributes
-    ld de, $2fa3
+    ld de, FinalBossCutsceneGraphics
     call SetObjectGraphicsPointer
-    ld de, $2d32
+    ld de, WaitForFinalBossCutsceneDelay
     jp SetCurrentHandlerAddress
 
-
+WaitForFinalBossCutsceneDelay:
     ld hl, $0010
     add hl, bc
     inc [hl]
@@ -7700,10 +7702,10 @@ jr_000_2c94:
     and $ff
     jp nz, AdvanceToNextHandler
 
-    ld de, $2d43
+    ld de, UpdateFinalBossCutsceneDestruction
     jp SetCurrentHandlerAddress
 
-
+UpdateFinalBossCutsceneDestruction:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $001c
@@ -7720,27 +7722,27 @@ jr_000_2c94:
     jp z, FreeObjectAndRemoveHandler
 
     push hl
-    ld hl, $2fc7
+    ld hl, FinalBossCutsceneDestructionSmokeOffsets
     call $465d
     pop hl
     ld a, [hl]
     cp $04
     jp nz, AdvanceToNextHandler
 
-    ld de, $2d71
+    ld de, InitializeCutscenePlayerObject
     call StoreAddressInFreeWramSlot
     jp AdvanceToNextHandler
 
-
-    ld bc, $2faf
+InitializeCutscenePlayerObject:
+    ld bc, PlayerShipCutsceneInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2d81
+    ld de, ConfigureCutscenePlayerObject
     jp SetCurrentHandlerAddress
 
-
+ConfigureCutscenePlayerObject:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0008
@@ -7750,47 +7752,47 @@ jr_000_2c94:
     ld [hl], a
     ld hl, $0018
     add hl, bc
-    ld bc, $2faf
+    ld bc, PlayerShipCutsceneInitTemplate
     ld de, $606a
     call ResetObjectAttributes
-    ld de, $2fb7
+    ld de, PlayerShipCutsceneGraphics
     call SetObjectGraphicsPointer
-    ld de, $2da5
+    ld de, UpdateCutscenePlayerShipMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateCutscenePlayerShipMovement:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $f0
-    jr nc, jr_000_2dbf
+    jr nc, .startTextDisplay
 
     ld hl, $0008
     add hl, bc
     ld a, [hl+]
     ld e, [hl]
     ld d, a
-    call Call_000_0bf3
-    ld de, $2dd5
+    call MoveObjectWithFractionalVelocity
+    ld de, AccelerateCutscenePlayerShip
     jp SetCurrentHandlerAddress
 
 
-jr_000_2dbf:
+.startTextDisplay
     call ClearSelectedObject
     ld a, [$ca22]
     cp $0f
-    jr nz, jr_000_2dcf
+    jr nz, .alternatePath
 
-    ld de, $2ded
+    ld de, QueueFinalMissionText
     jp SetCurrentHandlerAddress
 
 
-jr_000_2dcf:
-    ld de, $2e5b
+.alternatePath
+    ld de, QueueFinalMissionTextAlternate
     jp SetCurrentHandlerAddress
 
-
+AccelerateCutscenePlayerShip:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $0007
@@ -7799,24 +7801,28 @@ jr_000_2dcf:
     inc a
     and $03
     ld [hl+], a
-    jr nz, jr_000_2de7
+    jr nz, .setMovementHandler
 
     dec [hl]
     inc hl
     dec [hl]
 
-jr_000_2de7:
-    ld de, $2da5
+.setMovementHandler
+    ld de, UpdateCutscenePlayerShipMovement
     jp SetCurrentHandlerAddress
 
-
+    ; this copies the instructions to display FINAL MISSION
+    ; FinalMissionText: tile data
+    ; $0e: bytes to copy (14)
+    ; $9a2e: start drawing here in tile map
+QueueFinalMissionText:
     ld hl, $0018
     add hl, bc
     xor a
     ld [hl], a
     ld a, $0e
     ld [$cad6], a
-    ld de, $2fdb
+    ld de, FinalMissionText
     ld hl, $cad2
     ld a, e
     ld [hl+], a
@@ -7829,17 +7835,21 @@ jr_000_2de7:
     ld a, $01
     ld [$cad0], a
     ld [$cad8], a
-    ld de, $2e18
+    ld de, QueueIsOverText
     jp SetCurrentHandlerAddress
 
-
+    ; this copies the instructions to display IS OVER
+    ; IsOverText: tile data
+    ; $0e: bytes to copy (14)
+    ; $9a4e: start drawing here in tile map
+QueueIsOverText:
     ld a, [$cad0]
     or a
     jp nz, AdvanceToNextHandler
 
     ld a, $0e
     ld [$cad6], a
-    ld de, $2fe9
+    ld de, IsOverText
     ld hl, $cad2
     ld a, e
     ld [hl+], a
@@ -7852,10 +7862,10 @@ jr_000_2de7:
     ld a, $01
     ld [$cad0], a
     ld [$cad8], a
-    ld de, $2e44
+    ld de, WaitThenEndStageSevenCutscene
     jp SetCurrentHandlerAddress
 
-
+WaitThenEndStageSevenCutscene:
     ld a, [$cad0]
     or a
     jp nz, AdvanceToNextHandler
@@ -7867,17 +7877,18 @@ jr_000_2de7:
     or a
     jp nz, AdvanceToNextHandler
 
-    ld de, $0de6
+    ld de, RequestNextStage
     jp SetCurrentHandlerAddress
 
-
+    ; 2E5B
+QueueFinalMissionTextAlternate:
     ld hl, $0018
     add hl, bc
     xor a
     ld [hl], a
     ld a, $0e
     ld [$cad6], a
-    ld de, $2ff7
+    ld de, FinalMissionTextDuplicate
     ld hl, $cad2
     ld a, e
     ld [hl+], a
@@ -7890,17 +7901,18 @@ jr_000_2de7:
     ld a, $01
     ld [$cad0], a
     ld [$cad8], a
-    ld de, $2e86
+    ld de, QueueIsOverTextAlternate
     jp SetCurrentHandlerAddress
 
-
+    ; 2E86
+QueueIsOverTextAlternate:
     ld a, [$cad0]
     or a
     jp nz, AdvanceToNextHandler
 
     ld a, $0e
     ld [$cad6], a
-    ld de, $3005
+    ld de, IsOverTextLeftTrimmed
     ld hl, $cad2
     ld a, e
     ld [hl+], a
@@ -7913,10 +7925,11 @@ jr_000_2de7:
     ld a, $01
     ld [$cad0], a
     ld [$cad8], a
-    ld de, $2eb2
+    ld de, WaitThenEndStageSevenCutsceneAlternate
     jp SetCurrentHandlerAddress
 
-
+    ; 2EB2
+WaitThenEndStageSevenCutsceneAlternate:
     ld a, [$cad0]
     or a
     jp nz, AdvanceToNextHandler
@@ -7928,10 +7941,10 @@ jr_000_2de7:
     or a
     jp nz, AdvanceToNextHandler
 
-    ld de, $0de6
+    ld de, RequestNextStage
     jp SetCurrentHandlerAddress
 
-
+    ; 2EC9
     ld de, $3019
     call StoreAddressInFreeWramSlot
     ld de, $2ed5
@@ -8056,98 +8069,64 @@ jr_000_2f53:
     adc $00
     cp d
     nop
-    inc de
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    ld bc, $0080
-    add d
-    nop
-    add h
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    inc h
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    ld bc, $005a
-    ld e, h
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    ld e, [hl]
-    nop
-    ld h, b
-    nop
-    inc b
-    inc b
-    nop
-    inc b
-    inc b
-    nop
-    nop
-    db $fc
-    db $fc
-    nop
-    nop
-    nop
-    db $fc
-    db $fc
-    db $fc
-    inc b
-    nop
-    inc b
-    inc b
-    db $fc
-    cp [hl]
-    call nz, $b4ce
-    jp z, $ccbf
 
-    call nz, $d8d8
-    call nz, $ced0
-    cp a
-    cp a
-    cp a
-    cp a
-    call nz, $bfd8
-    ret nc
+FinalBossCutsceneInitTemplate:
+    db $13, $08, $08, $00, $00, $10, $10, $01
 
-    sbc $bc
-    sub $bf
-    cp a
-    cp a
-    cp a
-    cp [hl]
-    call nz, $b4ce
-    jp z, $ccbf
+    ; $2FA3: graphics (tile, attributes).
+FinalBossCutsceneGraphics:
+    db $80, $00, $82, $00, $84, $00
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
-    call nz, $d8d8
-    call nz, $ced0
-    cp a
-    call nz, $bfd8
-    ret nc
+PlayerShipCutsceneInitTemplate:
+    db $24, $08, $08, $00, $00, $10, $10, $01
 
-    sbc $bc
-    sub $bf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
+PlayerShipCutsceneGraphics:
+    db $5a, $00, $5c, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $5e, $00, $60, $00
+
+FinalBossCutsceneDestructionSmokeOffsets: ; $2FC7, signed (Y, X) pairs.
+    db $04, $04
+    db $00, $04
+    db $04, $00
+    db $00, $fc
+    db $fc, $00
+    db $00, $00
+    db $fc, $fc
+    db $fc
+    inc b
+    nop
+    inc b
+    inc b
+    db $fc
+    ; $2FDB: cutscene tile data (14 bytes).
+    ; Spells FINAL MISSION
+FinalMissionText:
+    db $be, $c4, $ce, $b4, $ca, $bf, $cc
+    db $c4, $d8, $d8, $c4, $d0, $ce, $bf
+
+    ; $2FE9: cutscene tile data (14 bytes).
+    ; Spells IS OVER
+IsOverText:
+    db $bf, $bf, $bf, $c4, $d8, $bf, $d0
+    db $de, $bc, $d6, $bf, $bf, $bf, $bf
+
+    ; $2FF7: alternate-path cutscene tile data (14 bytes), FINAL MISSION.
+FinalMissionTextDuplicate:
+    db $be, $c4, $ce, $b4, $ca, $bf, $cc
+    db $c4, $d8, $d8, $c4, $d0, $ce, $bf
+
+    ; $3005: alternate-path cutscene tile data (14 bytes), IS OVER.
+IsOverTextLeftTrimmed:
+    db $c4, $d8, $bf, $d0, $de, $bc, $d6
+    db $bf, $bf, $bf, $bf, $bf, $bf, $bf
+
+    ; $3013: following data block.
     ret c
 
     cp b

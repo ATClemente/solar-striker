@@ -9362,14 +9362,14 @@ Call_000_3c10:
     pop hl
     inc a
 QuasiObliteratorLeftMovementScript: ; $3C45
-    dw MovementDown16Commands, MovementLeft16Commands, $3d55, MovementRight16Commands, MovementLeft16Commands, MovementDown16Commands
-    dw MovementRight16Commands, $3d55, MovementLeft16Commands, MovementRight16Commands, MovementDown8Commands, MovementLeft16Commands
-    dw $3d55, MovementRight16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
+    dw MovementDown16Commands, MovementLeft16Commands, MovementUp8Commands, MovementRight16Commands, MovementLeft16Commands, MovementDown16Commands
+    dw MovementRight16Commands, MovementUp8Commands, MovementLeft16Commands, MovementRight16Commands, MovementDown8Commands, MovementLeft16Commands
+    dw MovementUp8Commands, MovementRight16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 QuasiObliteratorRightMovementScript: ; $3C67
-    dw MovementDown16Commands, MovementRight16Commands, $3d55, MovementLeft16Commands, MovementRight16Commands, MovementDown16Commands
-    dw MovementLeft16Commands, $3d55, MovementRight16Commands, MovementLeft16Commands, MovementDown8Commands, MovementRight16Commands
-    dw $3d55, MovementLeft16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
+    dw MovementDown16Commands, MovementRight16Commands, MovementUp8Commands, MovementLeft16Commands, MovementRight16Commands, MovementDown16Commands
+    dw MovementLeft16Commands, MovementUp8Commands, MovementRight16Commands, MovementLeft16Commands, MovementDown8Commands, MovementRight16Commands
+    dw MovementUp8Commands, MovementLeft16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 
 ; Shared movement commands: bit 7 = Y -3, bit 6 = Y +3,
@@ -9424,14 +9424,8 @@ MovementLeft8Commands: ; $3D45: 8 commands moving left.
 MovementDown8Commands: ; $3D4D: 8 commands moving down.
     db $40, $40, $40, $40, $40, $40, $40, $48
 
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    adc b
+MovementUp8Commands: ; $3D55: 8 commands moving up.
+    db $80, $80, $80, $80, $80, $80, $80, $88
 
 MovementDownRight8Commands: ; $3D5D: 8 commands moving down-right.
     db $50, $50, $50, $50, $50, $50, $50, $58

@@ -9047,11 +9047,11 @@ MackMovementScript: ; $36D5
     dw MovementDown8Commands, MovementPause8Commands
 
 VexorMovementScriptA: ; $36ED
-    dw MovementDown16Commands, MovementRight8Commands, $3d93, MovementDownRightToDownCommands
+    dw MovementDown16Commands, MovementRight8Commands, MovementRightToDownRightCommands, MovementDownRightToDownCommands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 VexorMovementScriptB: ; $36FD
-    dw MovementDown16Commands, MovementLeft8Commands, $3deb, MovementDownLeftToDownCommands
+    dw MovementDown16Commands, MovementLeft8Commands, MovementLeftToDownLeftCommands, MovementDownLeftToDownCommands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
     or c
@@ -9690,16 +9690,10 @@ jr_000_3d6f:
     ld b, b
     nop
     ld b, b
-    ld [$1010], sp
-    db $10
-    ld d, b
-    db $10
-    db $10
-    ld d, b
-    db $10
-    ld d, b
-    ld d, b
-    ld e, b
+    db $08 ; $3D92: final command of the preceding sequence.
+
+MovementRightToDownRightCommands: ; $3D93: Blend rightward movement into down-right movement.
+    db $10, $10, $10, $50, $10, $10, $50, $10, $50, $50, $58
 
 MovementDownRightToDownCommands: ; $3D9E: Blend down-right movement into downward movement.
     db $50, $50, $50, $40, $50, $40, $40, $50, $40, $40, $48
@@ -9759,18 +9753,10 @@ jr_000_3de5:
     sub b
     db $10
     db $10
-    jr @+$22
+    db $18 ; $3DEA: final command of the preceding sequence.
 
-    jr nz, @+$22
-
-    ld h, b
-    jr nz, @+$22
-
-    ld h, b
-    jr nz, @+$62
-
-    ld h, b
-    ld l, b
+MovementLeftToDownLeftCommands: ; $3DEB: Blend leftward movement into down-left movement.
+    db $20, $20, $20, $60, $20, $20, $60, $20, $60, $60, $68
 
 MovementDownLeftToDownCommands: ; $3DF6: Blend down-left movement into downward movement.
     db $60, $60, $60, $40, $60, $40, $40, $60, $40, $40, $48

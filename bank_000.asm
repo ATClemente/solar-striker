@@ -1677,7 +1677,7 @@ UpdateScriptedEnemyMovement:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld a, [hl+]
     ret
@@ -1729,7 +1729,7 @@ CheckEnemyShotTimer:
 CheckEnemyCollisionWithPlayer:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $0006
+    ld de, OBJECT_COLLISION_CENTER_Y_OFFSET
     add hl, de
     ld de, wCollisionPointY
     ld a, [hl+]
@@ -1759,7 +1759,7 @@ CheckPlayerCenterInEnemyHitbox:
     inc bc
     ld a, [bc]
     ld [de], a
-    ld de, $0008
+    ld de, OBJECT_HITBOX_MIN_Y_OFFSET
     add hl, de
     call CheckPointInHitbox
     ld a, c
@@ -1774,15 +1774,15 @@ CheckPlayerCenterInEnemyHitbox:
 Call_000_0a0c:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000d
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
-    ld d, [hl]
+    ld d, [hl] ; put accum damage in D
     ld hl, $0016
     add hl, bc
     ld a, [hl]
     ld [hl], d
-    xor d
-    or a
+    xor d ; compare previous and current totals
+    or a ; set flags based on results
     ret z
 
     ld a, [$cfa0]
@@ -4503,7 +4503,7 @@ Call_000_1857:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0006
+    ld bc, OBJECT_COLLISION_CENTER_Y_OFFSET
     add hl, bc
     ld bc, wCollisionPointY
     ld a, [hl+]
@@ -4518,7 +4518,7 @@ Call_000_186b:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0006
+    ld bc, OBJECT_COLLISION_CENTER_Y_OFFSET
     add hl, bc
     ld bc, wCollisionPointY
     ld a, [hl+]
@@ -4534,7 +4534,7 @@ Call_000_1881:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0006
+    ld bc, OBJECT_COLLISION_CENTER_Y_OFFSET
     add hl, bc
     ld bc, wCollisionPointY
     ld a, [hl+]
@@ -5075,7 +5075,7 @@ UpdateBlazerStatus:
     cp $90
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $000a
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET - OBJECT_X_OFFSET
     add hl, de
     ld d, $53
     ld a, [hl+]
@@ -5161,7 +5161,7 @@ UpdateArrowheadMovement:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld d, $22
     ld a, [hl+]
@@ -5300,7 +5300,7 @@ SetUpdateHarrierMovementHandler:
 UpdateHarrierVerticalMovement:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld d, $32
     ld a, [hl+]
@@ -5348,7 +5348,7 @@ SetUpdateHarrierStatusHandler:
 UpdateHarrierHorizontalMovement:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld d, $22
     ld a, [hl+]
@@ -5526,7 +5526,7 @@ CheckPowerUpCollection:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0008
+    ld de, OBJECT_HITBOX_MIN_Y_OFFSET
     add hl, de
     call CheckPointInHitbox
     ld a, c
@@ -5823,7 +5823,7 @@ UpdateTerraCannonStatus:
     cp $90
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $000a
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET - OBJECT_X_OFFSET
     add hl, de
     ld d, $13
     ld a, [hl+]
@@ -6150,7 +6150,7 @@ UpdateAnthropMissileMovement:
     ld e, $00
     call MoveObject
     pop hl
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld d, $52
     ld a, [hl+]
@@ -6283,7 +6283,7 @@ CheckStageFourBossPartAndSetupHandler:
 
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000d
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
     xor a
     ld [hl], a
@@ -6303,7 +6303,7 @@ CheckStageFourBossPartAndSetupHandler:
 UpdateStageFourBossStatus:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld a, [hl+]
     cp [hl]
@@ -6423,7 +6423,7 @@ HandleStageFiveBossActivation:
 
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000d
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
     xor a
     ld [hl], a
@@ -6433,7 +6433,7 @@ HandleStageFiveBossActivation:
 UpdateStageFiveBossStatus:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld a, [hl+]
     cp [hl]
@@ -6521,7 +6521,7 @@ HandleFinalBossActivation:
 
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000d
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
     xor a
     ld [hl], a
@@ -6531,7 +6531,7 @@ HandleFinalBossActivation:
 UpdateFinalBossStatus:
     ld a, [bc]
     call SetObjectPointer
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld a, [hl+]
     cp [hl]
@@ -6731,7 +6731,7 @@ ConfigureDestructorOrb:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000d
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
     xor a
     ld [hl], a
@@ -6760,7 +6760,7 @@ UpdateDestructorOrbStatus:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld d, $12
     ld a, [hl+]

@@ -942,7 +942,7 @@ Call_001_4627:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000c
+    ld de, OBJECT_DAMAGE_THRESHOLD_OFFSET
     add hl, de
     ld a, [hl+]
     ret

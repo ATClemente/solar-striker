@@ -4975,7 +4975,7 @@ ConfigureBatwing:
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 BatwingMovementScriptTable:
-    dw $358b, $3595
+    dw BatwingMovementScriptA, BatwingMovementScriptB
 
 BatwingInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
@@ -8790,24 +8790,19 @@ RotomechMovementScriptB: ; $357F
     dw MovementDownLeft8Commands
     dw MovementDownLeftToDownCommands
 
-    or c
-    inc a
-    or c
-    inc a
-    pop af
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    ld bc, $b13d
-    inc a
-    or c
-    inc a
+BatwingMovementScriptA: ; $358B
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementUpRight16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+
+BatwingMovementScriptB: ; $3595
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementUpLeft16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
 
 ; Each pointer selects a movement command sequence, read in order.
 PincherMovementScriptA: ; $359F
@@ -9168,9 +9163,9 @@ OmniquadOuterMovementScript1: ; $39B7
     dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
     dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
     dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
-    dw $3d27, MovementPause8Commands, $3cf1, MovementPause8Commands, $3d1c, MovementPause8Commands
+    dw $3d27, MovementPause8Commands, MovementUpRight16Commands, MovementPause8Commands, $3d1c, MovementPause8Commands
     dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d11, MovementPause8Commands, $3d01
+    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d11, MovementPause8Commands, MovementUpLeft16Commands
     dw MovementPause8Commands, $3d27, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
@@ -9180,7 +9175,7 @@ OmniquadOuterMovementScript2: ; $3A11
     dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
     dw $3d1c, MovementPause8Commands, $3cd1, MovementPause8Commands, $3d32, MovementPause8Commands
     dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d27, MovementPause8Commands, $3cf1
+    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d27, MovementPause8Commands, MovementUpRight16Commands
     dw MovementPause8Commands, $3d1c, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
@@ -9188,7 +9183,7 @@ OmniquadOuterMovementScript3: ; $3A6B
     dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
     dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
     dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
-    dw $3d11, MovementPause8Commands, $3d01, MovementPause8Commands, $3d27, MovementPause8Commands
+    dw $3d11, MovementPause8Commands, MovementUpLeft16Commands, MovementPause8Commands, $3d27, MovementPause8Commands
     dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
     dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d32, MovementPause8Commands, $3ce1
     dw MovementPause8Commands, $3d11, MovementPause8Commands, $3d83, $3d83, $3d83
@@ -9551,38 +9546,12 @@ MovementDown16Commands: ; $3CB1: 16 commands moving down.
     ld h, b
     ld h, b
     ld l, b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sbc b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    xor b
+MovementUpRight16Commands: ; $3CF1: 16 commands moving up-right.
+    db $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $90, $98
+
+MovementUpLeft16Commands: ; $3D01: 16 commands moving up-left.
+    db $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a8
+
     db $10
     db $10
     db $10

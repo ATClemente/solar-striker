@@ -5859,7 +5859,7 @@ ConfigureOctopod:
 
 
 OctopodMovementScriptTable:
-    dw $3655, $3669
+    dw OctopodMovementScriptA, OctopodMovementScriptB
 
 OctopodInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
@@ -8919,46 +8919,37 @@ AnthropMovementScriptB: ; $363F
     dw MovementUp16Commands
     dw MovementUp16Commands
 
-    or c
-    inc a
-    ld c, l
-    dec a
-    ld a, d
-    ld a, $85
-    ld a, $90
-    ld a, $6f
-    ld a, $b1
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    ld c, l
-    dec a
-    ld c, [hl]
-    ld a, $59
-    ld a, $64
-    ld a, $43
-    ld a, $b1
-    inc a
-    or c
-    inc a
-    or c
-    inc a
-    or c
-    inc a
+OctopodMovementScriptA: ; $3655
+    dw MovementDown16Commands
+    dw MovementDown8Commands
+    dw MovementDownToRightCommands
+    dw MovementRightToUpCommands
+    dw MovementUpToLeftCommands
+    dw MovementLeftToDownCommands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+
+OctopodMovementScriptB: ; $3669
+    dw MovementDown16Commands
+    dw MovementDown8Commands
+    dw MovementDownToLeftCommands
+    dw MovementLeftToUpCommands
+    dw MovementUpToRightCommands
+    dw MovementRightToDownCommands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
+    dw MovementDown16Commands
 
 SkimbotMovementScript: ; $367D
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 TwerkMovementScript: ; $3687
-    dw MovementDownToLeftCommands, MovementRightToDownCommands, $3e64, $3e59, MovementDown16Commands
-    dw MovementDownToLeftCommands, MovementRightToDownCommands, $3e64, $3e59, MovementDown16Commands
-    dw MovementDownToLeftCommands, MovementRightToDownCommands, $3e64, $3e59, MovementDown16Commands
+    dw MovementDownToLeftCommands, MovementRightToDownCommands, MovementUpToRightCommands, MovementLeftToUpCommands, MovementDown16Commands
+    dw MovementDownToLeftCommands, MovementRightToDownCommands, MovementUpToRightCommands, MovementLeftToUpCommands, MovementDown16Commands
+    dw MovementDownToLeftCommands, MovementRightToDownCommands, MovementUpToRightCommands, MovementLeftToUpCommands, MovementDown16Commands
 
     ld bc, $0c3e
     ld a, $eb
@@ -9063,16 +9054,16 @@ VexorMovementScriptB: ; $36FD
     inc a
 DestructorMovementScript: ; $373D
     dw MovementDown8Commands, MovementLeft8Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, MovementLeft16Commands, $3e59, $3e64, MovementRight16Commands, $3e85
-    dw $3e90, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, MovementLeft16Commands, $3e59, $3e64, MovementRight16Commands, $3e85
-    dw $3e90, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, MovementLeft16Commands, $3e59, $3e64, MovementRight16Commands, $3e85
-    dw $3e90, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, MovementLeft16Commands, $3e59, $3e64, MovementRight16Commands, $3e85
-    dw $3e90, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, MovementLeft16Commands, $3e59, $3e64, MovementRight16Commands, $3e85
-    dw $3e90, MovementLeft8Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
+    dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands
+    dw MovementUpToLeftCommands, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands
+    dw MovementUpToLeftCommands, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands
+    dw MovementUpToLeftCommands, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands
+    dw MovementUpToLeftCommands, MovementLeft16Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands
+    dw MovementUpToLeftCommands, MovementLeft8Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 UltraCrusherMovementScript: ; $37BF
     dw MovementDown8Commands
@@ -9113,53 +9104,53 @@ EpikhanMovementScript: ; $38C9
     dw $3d83, $3d83, $3d83, $3d83
 
 OmniquadCenterMovementScript: ; $3955
-    dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
-    dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
-    dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
+    dw MovementDown16Commands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands
+    dw MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands
+    dw MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
     dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
-    dw MovementPause8Commands, $3d7d, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85
-    dw $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands, MovementPause8Commands
+    dw MovementPause8Commands, $3d7d, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands
+    dw MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, MovementPause8Commands
     dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
     dw $3d7d, $3d83, $3d83, $3d83, $3d83, $3d83
     dw $3d83
 
 OmniquadOuterMovementScript1: ; $39B7
-    dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
-    dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
-    dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
+    dw MovementDown16Commands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands
+    dw MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands
+    dw MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
     dw $3d27, MovementPause8Commands, MovementUpRight16Commands, MovementPause8Commands, $3d1c, MovementPause8Commands
-    dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d11, MovementPause8Commands, MovementUpLeft16Commands
+    dw MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, $3d11, MovementPause8Commands, MovementUpLeft16Commands
     dw MovementPause8Commands, $3d27, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
 OmniquadOuterMovementScript2: ; $3A11
-    dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
-    dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
-    dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
+    dw MovementDown16Commands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands
+    dw MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands
+    dw MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
     dw $3d1c, MovementPause8Commands, $3cd1, MovementPause8Commands, $3d32, MovementPause8Commands
-    dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d27, MovementPause8Commands, MovementUpRight16Commands
+    dw MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, $3d27, MovementPause8Commands, MovementUpRight16Commands
     dw MovementPause8Commands, $3d1c, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
 OmniquadOuterMovementScript3: ; $3A6B
-    dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
-    dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
-    dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
+    dw MovementDown16Commands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands
+    dw MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands
+    dw MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
     dw $3d11, MovementPause8Commands, MovementUpLeft16Commands, MovementPause8Commands, $3d27, MovementPause8Commands
-    dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d32, MovementPause8Commands, $3ce1
+    dw MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, $3d32, MovementPause8Commands, $3ce1
     dw MovementPause8Commands, $3d11, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
 OmniquadOuterMovementScript4: ; $3AC5
-    dw MovementDown16Commands, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64
-    dw MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, $3e90, MovementLeftToDownCommands, MovementDownToRightCommands
-    dw $3e85, $3e64, MovementRightToDownCommands, MovementDownToLeftCommands, $3e59, MovementPause8Commands
+    dw MovementDown16Commands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands
+    dw MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands
+    dw MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
     dw $3d32, MovementPause8Commands, $3ce1, MovementPause8Commands, $3d11, MovementPause8Commands
-    dw $3e90, MovementLeftToDownCommands, MovementDownToRightCommands, $3e85, $3e64, MovementRightToDownCommands
-    dw MovementDownToLeftCommands, $3e59, MovementPause8Commands, $3d1c, MovementPause8Commands, $3cd1
+    dw MovementUpToLeftCommands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRightToUpCommands, MovementUpToRightCommands, MovementRightToDownCommands
+    dw MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, $3d1c, MovementPause8Commands, $3cd1
     dw MovementPause8Commands, $3d32, MovementPause8Commands, $3d83, $3d83, $3d83
     dw $3d83, $3d83, $3d83
 
@@ -9715,10 +9706,10 @@ jr_000_3e39:
     and b
     jr nz, jr_000_3ddd
 
-    jr nz, jr_000_3e5f
+    jr nz, MovementLeftToUpCommands + 6
 
     and b
-    jr nz, jr_000_3e62
+    jr nz, MovementLeftToUpCommands + 9
 
     db $28
 
@@ -9729,33 +9720,11 @@ MovementRightToDownCommands: ; $3E43: Blend rightward movement into downward mov
 MovementDownToLeftCommands: ; $3E4E: Blend downward movement into leftward movement.
     db $40, $40, $60, $40, $60, $60, $60, $20, $60, $20, $28
 
-    jr nz, @+$22
+MovementLeftToUpCommands: ; $3E59: Blend leftward movement into upward movement.
+    db $20, $20, $a0, $20, $a0, $a0, $a0, $80, $a0, $80, $88
 
-    and b
-    jr nz, @-$5e
-
-    and b
-
-jr_000_3e5f:
-    and b
-    add b
-    and b
-
-jr_000_3e62:
-    add b
-    adc b
-    add b
-    add b
-    sub b
-    add b
-    sub b
-    sub b
-    sub b
-    db $10
-    sub b
-    db $10
-    db $18
-
+MovementUpToRightCommands: ; $3E64: Blend upward movement into rightward movement.
+    db $80, $80, $90, $80, $90, $90, $90, $10, $90, $10, $18
 
 MovementLeftToDownCommands: ; $3E6F: Blend leftward movement into downward movement.
     db $20, $20, $60, $20, $60, $60, $60, $40, $60, $40, $48
@@ -9763,29 +9732,11 @@ MovementLeftToDownCommands: ; $3E6F: Blend leftward movement into downward movem
 MovementDownToRightCommands: ; $3E7A: Blend downward movement into rightward movement.
     db $40, $40, $50, $40, $50, $50, $50, $10, $50, $10, $18
 
-    db $10
-    db $10
-    sub b
-    db $10
-    sub b
-    sub b
-    sub b
-    add b
-    sub b
-    add b
-    adc b
+MovementRightToUpCommands: ; $3E85: Blend rightward movement into upward movement.
+    db $10, $10, $90, $10, $90, $90, $90, $80, $90, $80, $88
 
-jr_000_3e90:
-    add b
-    add b
-    and b
-    add b
-    and b
-    and b
-    and b
-    jr nz, jr_000_3e39
-
-    jr nz, @+$2a
+MovementUpToLeftCommands: ; $3E90: Blend upward movement into leftward movement.
+    db $80, $80, $a0, $80, $a0, $a0, $a0, $20, $a0, $20, $28
 
     ; Packet format: destination high byte, destination low byte, control, data.
     ; These destinations are in VRAM (the background tile map).

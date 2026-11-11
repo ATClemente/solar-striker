@@ -1519,7 +1519,7 @@ CopyOneByteDown:
 ; DE points to a Y/X coordinate pair. Returns A = direction, clockwise from 0 (up).
 ; Uses a 24-pixel band to choose cardinal versus diagonal directions.
 GetDirectionToPlayer:
-    ld hl, $c781
+    ld hl, wPlayerYPos
     ld a, [hl+]
     ld c, [hl]
     ld b, a ; B = player Y, C = player X
@@ -1737,7 +1737,7 @@ CheckEnemyCollisionWithPlayer:
     inc de
     ld a, [hl]
     ld [de], a
-    ld hl, $c788 ; Player hitbox minimum Y
+    ld hl, wPlayerHitboxMinY ; Player hitbox minimum Y
     call CheckPointInHitbox
     ld a, c
     or a
@@ -1751,7 +1751,7 @@ CheckEnemyCollisionWithPlayer:
 CheckPlayerCenterInEnemyHitbox:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $c786
+    ld bc, wPlayerCollisionCenterY
     ld de, wCollisionPointY
     ld a, [bc]
     ld [de], a
@@ -2191,7 +2191,7 @@ Jump_000_0bbb:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0005
+    ld de, OBJECT_SHOT_COLLISION_DISABLED_OFFSET
     add hl, de
     inc [hl]
     ld a, [$cfa0]
@@ -4042,7 +4042,7 @@ ApplyHorizontalScroll:
 
 
 ClampPlayerMovement:
-    ld hl, $c781
+    ld hl, wPlayerYPos
     ld a, [hl+]
     cp PLAYER_UP_MOVEMENT_LIMIT
     jr nc, ClampDownwardMovement
@@ -4554,7 +4554,7 @@ Jump_000_189a:
     or a
     jp z, Jump_000_18c0
 
-    ld de, $0005
+    ld de, OBJECT_SHOT_COLLISION_DISABLED_OFFSET
     add hl, de
     ld a, [hl+]
     or a
@@ -4569,7 +4569,7 @@ Jump_000_189a:
     or a
     jr z, jr_000_18c0
 
-    ld de, $0005
+    ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET - OBJECT_HITBOX_MIN_Y_OFFSET
     add hl, de
     ld a, [$ca33]
     add [hl]
@@ -4668,7 +4668,7 @@ PlayPlayerFiringSound:
     call SetObjectPointer
     ld b, h
     ld c, l
-    ld hl, $c781
+    ld hl, wPlayerYPos
     call Call_000_1824
     ld a, [wWeaponPowerLevel]
     add a
@@ -5048,7 +5048,7 @@ InitializeBlazer:
 ConfigureBlazer:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $c782
+    ld hl, wPlayerXPos
     ld e, [hl]
     ld d, $00
     ld bc, BlazerInitTemplate
@@ -5313,7 +5313,7 @@ UpdateHarrierVerticalMovement:
     ld d, a
     ld e, $00
     call MoveObject
-    ld de, $c781
+    ld de, wPlayerYPos
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -5515,7 +5515,7 @@ InitializePowerUpReveal:
 CheckPowerUpCollection:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $c786
+    ld hl, wPlayerCollisionCenterY
     ld de, wCollisionPointY
     ld a, [hl+]
     ld [de], a
@@ -6459,7 +6459,7 @@ CheckForStageFiveBossHit:
     ld [wScreenShakeRequested], a
 
 .checkPlayerAboveBossBoundary
-    ld hl, $c781
+    ld hl, wPlayerYPos
     ld a, [hl]
     cp $34
     jr nc, .setStatusHandler
@@ -6626,7 +6626,7 @@ TryFireUltraCrusherLaser:
     ld a, [hl]
     add $10
     ld b, a
-    ld de, $c782
+    ld de, wPlayerXPos
     ld a, [de]
     add $10
     cp b

@@ -8776,19 +8776,19 @@ CruiserMovementScriptB: ; $3561
 ; Each pointer selects a movement command sequence, read in order.
 RotomechMovementScriptA: ; $3573
     dw MovementDownToDownLeftCommands
-    dw $3d65
-    dw $3df6
+    dw MovementDownLeft8Commands
+    dw MovementDownLeftToDownCommands
     dw MovementDownToDownRightCommands
-    dw $3d5d
-    dw $3d9e
+    dw MovementDownRight8Commands
+    dw MovementDownRightToDownCommands
 
 RotomechMovementScriptB: ; $357F
     dw MovementDownToDownRightCommands
-    dw $3d5d
-    dw $3d9e
+    dw MovementDownRight8Commands
+    dw MovementDownRightToDownCommands
     dw MovementDownToDownLeftCommands
-    dw $3d65
-    dw $3df6
+    dw MovementDownLeft8Commands
+    dw MovementDownLeftToDownCommands
 
     or c
     inc a
@@ -9047,11 +9047,11 @@ MackMovementScript: ; $36D5
     dw $3d4d, $3c89
 
 VexorMovementScriptA: ; $36ED
-    dw MovementDown16Commands, MovementRight8Commands, $3d93, $3d9e
+    dw MovementDown16Commands, MovementRight8Commands, $3d93, MovementDownRightToDownCommands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 VexorMovementScriptB: ; $36FD
-    dw MovementDown16Commands, MovementLeft8Commands, $3deb, $3df6
+    dw MovementDown16Commands, MovementLeft8Commands, $3deb, MovementDownLeftToDownCommands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
     or c
@@ -9644,7 +9644,11 @@ MovementLeft8Commands: ; $3D45: 8 commands moving left.
     add b
     adc b
 
-    db $50, $50, $50, $50, $50, $50, $50, $58, $60, $60, $60, $60, $60, $60, $60, $68
+MovementDownRight8Commands: ; $3D5D: 8 commands moving down-right.
+    db $50, $50, $50, $50, $50, $50, $50, $58
+
+MovementDownLeft8Commands: ; $3D65: 8 commands moving down-left.
+    db $60, $60, $60, $60, $60, $60, $60, $68
 
     sub b
     sub b
@@ -9694,6 +9698,7 @@ jr_000_3d6f:
     ld d, b
     ld e, b
 
+MovementDownRightToDownCommands: ; $3D9E: Blend down-right movement into downward movement.
     db $50, $50, $50, $40, $50, $40, $40, $50, $40, $40, $48
 
 MovementDownToDownLeftCommands: ; $3DA9: Blend downward movement into down-left movement.
@@ -9764,6 +9769,7 @@ jr_000_3de5:
     ld h, b
     ld l, b
 
+MovementDownLeftToDownCommands: ; $3DF6: Blend down-left movement into downward movement.
     db $60, $60, $60, $40, $60, $40, $40, $60, $40, $40, $48
 
 MovementDownToDownRightCommands: ; $3E01: Blend downward movement into down-right movement.

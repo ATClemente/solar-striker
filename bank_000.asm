@@ -575,7 +575,7 @@ Jump_000_0315:
     reti
 
 CheckForSoftReset:
-    ld a, [$cab9]
+    ld a, [wEnableQuickSoftReset]
     or a
     jr nz, CheckQuickSoftReset
 
@@ -839,7 +839,7 @@ AdvanceToNextHandler:
 Call_000_048d:
     ld a, [wCurrentStage]
     cp $07
-    jr nc, jr_000_04b3
+    jr nc, CopyQueuedTextToTilemap ; stage 7 and 8
 
     ld c, $0d
     ld hl, $9c06
@@ -868,18 +868,18 @@ jr_000_04ac:
     ret
 
 
-jr_000_04b3:
-    ld a, [$cad0]
+CopyQueuedTextToTilemap:
+    ld a, [wTextCopyPending]
     or a
     ret z
 
-    ld a, [$cad6]
+    ld a, [wTextCopyLength]
     ld b, a
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld a, [hl+]
     ld d, [hl]
     ld e, a
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
@@ -892,7 +892,7 @@ jr_000_04c8:
     jr nz, jr_000_04c8
 
     ld a, b
-    ld [$cad0], a
+    ld [wTextCopyPending], a
     ret
 
 ShakeScreen:
@@ -1095,8 +1095,8 @@ SetupNextStage:
     ld [wStageTransitionActive], a
     ld [wBackgroundScrollTimer], a
     ld [$cfa1], a
-    ld [$cad8], a
-    ld [$cad0], a
+    ld [wNextCreditsEntryIndex], a
+    ld [wTextCopyPending], a
     ld [wScreenShakeRequested], a
     ld [wScreenShakeOffset], a
     ld a, [wCurrentStage]
@@ -1163,7 +1163,7 @@ SetupNextStage:
     dec b
     jr nz, .clearWindowMapBytes
 
-    ld de, $2ec9 ; stage 8
+    ld de, InitializeStageEightCredits ; stage 8
     call StoreAddressInFreeWramSlot
 
 .finishSetup
@@ -2793,7 +2793,7 @@ StageEventHandlerTable:
     dw StartBossAudio ; event type $1c
     dw StopStageAudio ; event type $1d
     dw StartAlternateBossAudio ; event type $1e
-    dw $2ec9 ; event type $1f
+    dw InitializeStageEightCredits ; event type $1f ; not used via this table
     dw InitializeBatwing ; event type $20
     dw InitializeZigzag ; event type $21
     dw InitializeBlazer ; event type $22
@@ -3128,7 +3128,7 @@ ConfigureEnemyProjectileMovement:
     ld a, [bc]
     call SetObjectPointer
     ld de, EnemyShotAlternateMovementTable
-    ld a, [$ca2f]
+    ld a, [wEnableAltProjectileMovement]
     or a
     jr nz, SetProjectileVelocityAndStartUpdateCycle ; Use the alternate projectile movement table
 
@@ -3360,7 +3360,7 @@ GetFiringSequenceMovement:
 
 
     ld de, $1364
-    ld a, [$ca2f]
+    ld a, [wEnableAltProjectileMovement]
     or a
     jp nz, SetProjectileVelocityAndStartUpdateCycle
 
@@ -7125,7 +7125,7 @@ jr_000_292d:
     cp $0f
     jr nz, jr_000_2927
 
-    ld de, $2983
+    ld de, WaitForMotherAtenaSetup
     jp SetCurrentHandlerAddress
 
 
@@ -7172,15 +7172,15 @@ jr_000_292d:
     ld de, PlayerMovementHandler
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$ca2d]
+WaitForMotherAtenaSetup:
+    ld a, [wMotherAtenaSetup]
     or a
     jp z, AdvanceToNextHandler
 
-    ld de, $2990
+    ld de, ConfigurePlayerStage8
     jp SetCurrentHandlerAddress
 
-
+ConfigurePlayerStage8:
     ld a, [bc]
     call SetObjectPointer
     ld de, $000f
@@ -7190,28 +7190,28 @@ jr_000_292d:
     ld bc, PlayerInitTemplate
     ld de, $3c98
     call ResetObjectAttributes
-    ld de, $2af0
+    ld de, Stage8PlayerGraphics
     call SetObjectGraphicsPointer
-    ld de, $29af
+    ld de, WaitForStage8Ready
     jp SetCurrentHandlerAddress
 
-
+WaitForStage8Ready:
     ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
-    ld de, $29bc
+    ld de, WaitForStage8LeftScroll
     jp SetCurrentHandlerAddress
 
-
+WaitForStage8LeftScroll:
     ldh a, [rSCX]
     cp $11
     jp nc, AdvanceToNextHandler
 
-    ld de, $29c9
+    ld de, MovePlayerShipsStage8Left
     jp SetCurrentHandlerAddress
 
-
+MovePlayerShipsStage8Left:
     ld a, [bc]
     call SetObjectPointer
     ld a, $f8
@@ -7230,7 +7230,7 @@ jr_000_292d:
     cp $38
     jp nc, AdvanceToNextHandler
 
-    ld de, $3207
+    ld de, WaitAndClearCreditIndex
     call StoreAddressInFreeWramSlot
     jp FreeObjectAndRemoveHandler
 
@@ -7310,10 +7310,9 @@ Stage6AnnouncementGraphics: ; $2AD4
     db $d8, $00,  $da, $00,  $b4, $00,  $c0, $00,  $bc, $00,  $00, $00,  $ac, $00 ; Row 1
     db $00, $00,  $d6, $00,  $bc, $00,  $b4, $00,  $ba, $00,  $e4, $00,  $00, $00 ; Row 2
 
-    ld [bc], a
-    nop
-    inc b
-    nop
+    ; $2AF0: stage 8 player graphics (tile, attributes).
+Stage8PlayerGraphics:
+    db $02, $00, $04, $00
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -7821,20 +7820,20 @@ QueueFinalMissionText:
     xor a
     ld [hl], a
     ld a, $0e
-    ld [$cad6], a
+    ld [wTextCopyLength], a
     ld de, FinalMissionText
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld a, e
     ld [hl+], a
     ld [hl], d
     ld de, $9a2e
     ld a, e
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], d
     ld a, $01
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ld de, QueueIsOverText
     jp SetCurrentHandlerAddress
 
@@ -7843,30 +7842,30 @@ QueueFinalMissionText:
     ; $0e: bytes to copy (14)
     ; $9a4e: start drawing here in tile map
 QueueIsOverText:
-    ld a, [$cad0]
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
     ld a, $0e
-    ld [$cad6], a
+    ld [wTextCopyLength], a
     ld de, IsOverText
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld a, e
     ld [hl+], a
     ld [hl], d
     ld de, $9a4e
     ld a, e
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], d
     ld a, $01
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ld de, WaitThenEndStageSevenCutscene
     jp SetCurrentHandlerAddress
 
 WaitThenEndStageSevenCutscene:
-    ld a, [$cad0]
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
@@ -7887,50 +7886,50 @@ QueueFinalMissionTextAlternate:
     xor a
     ld [hl], a
     ld a, $0e
-    ld [$cad6], a
+    ld [wTextCopyLength], a
     ld de, FinalMissionTextDuplicate
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld a, e
     ld [hl+], a
     ld [hl], d
     ld de, $9a2e
     ld a, e
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], d
     ld a, $01
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ld de, QueueIsOverTextAlternate
     jp SetCurrentHandlerAddress
 
     ; 2E86
 QueueIsOverTextAlternate:
-    ld a, [$cad0]
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
     ld a, $0e
-    ld [$cad6], a
+    ld [wTextCopyLength], a
     ld de, IsOverTextLeftTrimmed
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld a, e
     ld [hl+], a
     ld [hl], d
     ld de, $9a4e
     ld a, e
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], d
     ld a, $01
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ld de, WaitThenEndStageSevenCutsceneAlternate
     jp SetCurrentHandlerAddress
 
     ; 2EB2
 WaitThenEndStageSevenCutsceneAlternate:
-    ld a, [$cad0]
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
@@ -7944,13 +7943,13 @@ WaitThenEndStageSevenCutsceneAlternate:
     ld de, RequestNextStage
     jp SetCurrentHandlerAddress
 
-    ; 2EC9
-    ld de, $3019
+InitializeStageEightCredits:
+    ld de, SetupMotherAtenaInitHandlers
     call StoreAddressInFreeWramSlot
-    ld de, $2ed5
+    ld de, WaitThenScrollBackgroundLeft
     jp SetCurrentHandlerAddress
 
-
+WaitThenScrollBackgroundLeft:
     ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
@@ -7960,7 +7959,7 @@ WaitThenEndStageSevenCutsceneAlternate:
     or a
     jp nz, AdvanceToNextHandler
 
-    ld hl, $ff43
+    ld hl, rSCX
     dec [hl]
     ld a, [hl]
     cp $11
@@ -7968,33 +7967,33 @@ WaitThenEndStageSevenCutsceneAlternate:
 
     jp RemoveCurrentHandler
 
-
-    ld bc, $2f8d
+InitializeCreditsEndObject:
+    ld bc, CreditsEndObjectInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $2f01
+    ld de, ConfigureCreditsEndObject
     jp SetCurrentHandlerAddress
 
-
+ConfigureCreditsEndObject:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $2f8d
+    ld bc, CreditsEndObjectInitTemplate
     ld de, $a048
     call ResetObjectAttributes
-    ld de, $2f95
+    ld de, CreditsEndObjectGraphics
     call SetObjectGraphicsPointer
-    ld de, $2f1a
+    ld de, UpdateCreditsEndObjectMovement
     jp SetCurrentHandlerAddress
 
-
+UpdateCreditsEndObjectMovement:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $30
-    jr c, jr_000_2f37
+    jr c, .displayScore
 
     ld d, b
     ld e, c
@@ -8007,68 +8006,68 @@ WaitThenEndStageSevenCutsceneAlternate:
     jp AdvanceToNextHandler
 
 
-jr_000_2f37:
-    ld de, $2f3d
+.displayScore
+    ld de, QueueDisplayScoreAndFinishCredits
     jp SetCurrentHandlerAddress
 
-
-    ld hl, $caf0
-    ld de, $3013
+QueueDisplayScoreAndFinishCredits:
+    ld hl, wFinalScoreTextBuffer
+    ld de, FinalScoreTextPrefix
     ld b, $06
 
-jr_000_2f45:
+.copyBytes
     ld a, [de]
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_2f45
+    jr nz, .copyBytes
 
-    ld hl, $caf6
+    ld hl, wFinalScoreTextBuffer + 6
     ld de, wPlayerScore
     ld b, $07
 
-jr_000_2f53:
+.copyPlayerScore:
     ld a, [de]
     or $f0
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_2f53
+    jr nz, .copyPlayerScore
 
     ld a, $0e
-    ld [$cad6], a
-    ld de, $caf0
-    ld hl, $cad2
+    ld [wTextCopyLength], a
+    ld de, wFinalScoreTextBuffer
+    ld hl, wTextCopySourcePointer
     ld a, e
     ld [hl+], a
     ld [hl], d
     ld de, $9a25
     ld a, e
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], d
     ld a, $01
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ld [wHardModeUnlocked], a
-    ld [$cab9], a
+    ld [wEnableQuickSoftReset], a
     ld a, [wGameMode]
     or a
     jp z, RemoveCurrentHandler
 
-    ld [$ca2f], a
+    ld [wEnableAltProjectileMovement], a
     jp RemoveCurrentHandler
 
 
-    inc de
-    ld [$0008], sp
-    nop
-    db $10
-    db $10
-    ld bc, $00bc
-    adc $00
-    cp d
-    nop
+CreditsEndObjectInitTemplate: ; $2F8D
+    db $13             ; One row, three sprite columns.
+    db $08, $08        ; Collision center offset (Y, X).
+    db $00, $00        ; Hitbox minimum offset (Y, X).
+    db $10, $10        ; Hitbox maximum offset (Y, X).
+    db $01             ; Final object attribute.
+
+CreditsEndObjectGraphics: ; $2F95: (tile, attributes).
+    db $bc, $00, $ce, $00, $ba, $00
 
 FinalBossCutsceneInitTemplate:
     db $13, $08, $08, $00, $00, $10, $10, $01
@@ -8126,64 +8125,60 @@ IsOverTextLeftTrimmed:
     db $c4, $d8, $bf, $d0, $de, $bc, $d6
     db $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    ; $3013: following data block.
-    ret c
+FinalScoreTextPrefix: ; $3013: "SCORE " tile IDs.
+    db $d8, $b8, $d0, $d6, $bc, $bf
 
-    cp b
-    ret nc
-
-    sub $bc
-    cp a
-    ld de, $3040
+SetupMotherAtenaInitHandlers:
+    ld de, InitializeMotherAtenaBow
     call StoreAddressInFreeWramSlot
-    ld de, $30d9
+    ld de, InitializeMotherAtenaThruster
     call StoreAddressInFreeWramSlot
     ld a, $01
-    ld [$ca2d], a
-    ld de, $3030
+    ld [wMotherAtenaSetup], a
+    ld de, InitializeMotherAtenaBody
     jp SetCurrentHandlerAddress
 
-
-    ld bc, $31ba
+InitializeMotherAtenaBody:
+    ld bc, MotherAtenaBodyInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $3050
+    ld de, ConfigureMotherAtenaBody
     jp SetCurrentHandlerAddress
 
-
-    ld bc, $31bb
+InitializeMotherAtenaBow:
+    ld bc, MotherAtenaBowInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $3069
+    ld de, ConfigureMotherAtenaBow
     jp SetCurrentHandlerAddress
 
-
+ConfigureMotherAtenaBody:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $31ba
+    ld bc, MotherAtenaBodyInitTemplate
     ld de, $30e1
     call ResetObjectAttributes
-    ld de, $31bc
+    ld de, MotherAtenaBodyGraphics
     call SetObjectGraphicsPointer
-    ld de, $3082
+    ld de, MoveAtenaPartsRightDuringScroll
     jp SetCurrentHandlerAddress
 
-
+ConfigureMotherAtenaBow:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $31bb
+    ld bc, MotherAtenaBowInitTemplate
     ld de, $4000
     call ResetObjectAttributes
-    ld de, $31d4
+    ld de, MotherAtenaBowGraphics
     call SetObjectGraphicsPointer
-    ld de, $3082
+    ld de, MoveAtenaPartsRightDuringScroll
     jp SetCurrentHandlerAddress
 
-
+MoveAtenaPartsRightDuringScroll:
     ld hl, wBackgroundScrollTimer
     ld a, [hl]
     or a
@@ -8191,7 +8186,7 @@ IsOverTextLeftTrimmed:
 
     ldh a, [rSCX]
     cp $12
-    jp c, Jump_000_309e
+    jp c, .setDepartureHandler
 
     ld a, [bc]
     call SetObjectPointer
@@ -8200,19 +8195,19 @@ IsOverTextLeftTrimmed:
     jp AdvanceToNextHandler
 
 
-Jump_000_309e:
-    ld de, $30a4
+.setDepartureHandler
+    ld de, WaitForMotherAtenaDeparture
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$ca1c]
+WaitForMotherAtenaDeparture:
+    ld a, [wMotherAtenaDeparture]
     or a
     jp z, AdvanceToNextHandler
 
-    ld de, $30b1
+    ld de, UpdateMotherAtenaPartDeparture
     jp SetCurrentHandlerAddress
 
-
+UpdateMotherAtenaPartDeparture:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -8227,11 +8222,11 @@ Jump_000_309e:
     inc [hl]
     inc hl
     and $07
-    jr nz, jr_000_30c9
+    jr nz, .moveAtena
 
     inc [hl]
 
-jr_000_30c9:
+.moveAtena
     ld a, [hl]
     call CalculateXMovement
     ld a, [$ca17]
@@ -8240,29 +8235,29 @@ jr_000_30c9:
     call MoveObject
     jp AdvanceToNextHandler
 
-
-    ld a, [$ca1b]
+InitializeMotherAtenaThruster:
+    ld a, [wCreditsEnded]
     or a
     jp z, AdvanceToNextHandler
 
-    ld bc, $31dc
+    ld bc, MotherAtenaThrusterInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
 
-    ld de, $30f0
+    ld de, ConfigureMotherAtenaThruster
     jp SetCurrentHandlerAddress
 
-
+ConfigureMotherAtenaThruster:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $31dc
+    ld bc, MotherAtenaThrusterInitTemplate
     ld de, $4012
     call ResetObjectAttributes
-    ld de, $3103
+    ld de, AnimateThrusterStartup
     jp SetCurrentHandlerAddress
 
-
+AnimateThrusterStartup:
     ld a, [bc]
     call SetObjectPointer
     inc bc
@@ -8278,13 +8273,13 @@ jr_000_30c9:
     ld a, [hl]
     inc [hl]
     cp $04
-    jr z, jr_000_312c
+    jr z, .moveToNextPhase
 
     and $01
     add a
     ld l, a
     ld h, $00
-    ld de, $31dd
+    ld de, MotherAtenaThrusterStartupFrameTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -8293,13 +8288,13 @@ jr_000_30c9:
     jp AdvanceToNextHandler
 
 
-jr_000_312c:
+.moveToNextPhase
     xor a
     ld [bc], a
-    ld de, $3134
+    ld de, AnimateThrusterSecondPhase
     jp SetCurrentHandlerAddress
 
-
+AnimateThrusterSecondPhase:
     ld a, [bc]
     call SetObjectPointer
     inc bc
@@ -8315,12 +8310,12 @@ jr_000_312c:
     ld a, [hl]
     inc [hl]
     cp $03
-    jr z, jr_000_315b
+    jr z, .movetoDeparture
 
     add a
     ld l, a
     ld h, $00
-    ld de, $31e1
+    ld de, MotherAtenaThrusterSecondPhaseFrameTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -8329,22 +8324,22 @@ jr_000_312c:
     jp AdvanceToNextHandler
 
 
-jr_000_315b:
+.movetoDeparture
     xor a
     ld [bc], a
     inc a
-    ld [$ca1c], a
-    ld de, $3167
+    ld [wMotherAtenaDeparture], a
+    ld de, UpdateMotherAtenaThrusterDeparture
     jp SetCurrentHandlerAddress
 
-
+UpdateMotherAtenaThrusterDeparture:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     inc hl
     ld a, [hl]
     cp $c0
-    jp nc, Jump_000_31ad
+    jp nc, .removeAtena
 
     ld hl, $0004
     add hl, bc
@@ -8352,11 +8347,11 @@ jr_000_315b:
     inc [hl]
     inc hl
     and $07
-    jr nz, jr_000_317f
+    jr nz, .moveAtena
 
     inc [hl]
 
-jr_000_317f:
+.moveAtena
     ld a, [hl]
     call CalculateXMovement
     ld a, [$ca17]
@@ -8379,7 +8374,7 @@ jr_000_317f:
     add a
     ld l, a
     ld h, $00
-    ld de, $31e7
+    ld de, MotherAtenaThrusterDepartureFrameTable
     add hl, de
     ld a, [hl+]
     ld d, [hl]
@@ -8388,80 +8383,63 @@ jr_000_317f:
     jp AdvanceToNextHandler
 
 
-Jump_000_31ad:
+.removeAtena
     ld a, [bc]
     call SetObjectPointer
-    ld de, $2ef1
+    ld de, InitializeCreditsEndObject
     call StoreAddressInFreeWramSlot
     jp FreeObjectAndRemoveHandler
 
 
-    inc [hl]
-    inc d
-    ld b, $00
-    ld [$0a00], sp
-    nop
-    inc c
-    nop
-    ld c, $00
-    stop
-    ld [de], a
-    nop
-    inc d
-    nop
-    ld d, $00
-    jr jr_000_31d0
+; Both eight-byte templates overlap each other and the first graphics block.
+MotherAtenaBodyInitTemplate: ; $31BA: three rows, four columns.
+    db $34
+MotherAtenaBowInitTemplate: ; $31BB: one row, four columns.
+    db $14
 
-jr_000_31d0:
-    ld a, [de]
-    nop
-    inc e
-    nop
-    ld e, $00
-    jr nz, jr_000_31d8
+MotherAtenaBodyGraphics: ; $31BC: (tile, attributes), four sprites per row.
+    db $06, $00, $08, $00, $0a, $00, $0c, $00
+    db $0e, $00, $10, $00, $12, $00, $14, $00
+    db $16, $00, $18, $00, $1a, $00, $1c, $00
 
-jr_000_31d8:
-    ld [hl+], a
-    nop
-    inc h
-    nop
-    ld [de], a
-    db $eb
-    ld sp, $31ef
-    di
-    ld sp, $31f7
-    ei
-    ld sp, $31ff
-    inc bc
-    ld [hl-], a
-    nop
-    nop
-    ld h, $00
-    nop
-    nop
-    jr z, jr_000_31f3
+MotherAtenaBowGraphics: ; $31D4: (tile, attributes).
+    db $1e, $00, $20, $00, $22, $00, $24, $00
 
-jr_000_31f3:
-    nop
-    nop
-    ld a, [hl+]
-    nop
-    nop
-    nop
-    inc l
-    nop
-    ld l, $00
-    jr nc, jr_000_31ff
+    ; $31DC: eight-byte initialization template overlapping the pointer data below.
+MotherAtenaThrusterInitTemplate:
+    db $12
 
-jr_000_31ff:
-    ld [hl-], a
-    nop
-    inc [hl]
-    nop
-    ld [hl], $00
-    jr c, jr_000_3207
+; The initialization template consumes seven bytes of these frame pointers.
+MotherAtenaThrusterStartupFrameTable: ; $31DD: alternate these two frames.
+    dw MotherAtenaThrusterStartupGraphics0, MotherAtenaThrusterStartupGraphics1
 
-jr_000_3207:
+MotherAtenaThrusterSecondPhaseFrameTable: ; $31E1: play these three frames in order.
+    dw MotherAtenaThrusterSecondPhaseGraphics0, MotherAtenaThrusterSecondPhaseGraphics1
+    dw MotherAtenaThrusterSecondPhaseGraphics2
+
+MotherAtenaThrusterDepartureFrameTable: ; $31E7: alternate these two frames.
+    dw MotherAtenaThrusterDepartureGraphics0, MotherAtenaThrusterDepartureGraphics1
+
+; Each frame is two (tile, attributes) pairs; tile $00 is blank.
+MotherAtenaThrusterStartupGraphics0: ; $31EB
+    db $00, $00, $26, $00
+MotherAtenaThrusterStartupGraphics1: ; $31EF
+    db $00, $00, $28, $00
+
+MotherAtenaThrusterSecondPhaseGraphics0: ; $31F3
+    db $00, $00, $2a, $00
+MotherAtenaThrusterSecondPhaseGraphics1: ; $31F7
+    db $00, $00, $2c, $00
+MotherAtenaThrusterSecondPhaseGraphics2: ; $31FB
+    db $2e, $00, $30, $00
+
+MotherAtenaThrusterDepartureGraphics0: ; $31FF
+    db $32, $00, $34, $00
+MotherAtenaThrusterDepartureGraphics1: ; $3203
+    db $36, $00, $38, $00
+
+; 3207
+WaitAndClearCreditIndex:
     ld hl, $0004
     add hl, bc
     inc [hl]
@@ -8470,663 +8448,281 @@ jr_000_3207:
     jp nz, AdvanceToNextHandler
 
     xor a
-    ld [$cad8], a
-    ld de, $321b
+    ld [wNextCreditsEntryIndex], a
+    ld de, StartNextCreditsGroup
     jp SetCurrentHandlerAddress
 
-
-    call Call_000_32ab
+StartNextCreditsGroup:
+    call QueueNextCreditsEntryDisplay
     ld a, $90
     ldh [rWX], a
-    ld de, $3228
+    ld de, WaitAndQueueNextCredits
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cad0]
+WaitAndQueueNextCredits:
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
-    call Call_000_32ab
-    ld a, [$cad8]
+    call QueueNextCreditsEntryDisplay
+    ld a, [wNextCreditsEntryIndex]
     cp $02
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $05
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $08
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $0a
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $0d
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $0f
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $12
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $14
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $16
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $18
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     cp $1c
-    jr z, jr_000_3264
+    jr z, .setSlideCreditsLeft
 
     jp AdvanceToNextHandler
 
 
-jr_000_3264:
-    ld de, $326a
+.setSlideCreditsLeft
+    ld de, SlideCreditsWindowLeft
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cad0]
+SlideCreditsWindowLeft:
+    ld a, [wTextCopyPending]
     or a
     jp nz, AdvanceToNextHandler
 
-    ld hl, $cad1
+    ld hl, wCreditsWindowSlideCounter
     ld a, [hl]
     inc a
     ld [hl], a
     and $03
     jp nz, AdvanceToNextHandler
 
-    ld hl, $ff4b
+    ld hl, rWX
     dec [hl]
     ld a, [hl]
     cp $08
     jp nc, AdvanceToNextHandler
 
-    ld de, $328c
+    ld de, CheckCreditsEnd
     jp SetCurrentHandlerAddress
 
-
-    ld hl, $cad8
+CheckCreditsEnd:
+    ld hl, wNextCreditsEntryIndex
     ld a, [hl+]
     cp $1c
-    jr nz, jr_000_329c
+    jr nz, .waitAndMoveToNextCreditsGroup
 
     ld a, $01
-    ld [$ca1b], a
+    ld [wCreditsEnded], a
     jp RemoveCurrentHandler
 
-
-jr_000_329c:
+.waitAndMoveToNextCreditsGroup
     inc [hl]
-    ld a, [hl]
+    ld a, [hl] ; wCreditsGroupHoldTimer
     cp $e0
     jp nz, AdvanceToNextHandler
 
     xor a
     ld [hl], a
-    ld de, $321b
+    ld de, StartNextCreditsGroup
     jp SetCurrentHandlerAddress
 
-
-Call_000_32ab:
-    ld a, [$cad8]
+QueueNextCreditsEntryDisplay:
+    ld a, [wNextCreditsEntryIndex]
     ld b, a
     ld a, $11
-    ld [$cad6], a
+    ld [wTextCopyLength], a
     ld a, b
     add a
     ld l, a
     ld h, $00
-    ld de, $3315
+    ld de, CreditsTextPointerTable
     add hl, de
     ld a, [hl+]
     ld e, [hl]
-    ld hl, $cad2
+    ld hl, wTextCopySourcePointer
     ld [hl+], a
     ld [hl], e
     ld a, b
     add a
     ld l, a
     ld h, $00
-    ld de, $32dd
+    ld de, CreditsWindowDestinationTable
     add hl, de
     ld a, [hl+]
     ld e, [hl]
-    ld hl, $cad4
+    ld hl, wTextCopyDestinationPointer
     ld [hl+], a
     ld [hl], e
     ld a, b
     inc a
-    ld [$cad0], a
-    ld [$cad8], a
+    ld [wTextCopyPending], a
+    ld [wNextCreditsEntryIndex], a
     ret
 
 
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld [bc], a
-    sbc h
-    ld [hl+], a
-    sbc h
-    ld b, d
-    sbc h
-    ld h, d
-    sbc h
-    ld c, l
-    inc sp
-    ld e, [hl]
-    inc sp
-    ld l, a
-    inc sp
-    add b
-    inc sp
-    sub c
-    inc sp
-    and d
-    inc sp
-    or e
-    inc sp
-    call nz, $d533
-    inc sp
-    and $33
-    rst $30
-    inc sp
-    ld [$1934], sp
-    inc [hl]
-    ld a, [hl+]
-    inc [hl]
-    dec sp
-    inc [hl]
-    ld c, h
-    inc [hl]
-    ld e, l
-    inc [hl]
-    ld l, [hl]
-    inc [hl]
-    ld a, a
-    inc [hl]
-    sub b
-    inc [hl]
-    and c
-    inc [hl]
-    or d
-    inc [hl]
-    jp $d434
+CreditsWindowDestinationTable: ; $32DD: 28 window tilemap destinations.
+    dw $9c02 ; entry $00
+    dw $9c22 ; entry $01
+    dw $9c02 ; entry $02
+    dw $9c22 ; entry $03
+    dw $9c42 ; entry $04
+    dw $9c02 ; entry $05
+    dw $9c22 ; entry $06
+    dw $9c42 ; entry $07
+    dw $9c02 ; entry $08
+    dw $9c22 ; entry $09
+    dw $9c02 ; entry $0a
+    dw $9c22 ; entry $0b
+    dw $9c42 ; entry $0c
+    dw $9c22 ; entry $0d
+    dw $9c42 ; entry $0e
+    dw $9c02 ; entry $0f
+    dw $9c22 ; entry $10
+    dw $9c42 ; entry $11
+    dw $9c22 ; entry $12
+    dw $9c42 ; entry $13
+    dw $9c22 ; entry $14
+    dw $9c42 ; entry $15
+    dw $9c22 ; entry $16
+    dw $9c42 ; entry $17
+    dw $9c02 ; entry $18
+    dw $9c22 ; entry $19
+    dw $9c42 ; entry $1a
+    dw $9c62 ; entry $1b
 
+CreditsTextPointerTable: ; $3315: 28 pointers to 17-byte text entries.
+    dw CreditsProducerText ; entry $00
+    dw CreditsGYokoiText ; entry $01
+    dw CreditsDirectorText ; entry $02
+    dw CreditsSOkadaText ; entry $03
+    dw CreditsKTerasakiText ; entry $04
+    dw CreditsProgrammerText ; entry $05
+    dw CreditsKSugimotoText ; entry $06
+    dw CreditsProgrammerBlankText ; entry $07
+    dw CreditsMusicSoundText ; entry $08
+    dw CreditsTOsadaText ; entry $09
+    dw CreditsDesignText ; entry $0a
+    dw CreditsAHigashiyaText ; entry $0b
+    dw CreditsKYamagamiText ; entry $0c
+    dw CreditsKKatsuyamaText ; entry $0d
+    dw CreditsKHayashiText ; entry $0e
+    dw CreditsSpecialThanksText ; entry $0f
+    dw CreditsHHirayamaText ; entry $10
+    dw CreditsYFujiiText ; entry $11
+    dw CreditsKTakeuchiText ; entry $12
+    dw CreditsHAyrtonWadaText ; entry $13
+    dw CreditsYKawakamiText ; entry $14
+    dw CreditsMNakataniText ; entry $15
+    dw CreditsHNakazawaText ; entry $16
+    dw CreditsYArashibaText ; entry $17
+    dw CreditsSolarStrikerText ; entry $18
+    dw CreditsCopyrightBlankText0 ; entry $19
+    dw CreditsCopyrightBlankText1 ; entry $1a
+    dw CreditsCopyrightText ; entry $1b
 
-    inc [hl]
-    push hl
-    inc [hl]
-    or $34
-    rlca
-    dec [hl]
-    jr @+$37
+; Credits tile IDs, with padding retained so every entry is exactly 17 bytes.
+; Group boundaries correspond to the next-entry index checks in WaitAndQueueNextCredits.
+; $BF and $FB are spaces; $E8 is a period; $FC and $EA-$EF form the copyright symbol and Nintendo logo.
 
-    jp nc, $d0d6
+; Group 1: producer.
+CreditsProducerText: ; $334D, entry $00: "PRODUCER".
+    db $d2, $d6, $d0, $ba, $dc, $b8, $bc, $d6, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsGYokoiText: ; $335E, entry $01: "G.YOKOI".
+    db $c0, $e8, $e4, $d0, $c8, $d0, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    cp d
-    call c, $bcb8
-    sub $bf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret nz
+; Group 2: directors.
+CreditsDirectorText: ; $336F, entry $02: "DIRECTOR".
+    db $ba, $c4, $d6, $bc, $b8, $da, $d0, $d6, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsSOkadaText: ; $3380, entry $03: "S.OKADA".
+    db $d8, $e8, $d0, $c8, $b4, $ba, $b4, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsKTerasakiText: ; $3391, entry $04: "K.TERASAKI".
+    db $c8, $e8, $da, $bc, $d6, $b4, $d8, $b4, $c8, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    add sp, -$1c
-    ret nc
+; Group 3: programmer.
+CreditsProgrammerText: ; $33A2, entry $05: "PROGRAMMER".
+    db $d2, $d6, $d0, $c0, $d6, $b4, $cc, $cc, $bc, $d6, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsKSugimotoText: ; $33B3, entry $06: "K.SUGIMOTO".
+    db $c8, $e8, $d8, $dc, $c0, $c4, $cc, $d0, $da, $d0, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsProgrammerBlankText: ; $33C4, entry $07: blank row.
+    db $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    ret z
+; Group 4: music / sound.
+CreditsMusicSoundText: ; $33D5, entry $08: "MUSIC SOUND".
+    db $cc, $dc, $d8, $c4, $b8, $bf, $d8, $d0, $dc, $ce, $ba, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsTOsadaText: ; $33E6, entry $09: "T.OSADA".
+    db $da, $e8, $d0, $d8, $b4, $ba, $b4, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    ret nc
+; Group 5: design (first page).
+CreditsDesignText: ; $33F7, entry $0a: "DESIGN".
+    db $ba, $bc, $d8, $c4, $c0, $ce, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsAHigashiyaText: ; $3408, entry $0b: "A.HIGASHIYA".
+    db $b4, $e8, $c2, $c4, $c0, $b4, $d8, $c2, $c4, $e4, $b4, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsKYamagamiText: ; $3419, entry $0c: "K.YAMAGAMI".
+    db $c8, $e8, $e4, $b4, $cc, $b4, $c0, $b4, $cc, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    call nz, $bfbf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp d
-    call nz, $bcd6
-    cp b
-    jp c, $d6d0
+; Group 6: design (second page).
+CreditsKKatsuyamaText: ; $342A, entry $0d: "K.KATSUYAMA".
+    db $c8, $e8, $c8, $b4, $da, $d8, $dc, $e4, $b4, $cc, $b4, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsKHayashiText: ; $343B, entry $0e: "K.HAYASHI".
+    db $c8, $e8, $c2, $b4, $e4, $b4, $d8, $c2, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret c
+; Group 7: special thanks (first page).
+CreditsSpecialThanksText: ; $344C, entry $0f: "SPECIAL THANKS TO".
+    db $d8, $d2, $bc, $b8, $c4, $b4, $ca, $fb, $da, $c2, $b4, $ce, $c8, $d8, $fb, $da, $d0
+CreditsHHirayamaText: ; $345D, entry $10: "H.HIRAYAMA".
+    db $c2, $e8, $c2, $c4, $d6, $b4, $e4, $b4, $cc, $b4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsYFujiiText: ; $346E, entry $11: "Y.FUJII".
+    db $e4, $e8, $be, $dc, $c6, $c4, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    add sp, -$30
-    ret z
+; Group 8: special thanks (second page).
+CreditsKTakeuchiText: ; $347F, entry $12: "K.TAKEUCHI".
+    db $c8, $e8, $da, $b4, $c8, $bc, $dc, $b8, $c2, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsHAyrtonWadaText: ; $3490, entry $13: "H.AYRTON.WADA".
+    db $c2, $e8, $b4, $e4, $d6, $da, $d0, $ce, $e8, $e0, $b4, $ba, $b4, $bf, $bf, $bf, $bf
 
-    or h
-    cp d
-    or h
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
+; Group 9: special thanks (third page).
+CreditsYKawakamiText: ; $34A1, entry $14: "Y.KAWAKAMI".
+    db $e4, $e8, $c8, $b4, $e0, $b4, $c8, $b4, $cc, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsMNakataniText: ; $34B2, entry $15: "M.NAKATANI".
+    db $cc, $e8, $ce, $b4, $c8, $b4, $da, $b4, $ce, $c4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    add sp, -$26
-    cp h
-    sub $b4
-    ret c
+; Group 10: special thanks (fourth page).
+CreditsHNakazawaText: ; $34C3, entry $16: "H.NAKAZAWA".
+    db $c2, $e8, $ce, $b4, $c8, $b4, $e6, $b4, $e0, $b4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsYArashibaText: ; $34D4, entry $17: "Y.ARASHIBA".
+    db $e4, $e8, $b4, $d6, $b4, $d8, $c2, $c4, $b6, $b4, $bf, $bf, $bf, $bf, $bf, $bf, $bf
 
-    or h
-    ret z
-
-    call nz, $bfbf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    jp nc, $d0d6
-
-    ret nz
-
-    sub $b4
-    call z, $bccc
-    sub $bf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
-
-    add sp, -$28
-    call c, $c4c0
-    call z, $dad0
-    ret nc
-
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    call z, $d8dc
-    call nz, $bfb8
-    ret c
-
-    ret nc
-
-    call c, $bace
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    jp c, $d0e8
-
-    ret c
-
-    or h
-    cp d
-    or h
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp d
-    cp h
-    ret c
-
-    call nz, $cec0
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    or h
-    add sp, -$3e
-    call nz, $b4c0
-    ret c
-
-    jp nz, $e4c4
-
-    or h
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
-
-    add sp, -$1c
-    or h
-    call z, $c0b4
-    or h
-    call z, $bfc4
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
-
-    add sp, -$38
-    or h
-    jp c, $dcd8
-
-    db $e4
-    or h
-    call z, $bfb4
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
-
-    add sp, -$3e
-    or h
-    db $e4
-    or h
-    ret c
-
-    jp nz, $bfc4
-
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret c
-
-    jp nc, $b8bc
-
-    call nz, $cab4
-    ei
-    jp c, $b4c2
-
-    adc $c8
-    ret c
-
-    ei
-    jp c, $c2d0
-
-    add sp, -$3e
-    call nz, $b4d6
-    db $e4
-    or h
-    call z, $bfb4
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    db $e4
-    add sp, -$42
-    call c, $c4c6
-    call nz, $bfbf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret z
-
-    add sp, -$26
-    or h
-    ret z
-
-    cp h
-    call c, $c2b8
-    call nz, $bfbf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    jp nz, $b4e8
-
-    db $e4
-    sub $da
-    ret nc
-
-    adc $e8
-    ldh [$ffb4], a
-    cp d
-    or h
-    cp a
-    cp a
-    cp a
-    cp a
-    db $e4
-    add sp, -$38
-    or h
-    ldh [$ffb4], a
-    ret z
-
-    or h
-    call z, $bfc4
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    call z, $cee8
-    or h
-    ret z
-
-    or h
-    jp c, $ceb4
-
-    call nz, $bfbf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    jp nz, $cee8
-
-    or h
-    ret z
-
-    or h
-    and $b4
-    ldh [$ffb4], a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    db $e4
-    add sp, -$4c
-    sub $b4
-    ret c
-
-    jp nz, $b6c4
-
-    or h
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    ret c
-
-    ret nc
-
-    jp z, $d6b4
-
-    ret c
-
-    jp c, $c4d6
-
-    ret z
-
-    cp h
-    sub $bf
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    cp a
-    db $fc
-    and d
-    or d
-    or b
-    or d
-    cp a
-    ld [$eceb], a
-    db $ed
-    xor $ef
-    cp a
-    cp a
-    cp a
-    cp a
+; Group 11: title and copyright.
+CreditsSolarStrikerText: ; $34E5, entry $18: "SOLARSTRIKER".
+    db $bf, $d8, $d0, $ca, $b4, $d6, $d8, $da, $d6, $c4, $c8, $bc, $d6, $bf, $bf, $bf, $bf
+CreditsCopyrightBlankText0: ; $34F6, entry $19: blank row.
+    db $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsCopyrightBlankText1: ; $3507, entry $1a: blank row.
+    db $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf, $bf
+CreditsCopyrightText: ; $3518, entry $1b: "(C)1989 Nintendo".
+    db $bf, $fc, $a2, $b2, $b0, $b2, $bf, $ea, $eb, $ec, $ed, $ee, $ef, $bf, $bf, $bf, $bf
 
 ; Each pointer selects a movement command sequence, read in order.
 ProtodroidMovementScriptB: ; $3529

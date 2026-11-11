@@ -9083,278 +9083,40 @@ OmniquadOuterMovementScript4: ; $3AC5
     dw MovementPause8Commands, MovementUp11Commands, MovementPause8Commands, MovementDownWithPauses16Commands, MovementDownWithPauses16Commands, MovementDownWithPauses16Commands
     dw MovementDownWithPauses16Commands, MovementDownWithPauses16Commands, MovementDownWithPauses16Commands
 
-    ld c, l
-    dec a
-    adc c
-    inc a
-    dec a
-    dec a
-    ld b, e
-    ld a, $4e
-    ld a, $45
-    dec a
-    ld b, l
-    dec a
-    ld e, c
-    ld a, $64
-    ld a, $3d
-    dec a
-    and c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    ld c, [hl]
-    ld a, $59
-    ld a, $89
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    pop de
-    inc a
-    adc c
-    inc a
-    pop de
-    inc a
-    pop de
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    dec a
-    dec a
-    ld b, e
-    ld a, $4e
-    ld a, $45
-    dec a
-    ld b, l
-    dec a
-    ld e, c
-    ld a, $64
-    ld a, $3d
-    dec a
-    ld b, l
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld b, l
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld c, [hl]
-    ld a, $59
-    ld a, $89
-    inc a
-    ld b, l
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    pop de
-    inc a
-    adc c
-    inc a
-    pop de
-    inc a
-    pop de
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    dec a
-    dec a
-    ld b, e
-    ld a, $4e
-    ld a, $45
-    dec a
-    ld b, l
-    dec a
-    ld e, c
-    ld a, $64
-    ld a, $3d
-    dec a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    ld b, l
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld c, [hl]
-    ld a, $59
-    ld a, $89
-    inc a
-    dec a
-    dec a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    pop hl
-    inc a
-    adc c
-    inc a
-    pop hl
-    inc a
-    pop hl
-    inc a
-    ld c, l
-    dec a
-    adc c
-    inc a
-    dec a
-    dec a
-    ld b, e
-    ld a, $4e
-    ld a, $45
-    dec a
-    ld b, l
-    dec a
-    ld e, c
+XenocryptMovementScript1: ; $3B1F: 36 sequence pointers.
+    dw MovementDown8Commands, MovementPause8Commands, MovementRight8Commands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeft8Commands
+    dw MovementLeft8Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight8Commands, MovementLeft16Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementRight16Commands
+    dw MovementRight16Commands, MovementPause8Commands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, MovementLeft16Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementDownRight16Commands, MovementPause8Commands, MovementDownRight16Commands, MovementDownRight16Commands
 
-Call_000_3c10:
-    ld a, $64
-    ld a, $3d
-    dec a
-    sub c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    and c
-    inc a
-    and c
-    inc a
-    adc c
-    inc a
-    sub c
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    ld c, [hl]
-    ld a, $59
-    ld a, $89
-    inc a
-    sub c
-    inc a
-    adc c
-    inc a
-    adc c
-    inc a
-    pop hl
-    inc a
-    adc c
-    inc a
-    pop hl
-    inc a
-    pop hl
-    inc a
+XenocryptMovementScript2: ; $3B67: 39 sequence pointers.
+    dw MovementDown8Commands, MovementPause8Commands, MovementRight8Commands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeft8Commands
+    dw MovementLeft8Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight8Commands, MovementLeft8Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementLeft8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementRight8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementRight16Commands, MovementRight8Commands, MovementPause8Commands, MovementPause8Commands, MovementDownToLeftCommands, MovementLeftToUpCommands
+    dw MovementPause8Commands, MovementLeft8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementDownRight16Commands
+    dw MovementPause8Commands, MovementDownRight16Commands, MovementDownRight16Commands
+
+XenocryptMovementScript3: ; $3BB5: 38 sequence pointers.
+    dw MovementDown8Commands, MovementPause8Commands, MovementRight8Commands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeft8Commands
+    dw MovementLeft8Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight8Commands, MovementRight8Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementLeft16Commands, MovementLeft8Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementRight16Commands, MovementRight8Commands, MovementPause8Commands, MovementPause8Commands, MovementRight8Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands
+    dw MovementRight8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementDownLeft16Commands, MovementPause8Commands
+    dw MovementDownLeft16Commands, MovementDownLeft16Commands
+
+XenocryptMovementScript4: ; $3C01: 34 sequence pointers.
+    dw MovementDown8Commands, MovementPause8Commands, MovementRight8Commands, MovementRightToDownCommands, MovementDownToLeftCommands, MovementLeft8Commands
+    dw MovementLeft8Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight8Commands, MovementRight16Commands, MovementPause8Commands
+    dw MovementPause8Commands, MovementLeft16Commands, MovementLeft16Commands, MovementPause8Commands, MovementRight16Commands, MovementRight16Commands
+    dw MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementDownToLeftCommands, MovementLeftToUpCommands, MovementPause8Commands, MovementRight16Commands, MovementPause8Commands, MovementPause8Commands
+    dw MovementDownLeft16Commands, MovementPause8Commands, MovementDownLeft16Commands, MovementDownLeft16Commands
+
 QuasiObliteratorLeftMovementScript: ; $3C45
     dw MovementDown16Commands, MovementLeft16Commands, MovementUp8Commands, MovementRight16Commands, MovementLeft16Commands, MovementDown16Commands
     dw MovementRight16Commands, MovementUp8Commands, MovementLeft16Commands, MovementRight16Commands, MovementDown8Commands, MovementLeft16Commands

@@ -723,7 +723,10 @@ DestroyXenocryptPart:
 
 
 XenocryptMovementScriptTable:
-    dw $3b1f, $3b67, $3bb5, $3c01
+    dw XenocryptMovementScript1 ; script index $00
+    dw XenocryptMovementScript2 ; script index $01
+    dw XenocryptMovementScript3 ; script index $02
+    dw XenocryptMovementScript4 ; script index $03
 
 XenocryptPartInitTemplate:
     db $21, $10, $04, $00, $00, $20, $08, $20

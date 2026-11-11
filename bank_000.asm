@@ -5937,7 +5937,7 @@ ConfigureScarab:
 
     ; $216F: movement script pointers
 ScarabMovementScriptTable:
-    dw $36a5, $36bd
+    dw ScarabMovementScriptA, ScarabMovementScriptB
 
 ScarabInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
@@ -8951,42 +8951,15 @@ TwerkMovementScript: ; $3687
     dw MovementDownToLeftCommands, MovementRightToDownCommands, MovementUpToRightCommands, MovementLeftToUpCommands, MovementDown16Commands
     dw MovementDownToLeftCommands, MovementRightToDownCommands, MovementUpToRightCommands, MovementLeftToUpCommands, MovementDown16Commands
 
-    ld bc, $0c3e
-    ld a, $eb
-    dec a
-    or $3d
-    ld bc, $0c3e
-    ld a, $eb
-    dec a
-    or $3d
-    ld bc, $0c3e
-    ld a, $eb
-    dec a
-    or $3d
-    xor c
-    dec a
-    or h
-    dec a
-    sub e
-    dec a
-    sbc [hl]
-    dec a
-    xor c
-    dec a
-    or h
-    dec a
-    sub e
-    dec a
-    sbc [hl]
-    dec a
-    xor c
-    dec a
-    or h
-    dec a
-    sub e
-    dec a
-    sbc [hl]
-    dec a
+ScarabMovementScriptA: ; $36A5
+    dw MovementDownToDownRightCommands, MovementDownRightToRightCommands, MovementLeftToDownLeftCommands, MovementDownLeftToDownCommands
+    dw MovementDownToDownRightCommands, MovementDownRightToRightCommands, MovementLeftToDownLeftCommands, MovementDownLeftToDownCommands
+    dw MovementDownToDownRightCommands, MovementDownRightToRightCommands, MovementLeftToDownLeftCommands, MovementDownLeftToDownCommands
+
+ScarabMovementScriptB: ; $36BD
+    dw MovementDownToDownLeftCommands, MovementDownLeftToLeftCommands, MovementRightToDownRightCommands, MovementDownRightToDownCommands
+    dw MovementDownToDownLeftCommands, MovementDownLeftToLeftCommands, MovementRightToDownRightCommands, MovementDownRightToDownCommands
+    dw MovementDownToDownLeftCommands, MovementDownLeftToLeftCommands, MovementRightToDownRightCommands, MovementDownRightToDownCommands
 
 MackMovementScript: ; $36D5
     dw MovementDown8Commands, MovementPause8Commands

@@ -6088,7 +6088,7 @@ jr_000_2272:
 
 
 WarhawkMovementScriptTable:
-    dw $370d, $3725
+    dw WarhawkMovementScriptA, WarhawkMovementScriptB
 
 WarhawkInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $02
@@ -8977,54 +8977,16 @@ VexorMovementScriptB: ; $36FD
     dw MovementDown16Commands, MovementLeft8Commands, MovementLeftToDownLeftCommands, MovementDownLeftToDownCommands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
-    or c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
-    or c
-    inc a
-    and c
-    inc a
-    or c
-    inc a
-    sub c
-    inc a
+WarhawkMovementScriptA: ; $370D
+    dw MovementDown16Commands, MovementRight16Commands, MovementDown16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementRight16Commands, MovementDown16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementRight16Commands, MovementDown16Commands, MovementLeft16Commands
+
+WarhawkMovementScriptB: ; $3725
+    dw MovementDown16Commands, MovementLeft16Commands, MovementDown16Commands, MovementRight16Commands
+    dw MovementDown16Commands, MovementLeft16Commands, MovementDown16Commands, MovementRight16Commands
+    dw MovementDown16Commands, MovementLeft16Commands, MovementDown16Commands, MovementRight16Commands
+
 DestructorMovementScript: ; $373D
     dw MovementDown8Commands, MovementLeft8Commands, MovementLeftToDownCommands, MovementDownToRightCommands, MovementRight16Commands, MovementRightToDownCommands
     dw MovementDownToLeftCommands, MovementLeft16Commands, MovementLeftToUpCommands, MovementUpToRightCommands, MovementRight16Commands, MovementRightToUpCommands

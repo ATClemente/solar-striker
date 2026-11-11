@@ -5735,7 +5735,7 @@ CheckAnthropCollision:
 
 
 AnthropMovementScriptTable:
-    dw $3629, $363f
+    dw AnthropMovementScriptA, AnthropMovementScriptB
 
 AnthropInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
@@ -8893,50 +8893,32 @@ MiditronMovementScriptB: ; $3613
     dw MovementUp16Commands
     dw MovementUp16Commands
 
-    ld c, l
-    dec a
-    ld e, l
-    dec a
-    ld l, l
-    dec a
-    ld e, l
-    dec a
-    ld l, l
-    dec a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    ld c, l
-    dec a
-    ld h, l
-    dec a
-    ld [hl], l
-    dec a
-    ld h, l
-    dec a
-    ld [hl], l
-    dec a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
+AnthropMovementScriptA: ; $3629
+    dw MovementDown8Commands
+    dw MovementDownRight8Commands
+    dw MovementUpRight8Commands
+    dw MovementDownRight8Commands
+    dw MovementUpRight8Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+
+AnthropMovementScriptB: ; $363F
+    dw MovementDown8Commands
+    dw MovementDownLeft8Commands
+    dw MovementUpLeft8Commands
+    dw MovementDownLeft8Commands
+    dw MovementUpLeft8Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+
     or c
     inc a
     ld c, l
@@ -9591,24 +9573,12 @@ MovementDownRight8Commands: ; $3D5D: 8 commands moving down-right.
 MovementDownLeft8Commands: ; $3D65: 8 commands moving down-left.
     db $60, $60, $60, $60, $60, $60, $60, $68
 
-    sub b
-    sub b
+MovementUpRight8Commands: ; $3D6D: 8 commands moving up-right.
+    db $90, $90, $90, $90, $90, $90, $90, $98
 
-jr_000_3d6f:
-    sub b
-    sub b
-    sub b
-    sub b
-    sub b
-    sbc b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    and b
-    xor b
+MovementUpLeft8Commands: ; $3D75: 8 commands moving up-left.
+    db $a0, $a0, $a0, $a0, $a0, $a0, $a0, $a8
+
     nop
     nop
     nop
@@ -9656,7 +9626,7 @@ MovementDownLeftToLeftCommands: ; $3DB4: Blend down-left movement into leftward 
     and b
     and b
     and b
-    jr nz, jr_000_3d6f
+    jr nz, MovementUpRight8Commands + 2
 
     add b
     add b

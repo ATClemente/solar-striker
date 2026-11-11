@@ -5263,7 +5263,7 @@ jr_000_1d15:
 
 
 MiditronMovementScriptTable:
-    dw $35fd, $3613
+    dw MiditronMovementScriptA, MiditronMovementScriptB
 
 MiditronInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $02
@@ -8867,50 +8867,32 @@ PincherMovementScriptB: ; $35C3
     inc a
     pop hl
     inc a
-    ld c, l
-    dec a
-    ld c, l
-    dec a
-    dec a
-    dec a
-    dec a
-    dec a
-    dec a
-    dec a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    ld c, l
-    dec a
-    ld c, l
-    dec a
-    ld b, l
-    dec a
-    ld b, l
-    dec a
-    ld b, l
-    dec a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
-    pop bc
-    inc a
+MiditronMovementScriptA: ; $35FD
+    dw MovementDown8Commands
+    dw MovementDown8Commands
+    dw MovementRight8Commands
+    dw MovementRight8Commands
+    dw MovementRight8Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+
+MiditronMovementScriptB: ; $3613
+    dw MovementDown8Commands
+    dw MovementDown8Commands
+    dw MovementLeft8Commands
+    dw MovementLeft8Commands
+    dw MovementLeft8Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+    dw MovementUp16Commands
+
     ld c, l
     dec a
     ld e, l
@@ -9112,22 +9094,22 @@ DestructorMovementScript: ; $373D
 
 UltraCrusherMovementScript: ; $37BF
     dw MovementDown8Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
-    dw MovementDown16Commands, MovementDown16Commands, $3cc1, $3cc1, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
+    dw MovementDown16Commands, MovementDown16Commands, MovementUp16Commands, MovementUp16Commands, MovementLeft16Commands, MovementRight16Commands, MovementRight16Commands, MovementLeft16Commands
     dw MovementDown16Commands, MovementDown16Commands, MovementDown16Commands, MovementDown16Commands
 
 EpikhanMovementScript: ; $38C9
@@ -9498,22 +9480,9 @@ MovementDown16Commands: ; $3CB1: 16 commands moving down.
     db $40, $40, $40, $40, $40, $40, $40, $40
     db $40, $40, $40, $40, $40, $40, $40, $48
 
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    add b
-    adc b
+MovementUp16Commands: ; $3CC1: 16 commands moving up.
+    db $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $88
+
     ld d, b
     ld d, b
     ld d, b

@@ -5028,7 +5028,7 @@ ConfigureZigzag:
 
 
 ZigzagMovementTable:
-    dw $35e7, $35e9
+    dw ZigzagMovementScriptA, ZigzagMovementScriptB
 
 ZigzagInitTemplate:
     db $12, $08, $08, $00, $fe, $10, $12, $01
@@ -8845,28 +8845,22 @@ PincherMovementScriptB: ; $35C3
     dw MovementPause8Commands
     dw MovementLeft16Commands
 
-    pop de
-    inc a
-    pop hl
-    inc a
-    pop de
-    inc a
-    pop hl
-    inc a
-    pop de
-    inc a
-    pop hl
-    inc a
-    pop hl
-    inc a
-    pop de
-    inc a
-    pop hl
-    inc a
-    pop de
-    inc a
-    pop hl
-    inc a
+; Zigzag script B starts at script A's second pointer; both share the remaining data.
+ZigzagMovementScriptA: ; $35E7
+    dw MovementDownRight16Commands
+
+ZigzagMovementScriptB: ; $35E9
+    dw MovementDownLeft16Commands
+    dw MovementDownRight16Commands
+    dw MovementDownLeft16Commands
+    dw MovementDownRight16Commands
+    dw MovementDownLeft16Commands
+    dw MovementDownLeft16Commands
+    dw MovementDownRight16Commands
+    dw MovementDownLeft16Commands
+    dw MovementDownRight16Commands
+    dw MovementDownLeft16Commands
+
 MiditronMovementScriptA: ; $35FD
     dw MovementDown8Commands
     dw MovementDown8Commands

@@ -21,7 +21,7 @@ InitializeDestructor:
     jp z, RemoveCurrentHandler
 
     ld a, $05
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld de, ConfigureDestructor
     jp SetCurrentHandlerAddress
 
@@ -61,7 +61,7 @@ UpdateDestructorStatus:
     cp $a0
     jp nc, HandleDestructorExit
 
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     add $10
     ld [de], a
     inc de
@@ -181,7 +181,7 @@ UpdateUltraCrusherMovement:
     jr c, HandleUltraCrusherDefeat
 
     ld a, $05
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld de, UpdateUltraCrusherStatus
     jp SetCurrentHandlerAddress
 
@@ -204,7 +204,7 @@ UpdateUltraCrusherStatus:
     or a
     jr nz, .restoreBaseGraphics
 
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     ld bc, $100c
     call StoreOffsetObjectPosition
     ld a, $06
@@ -308,7 +308,7 @@ UpdateEpikhanMovement:
     jp c, HandleEpikhanDefeat ; object[$0C] < object[$0D]
 
     ld a, $05
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld de, UpdateEpikhanStatus
     jp SetCurrentHandlerAddress
 
@@ -334,7 +334,7 @@ UpdateEpikhanStatus:
 
     xor a
     ld [hl], a
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     ld bc, $100c
     call StoreOffsetObjectPosition
     ld a, $03
@@ -856,7 +856,7 @@ UpdateQuasiObliteratorPartStatus:
     or a
     jr nz, .setCollisionHandler
 
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     ld bc, $1008
     call StoreOffsetObjectPosition
     ld a, $02

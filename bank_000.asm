@@ -3122,7 +3122,7 @@ ConfigureEnemyProjectileMovement:
     or a
     jr nz, SetProjectileVelocityAndStartUpdateCycle ; Use the alternate projectile movement table
 
-    ld a, [$ca2c]
+    ld a, [wEnemyShotSpeedLevel]
     ld l, a
     ld h, $00
     ld de, EnemyShotMovementIndexByPowerLevel
@@ -3192,7 +3192,7 @@ UpdateProjectileStatus:
     jp SetCurrentHandlerAddress
 
 FailedProjectileSpawn:
-    ld hl, $ca63
+    ld hl, wEnemyFiringSequenceSpawnY
     xor a
     ld [hl+], a
     ld [hl], a
@@ -3256,7 +3256,7 @@ CheckAlternateProjectileCollision:
 
 
 UpdateEnemyFiringSequence:
-    ld hl, $ca6a
+    ld hl, wFiringCadenceCounter
     inc [hl]
     ld a, [hl]
     and $01
@@ -3265,25 +3265,25 @@ UpdateEnemyFiringSequence:
     ld [hl], a
     ld de, TrySpawnFiringSequenceProjectile
     call StoreAddressInFreeWramSlot
-    ld a, [$ca65]
+    ld a, [wFiringPatternIndex]
     ld e, a
     ld d, $00
     ld hl, FiringSequenceSpawnCounts
     add hl, de
     ld b, [hl]
-    ld hl, $ca6b
+    ld hl, wFiringSpawnAttemptsCounter
     inc [hl]
     ld a, [hl]
     cp b
     jp nz, AdvanceToNextHandler
 
     xor a
-    ld [$ca6b], a
+    ld [wFiringSpawnAttemptsCounter], a
     jp RemoveCurrentHandler
 
 TrySpawnFiringSequenceProjectile:
     ld bc, EnemyProjectileObjectTemplate
-    ld hl, $ca63
+    ld hl, wEnemyFiringSequenceSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -3305,7 +3305,7 @@ GetFiringSequenceDirection:
     ld hl, $000e
     add hl, bc
     push hl
-    ld bc, $ca65
+    ld bc, wFiringPatternIndex
     ld a, [bc]
     ld h, $00
     ld l, a
@@ -3332,7 +3332,7 @@ GetFiringSequenceDirection:
 GetFiringSequenceMovement:
     ld a, [bc]
     call SetObjectPointer
-    ld a, [$ca2c]
+    ld a, [wEnemyShotSpeedLevel]
     ld l, a
     ld h, $00
     ld de, EnemyShotMovementIndexByPowerLevel
@@ -3348,7 +3348,7 @@ GetFiringSequenceMovement:
     ld e, a
     jp SetProjectileVelocityAndStartUpdateCycle
 
-
+    ; $1234
     ld de, $1364
     ld a, [wEnableAltProjectileMovement]
     or a
@@ -3396,61 +3396,22 @@ FiringSequenceSpawnCounts: ; $126E
     db $05, $05, $05, $05, $05, $05, $05, $05
 
 ; Lookup: pattern index * 8 + sequence position.
-; First four rows shown as data; the table continues below.
+; Data extends through $12DD, immediately before EnemyShotMovementTable0.
+; Rows $04-$0B retain raw values; usage of every row has not been established.
 FiringSequenceDirectionTable: ; $127E
     db $04, $04, $04, $04, $04, $04, $04, $04 ; Pattern $00
     db $02, $06, $02, $06, $02, $06, $02, $06 ; Pattern $01
     db $00, $04, $00, $04, $00, $04, $00, $04 ; Pattern $02
     db $03, $04, $05, $03, $04, $05, $05, $07 ; Pattern $03 (Epikhan and Vexor)
 
-    ld bc, $0503
-    rlca
-    ld bc, $0503
-    rlca
-    nop
-    ld [bc], a
-    inc b
-    ld b, $00
-    ld [bc], a
-    inc b
-    ld b, $02
-    inc bc
-    inc b
-    dec b
-    ld b, $04
-    inc b
-    inc b
-    ld b, $07
-    nop
-    ld bc, $0302
-    inc b
-    dec b
-    nop
-    ld bc, $0905
-    ld a, [bc]
-    inc b
-    inc b
-    inc b
-    ld [bc], a
-    inc b
-    dec b
-    ld b, $08
-    inc b
-    inc b
-    inc b
-    ld bc, $0503
-    rlca
-    add hl, bc
-    inc b
-    inc b
-    inc b
-    inc bc
-    inc b
-    dec b
-    ld b, $07
-    inc b
-    inc b
-    inc b
+    db $01, $03, $05, $07, $01, $03, $05, $07 ; Row $04, ROM $129E
+    db $00, $02, $04, $06, $00, $02, $04, $06 ; Row $05, ROM $12A6
+    db $02, $03, $04, $05, $06, $04, $04, $04 ; Row $06, ROM $12AE
+    db $06, $07, $00, $01, $02, $03, $04, $05 ; Row $07, ROM $12B6
+    db $00, $01, $05, $09, $0a, $04, $04, $04 ; Row $08, ROM $12BE
+    db $02, $04, $05, $06, $08, $04, $04, $04 ; Row $09, ROM $12C6
+    db $01, $03, $05, $07, $09, $04, $04, $04 ; Row $0A, ROM $12CE
+    db $03, $04, $05, $06, $07, $04, $04, $04 ; Row $0B, ROM $12D6
 
 ; Eight (Y, X) movement pairs per table, clockwise from up.
 ; Values are signed 1/16-pixel units passed to CalculateYMovement/CalculateXMovement.
@@ -4121,7 +4082,7 @@ WaitAndConfigurePlayerRespawn:
     add hl, de
     ld a, [hl]
     ld [wWeaponPowerLevel], a
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld a, [wPlayerLives]
     or a
     jr z, .startGameOver
@@ -5624,7 +5585,7 @@ AwardPowerUp:
 
     inc a
     ld [bc], a
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     jp FreeObjectAndRemoveHandler
 
 AwardMaxPowerBonus:
@@ -6023,11 +5984,11 @@ TryFireVexorShot:
     or a
     jr nz, .setCollisionHandler
 
-    ld a, [$ca6b]
+    ld a, [wFiringSpawnAttemptsCounter]
     or a
     jr nz, .setCollisionHandler
 
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     ld bc, $0804
     call StoreOffsetObjectPosition
     ld a, $03
@@ -6441,7 +6402,7 @@ UpdateStageFiveBossStatus:
     ld de, $0000
     call MoveObject
     ld a, $05
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld de, CheckStageFiveBossCollision
     jp SetCurrentHandlerAddress
 
@@ -6575,7 +6536,7 @@ TryFireFinalBossSpread:
     or a
     jr nz, .setStatusHandler
 
-    ld de, $ca63
+    ld de, wEnemyFiringSequenceSpawnY
     ld bc, $0804
     call StoreOffsetObjectPosition
     ld a, $06
@@ -6718,7 +6679,7 @@ ConfigureDestructorOrb:
     inc bc
     ld a, [hl]
     ld [bc], a
-    ld hl, $ca63
+    ld hl, wEnemyFiringSequenceSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -7335,7 +7296,7 @@ SetupStageTransition:
     ld a, [$cf9a]
     call StopAudioPlayback
     ld a, [wWeaponPowerLevel]
-    ld [$ca2c], a
+    ld [wEnemyShotSpeedLevel], a
     ld de, ConfigureNextStageObj
     jp SetCurrentHandlerAddress
 

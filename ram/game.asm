@@ -18,6 +18,8 @@ DEF wHorizontalScrollOffset EQU $CA29
 DEF wCreditsEnded EQU $CA1B
 DEF wMotherAtenaDeparture EQU $CA1C
 
+DEF wEnemyShotSpeedLevel EQU $CA2C
+
 DEF wMotherAtenaSetup EQU $CA2D
 
 ; Shared point for player, enemy, projectile, and pickup collision checks.
@@ -28,6 +30,14 @@ DEF wPlayerShotDamage EQU $CA33
 
 DEF wEnemyShotSpawnY EQU $CA60 ; Zero means no pending shot request
 DEF wEnemyShotSpawnX EQU $CA61
+
+; Shared state for enemy firing sequences
+DEF wEnemyFiringSequenceSpawnY EQU $CA63
+DEF wEnemyFiringSequenceSpawnX EQU $CA64
+DEF wFiringPatternIndex EQU $CA65
+DEF wFiringDirectionSequenceIndex EQU $CA66
+DEF wFiringCadenceCounter EQU $CA6A
+DEF wFiringSpawnAttemptsCounter EQU $CA6B
 
 DEF wBackgroundScrollTimer EQU $CA80
 DEF wBackgroundScrollDelay EQU $06

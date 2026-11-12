@@ -545,7 +545,7 @@ Jump_000_02e5:
     or $02
     ldh [rLCDC], a
     call DrawMapBlock
-    call Call_000_048d
+    call UpdateHUDTilemap
     pop hl
     pop de
     pop bc
@@ -568,7 +568,7 @@ Jump_000_0315:
     ld a, $03
     ldh [rIE], a
     ei
-    call $4c97
+    call UpdateAudio
     ld a, $07
     ldh [rIE], a
     pop af
@@ -651,20 +651,20 @@ SetupPauseScreen:
     ld [wPauseRequested], a
     call CopyPauseTilesToBuffer
 
-jr_000_0399:
+PauseScreenLoop:
     ld a, [wVBlankOccurred]
     or a
-    jr z, jr_000_0399
+    jr z, PauseScreenLoop
 
     xor a
     ld [wOAMReady], a
-    call Call_000_048d
+    call UpdateHUDTilemap
     call ReadJoypad
     call BuildShadowOAM
-    call $4c97
-    call Call_000_0c04
+    call UpdateAudio
+    call GetCurrentPlaybackStatus
     or a
-    jp nz, Jump_000_03f6
+    jp nz, .nextLoop
 
     call CheckForSoftReset
     or a
@@ -673,77 +673,76 @@ jr_000_0399:
     ld hl, wPauseRequested
     ld a, [hl+]
     or a
-    jr z, jr_000_03d5
+    jr z, .waitForInitialStartRelease
 
     ld a, [hl+]
     or a
-    jr z, jr_000_03e1
+    jr z, .waitForResumePress
 
     ld a, [hl+]
     or a
-    jr z, jr_000_03ec
+    jr z, .waitForResumeRelease
 
     ld a, [wJoypadHeld]
     and $08
-    jr z, jr_000_03fc
+    jr z, .resumeGame
 
-    jr jr_000_03f6
+    jr .nextLoop
 
-jr_000_03d5:
+.waitForInitialStartRelease
     ld a, [wJoypadHeld]
     and $08
-    jr nz, jr_000_03f6
+    jr nz, .nextLoop
 
     inc a
     dec hl
     ld [hl], a
-    jr jr_000_03f6
+    jr .nextLoop
 
-jr_000_03e1:
+.waitForResumePress
     ld a, [wJoypadHeld]
     and $08
-    jr z, jr_000_03f6
+    jr z, .nextLoop
 
     dec hl
     ld [hl], a
-    jr jr_000_03f6
+    jr .nextLoop
 
-jr_000_03ec:
+.waitForResumeRelease
     ld a, [wJoypadHeld]
     and $08
-    jr nz, jr_000_03f6
+    jr nz, .nextLoop
 
     inc a
     dec hl
     ld [hl], a
 
-Jump_000_03f6:
-jr_000_03f6:
+.nextLoop
     xor a
     ld [wVBlankOccurred], a
-    jr jr_000_0399
+    jr PauseScreenLoop
 
-jr_000_03fc:
+.resumeGame
     ld hl, wPauseRequested
     ld [hl+], a
     ld [hl+], a
     ld [hl], a
     ld [wVBlankOccurred], a
     ld [$cfa2], a
-    call Call_000_0446
+    call CopyScoreTilesToBuffer
     ld a, [$cfa1]
     or a
-    jr z, jr_000_041f
+    jr z, .selectStageMusic
 
     ld hl, $5eb0
     ld a, [$cfa1]
     dec a
-    jr z, jr_000_042d
+    jr z, .startMusicAndResume
 
     ld hl, $5f23
-    jr jr_000_042d
+    jr .startMusicAndResume
 
-jr_000_041f:
+.selectStageMusic
     ld a, [wCurrentStage]
     add a
     ld l, a
@@ -754,7 +753,7 @@ jr_000_041f:
     ld h, [hl]
     ld l, a
 
-jr_000_042d:
+.startMusicAndResume
     xor a
     call SetupAudioPlayback
     ld [$cf9a], a
@@ -763,29 +762,28 @@ jr_000_042d:
 
 ; Only copy P A U S, E from SCORE remains on screen
 CopyPauseTilesToBuffer:
-    ld de, $080e
+    ld de, PauseLabelTiles
     ld hl, $cae0
     ld b, $04
 
-jr_000_043f:
+TileBufferLoop:
     ld a, [de]
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_043f
+    jr nz, TileBufferLoop
 
     ret
 
-
-Call_000_0446:
+CopyScoreTilesToBuffer:
     ld hl, $cae0
-    ld de, $0814
+    ld de, ScoreLabelTiles
     ld b, $06
     ld a, [de]
     ld [hl+], a
     inc de
     dec b
-    jr nz, jr_000_043f
+    jr nz, TileBufferLoop
 
     ret
 
@@ -836,7 +834,7 @@ AdvanceToNextHandler:
     ret
 
 
-Call_000_048d:
+UpdateHUDTilemap:
     ld a, [wCurrentStage]
     cp $07
     jr nc, CopyQueuedTextToTilemap ; stage 7 and 8
@@ -845,25 +843,24 @@ Call_000_048d:
     ld hl, $9c06
     ld de, wPlayerScore
 
-Call_000_049c:
-jr_000_049c:
+CopyHUDScoreDigitsAndLabels:
     ld a, [de]
     or $f0
     ld [hl+], a
     inc de
     dec c
-    jr nz, jr_000_049c
+    jr nz, CopyHUDScoreDigitsAndLabels
 
     ld c, $06
     ld hl, $9c00
     ld de, $cae0
 
-jr_000_04ac:
+.copyBuffer:
     ld a, [de]
     ld [hl+], a
     inc de
     dec c
-    jr nz, jr_000_04ac
+    jr nz, .copyBuffer
 
     ret
 
@@ -993,7 +990,7 @@ InitializeNewGame:
     ld de, $3ef4
     call DrawBackgroundTilePackets
     ld de, $cae0
-    ld hl, $0814
+    ld hl, ScoreLabelTiles
     ld b, $05
 
 CopyScoreLabelLoop:
@@ -1293,11 +1290,11 @@ SetupGameOverScreen:
     ld c, $07
     ld hl, $9a30
     ld de, wHighScore
-    call Call_000_049c
+    call CopyHUDScoreDigitsAndLabels
     ld c, $07
     ld hl, $9a90
     ld de, wPlayerScore
-    call Call_000_049c
+    call CopyHUDScoreDigitsAndLabels
     ld hl, $9c00
     xor a
     ld c, $14
@@ -1350,11 +1347,10 @@ StageMusicPointerTable: ; $07F8-$0809
     or b
     ld e, [hl]
 
-    db $d2, $b4, $dc, $d8
+PauseLabelTiles: ; $080E: "PAUSE "; pause copies only "PAUS", retaining the existing "E ".
+    db $d2, $b4, $dc, $d8, $bc, $bf
 
-    cp h
-    cp a
-
+ScoreLabelTiles: ; $0814: "SCORE ".
     db $d8, $b8, $d0, $d6, $bc, $bf
 
 INCLUDE "engine/joypad.asm"
@@ -2233,7 +2229,7 @@ MoveObjectWithFractionalVelocity:
     jp MoveObject
 
 
-Call_000_0c04:
+GetCurrentPlaybackStatus:
     ld a, [$cf9a]
     dec a
     ld l, a
@@ -4283,13 +4279,13 @@ UpdatePlayerState:
 
     ld a, [wPlayerInvincible]
     or a
-    jr nz, HandleFireInput
+    jr nz, HandlePlayerActionInput
 
     ld a, [wPlayerDeathRequested]
     or a
     jp nz, Jump_000_15e8
 
-HandleFireInput:
+HandlePlayerActionInput:
     ld bc, wPlayerInput
     ld a, [bc]
     and BUTTON_START
@@ -7372,7 +7368,7 @@ Stage8PlayerGraphics:
     or a
     jp z, AdvanceToNextHandler
 
-    call Call_000_0c04
+    call GetCurrentPlaybackStatus
     or a
     jp nz, AdvanceToNextHandler
 

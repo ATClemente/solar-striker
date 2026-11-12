@@ -2183,6 +2183,7 @@ jr_001_4c93:
     ret
 
 
+UpdateAudio:
     push af
     ld a, [$cc00]
     or a

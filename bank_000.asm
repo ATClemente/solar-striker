@@ -2574,7 +2574,7 @@ EnableBackgroundScroll:
     ld [$ca81], a
     jp RemoveCurrentHandler
 
-
+SetAlternatePlayerExitFlag:
     ld a, $01
     ld [$cac8], a
     jp RemoveCurrentHandler
@@ -2755,7 +2755,7 @@ StageEventHandlerTable:
     dw RemoveCurrentHandler ; event type $00 (handled directly by ScheduleStageEvents)
     dw RequestNextStage ; event type $01 (handled directly by ScheduleStageEvents)
     dw DisableBackgroundScroll ; event type $02
-    dw $0d9e ; event type $03
+    dw SetAlternatePlayerExitFlag ; event type $03 ; seems unused
     dw InitializeStageAnnouncement ; event type $04
     dw InitializeProtodroid ; event type $05
     dw InitializeCruiser ; event type $06

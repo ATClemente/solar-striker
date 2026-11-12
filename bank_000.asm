@@ -1196,25 +1196,23 @@ GetMusicIndexAndSetupAudio:
     ei
     jp GameLoop
 
-
-    ld hl, $cf97
+UpdateGameOverFadeOut:
+    ld hl, wGameOverFadeTimer
     ld a, [hl]
     inc [hl]
     cp $20
-    jr nc, jr_000_0705
+    jr nc, .fadeSecondPhase ; A >= $20
 
     ld a, $90
     ldh [rBGP], a
     ldh [rOBP0], a
     ldh [rOBP1], a
-
-Call_000_0702:
     jp AdvanceToNextHandler
 
 
-jr_000_0705:
+.fadeSecondPhase
     cp $30
-    jr nc, jr_000_0714
+    jr nc, .fadeLastPhase ; A >= $30
 
     ld a, $40
     ldh [rBGP], a
@@ -1223,9 +1221,9 @@ jr_000_0705:
     jp AdvanceToNextHandler
 
 
-jr_000_0714:
+.fadeLastPhase
     cp $40
-    jr nc, jr_000_0722
+    jr nc, .setGameOverRequested
 
     xor a
     ldh [rBGP], a
@@ -1234,7 +1232,7 @@ jr_000_0714:
     jp AdvanceToNextHandler
 
 
-jr_000_0722:
+.setGameOverRequested
     ld a, $e4
     ldh [rOBP0], a
     ldh [rOBP1], a
@@ -4069,18 +4067,17 @@ FinishMovementClamp:
     ld [hl], a
     ret
 
-
-Jump_000_15e8:
+StartPlayerDeathSequence:
     ld hl, $739b
     ld a, $01
     call SetupAudioPlayback
     xor a
     ld [wPlayerShotCooldown], a
-    ld de, $15fa
+    ld de, InitializePlayerDeathSmoke
     jp SetCurrentHandlerAddress
 
 
-    ; 15fa
+InitializePlayerDeathSmoke:
     ld a, [bc]
     call SetObjectPointer
     inc hl
@@ -4094,10 +4091,10 @@ Jump_000_15e8:
     ld [hl], c
     ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
-    ld de, $1616
+    ld de, WaitAndConfigurePlayerRespawn
     jp SetCurrentHandlerAddress
 
-
+WaitAndConfigurePlayerRespawn:
     ld hl, $000e
     add hl, bc
     inc [hl]
@@ -4120,38 +4117,37 @@ Jump_000_15e8:
     ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
-    ld de, $168c
+    ld de, WeaponPowerAfterDeathTable
     add hl, de
     ld a, [hl]
     ld [wWeaponPowerLevel], a
     ld [$ca2c], a
     ld a, [wPlayerLives]
     or a
-    jr z, jr_000_1658
+    jr z, .startGameOver
 
     call DecrementPlayerLives
-    ld de, $165e
+    ld de, MovePlayerBackToStage
     jp SetCurrentHandlerAddress
 
 
-jr_000_1658:
-    ld de, $2c49
+.startGameOver
+    ld de, StartGameOverSequence
     jp SetCurrentHandlerAddress
 
-
+MovePlayerBackToStage:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl]
     cp $60
-    jp c, Jump_000_1672
+    jp c, FinishPlayerDeathSequence
 
     ld de, $ff00
     call MoveObject
     jp AdvanceToNextHandler
 
-
-Jump_000_1672:
+FinishPlayerDeathSequence:
     xor a
     ld [wPlayerDeathRequested], a
     ld de, PlayerMovementHandler
@@ -4177,16 +4173,9 @@ Jump_000_168a:
     db $ff ; $E: Down + Up + Left
     db $ff ; $F: All four directions
 
-    db $00, $00
-
-    nop
-    db $01
-
-    db $01
-
-    inc bc
-    inc bc
-    inc bc
+WeaponPowerAfterDeathTable: ; $168C: indexed by weapon power level before death.
+    db $00, $00, $00, $01, $01, $03 ; Levels 0-5.
+    db $03, $03                   ; Unused indices 6-7.
 
 PlayerInitTemplate:
     db $12, $08, $08, $02, $02, $0e, $0e
@@ -4278,7 +4267,7 @@ UpdatePlayerState:
 
     ld a, [wPlayerDeathRequested]
     or a
-    jp nz, Jump_000_15e8
+    jp nz, StartPlayerDeathSequence
 
 HandlePlayerActionInput:
     ld bc, wPlayerInput
@@ -7586,20 +7575,21 @@ NextStageObjGraphics:
     nop
     nop
 
+StartGameOverSequence:
     ld a, [wPlayerLives]
     or a
-    jr z, jr_000_2c59
+    jr z, .setupForFade
 
     xor a
     ld [wPlayerLives], a
-    ld de, $165e
+    ld de, MovePlayerBackToStage
     jp SetCurrentHandlerAddress
 
 
-jr_000_2c59:
+.setupForFade
     xor a
-    ld [$cf97], a
-    ld de, $06f1
+    ld [wGameOverFadeTimer], a
+    ld de, UpdateGameOverFadeOut
     jp SetCurrentHandlerAddress
 
 WaitForGameOverStartPress:

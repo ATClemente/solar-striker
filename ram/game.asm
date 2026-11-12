@@ -71,4 +71,5 @@ DEF wSoundSuppressionTimer EQU $CFA0
 
 DEF wHardModeUnlocked EQU $CFFC
 
+DEF wGameOverFadeTimer EQU $CF97
 DEF wGameOverExitTimer EQU $CF98

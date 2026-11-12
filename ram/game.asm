@@ -67,3 +67,5 @@ DEF wHighScore   EQU $CFF1
 DEF wSoundSuppressionTimer EQU $CFA0
 
 DEF wHardModeUnlocked EQU $CFFC
+
+DEF wGameOverExitTimer EQU $CF98

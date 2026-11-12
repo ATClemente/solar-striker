@@ -484,11 +484,10 @@ GameLoop:
     ld [wVBlankOccurred], a
     jr GameLoop
 
-Jump_000_02a2:
-jr_000_02a2:
+GameOverScreenLoop:
     ld a, [wVBlankOccurred]
     or a
-    jr z, jr_000_02a2
+    jr z, GameOverScreenLoop
 
     ld a, $07
     ldh [rIE], a
@@ -499,14 +498,14 @@ jr_000_02a2:
     ld [wOAMReady], a
     xor a
     ld [wVBlankOccurred], a
-    ld hl, $cf98
+    ld hl, wGameOverExitTimer
     ld a, [hl]
     or a
-    jr z, jr_000_02a2
+    jr z, GameOverScreenLoop
 
     inc [hl]
     cp $04
-    jr c, jr_000_02a2
+    jr c, GameOverScreenLoop
 
     ld a, [$cf9a]
     call StopAudioPlayback
@@ -1286,7 +1285,7 @@ SetupGameOverScreen:
     call DrawBackgroundTilePackets
     ld de, $2cb5
     call DrawBackgroundTilePackets
-    call Call_000_2c79
+    call UpdateHighScore
     ld c, $07
     ld hl, $9a30
     ld de, wHighScore
@@ -1299,10 +1298,10 @@ SetupGameOverScreen:
     xor a
     ld c, $14
 
-jr_000_07be:
+.clearBytes
     ld [hl+], a
     dec c
-    jr nz, jr_000_07be
+    jr nz, .clearBytes
 
     ld a, $50
     ldh [rSCY], a
@@ -1312,10 +1311,10 @@ jr_000_07be:
     ldh [rBGP], a
     ldh [rOBP0], a
     ldh [rOBP1], a
-    ld de, $2c63
+    ld de, WaitForGameOverStartPress
     call StoreAddressInFreeWramSlot
     xor a
-    ld [$cf98], a
+    ld [wGameOverExitTimer], a
     ld [wVBlankOccurred], a
     ld hl, $5541
     call SetupAudioPlayback
@@ -1327,7 +1326,7 @@ jr_000_07be:
     ld a, $c7
     ldh [rLCDC], a
     ei
-    jp Jump_000_02a2
+    jp GameOverScreenLoop
 
 
 StageMusicPointerTable: ; $07F8-$0809
@@ -7590,7 +7589,7 @@ jr_000_2c59:
     ld de, $06f1
     jp SetCurrentHandlerAddress
 
-
+WaitForGameOverStartPress:
     ld a, [wJoypadHeld]
     and $08
     jp z, AdvanceToNextHandler
@@ -7598,41 +7597,40 @@ jr_000_2c59:
     ld a, $01
     ld [wStartAlreadyHeld], a
     ld [wSelectAlreadyHeld], a
-    ld [$cf98], a
+    ld [wGameOverExitTimer], a
     jp RemoveCurrentHandler
 
-
-Call_000_2c79:
+UpdateHighScore:
     ld c, $08
     ld de, wPlayerScore
     ld hl, wHighScore
 
-jr_000_2c81:
+.checkNextDigit:
     ld a, [de]
     cp [hl]
     ret c
 
-    jr nz, jr_000_2c8c
+    jr nz, .copyPlayerScore
 
     inc de
     inc hl
     dec c
-    jr nz, jr_000_2c81
+    jr nz, .checkNextDigit
 
     ret
 
 
-jr_000_2c8c:
+.copyPlayerScore
     ld c, $08
     ld hl, wPlayerScore
     ld de, wHighScore
 
-jr_000_2c94:
+.copyBytes:
     ld a, [hl+]
     ld [de], a
     inc de
     dec c
-    jr nz, jr_000_2c94
+    jr nz, .copyBytes
 
     ret
 
@@ -7654,7 +7652,7 @@ jr_000_2c94:
     ld [wStageTransitionActive], a
     ld a, [$cf9a]
     call StopAudioPlayback
-    call Call_000_2c79
+    call UpdateHighScore
     ld de, $2cdf
     jp SetCurrentHandlerAddress
 

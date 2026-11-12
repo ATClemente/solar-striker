@@ -50,7 +50,7 @@ UpdateDestructorMovement:
 HandleDestructorDefeat:
     ld de, DestructorBaseGraphics
     call SetObjectGraphicsPointer
-    jp Jump_001_4089
+    jp StartBossDestructionSequence
 
 
 UpdateDestructorStatus:
@@ -88,8 +88,8 @@ CheckDestructorCollision:
     ld de, UpdateDestructorMovement
     jp SetCurrentHandlerAddress
 
-
-Jump_001_4089:
+; Shared defeat sequence for Destructor, UltraCrusher, and Epikhan.
+StartBossDestructionSequence:
     ld a, $53
     call AddPlayerScore
     ld a, $01
@@ -97,7 +97,7 @@ Jump_001_4089:
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
-    ld de, $40b5
+    ld de, UpdateBossDestructionSequence
     jp SetCurrentHandlerAddress
 
 
@@ -109,10 +109,10 @@ HandleDestructorExit:
     ld [hl], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
-    jp Jump_001_46ea
+    jp FinishBossExitAndStartStageTransition
 
 
-    ; 40B5
+UpdateBossDestructionSequence:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $001c
@@ -126,10 +126,10 @@ HandleDestructorExit:
     ld a, [hl]
     inc [hl]
     cp $05
-    jp z, Jump_001_46ea
+    jp z, FinishBossExitAndStartStageTransition
 
     ld hl, BossPartDestructionSmokeOffsets
-    call Call_001_465d
+    call TriggerSmokeEffect
     jp AdvanceToNextHandler
 
 
@@ -189,7 +189,7 @@ UpdateUltraCrusherMovement:
 HandleUltraCrusherDefeat:
     ld de, UltraCrusherBaseGraphics
     call SetObjectGraphicsPointer
-    jp Jump_001_4089
+    jp StartBossDestructionSequence
 
 
 UpdateUltraCrusherStatus:
@@ -256,7 +256,7 @@ HandleUltraCrusherExit:
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
-    jp Jump_001_46ea
+    jp FinishBossExitAndStartStageTransition
 
 
 UltraCrusherInitTemplate:
@@ -316,7 +316,7 @@ UpdateEpikhanMovement:
 HandleEpikhanDefeat:
     ld de, EpikhanBaseGraphics
     call SetObjectGraphicsPointer
-    jp Jump_001_4089
+    jp StartBossDestructionSequence
 
 UpdateEpikhanStatus:
     ld a, [bc]
@@ -373,7 +373,7 @@ HandleEpikhanExit:
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
-    jp Jump_001_46ea
+    jp FinishBossExitAndStartStageTransition
 
 
 EpikhanInitTemplate:
@@ -965,11 +965,10 @@ UpdateQuasiObliteratorPartDestructionSequence:
     jp z, FreeObjectAndRemoveHandler
 
     ld hl, BossPartDestructionSmokeOffsets
-    call Call_001_465d
+    call TriggerSmokeEffect
     jp AdvanceToNextHandler
 
-
-Call_001_465d:
+TriggerSmokeEffect:
     add a
     ld c, a
     ld b, $00
@@ -1063,19 +1062,18 @@ DelayThenHideBackground:
     ldh [rLCDC], a
     jp RemoveCurrentHandler
 
-
-Jump_001_46ea:
+FinishBossExitAndStartStageTransition:
     ld a, [wCurrentStage]
     cp $06
-    jr nz, jr_001_46fa
+    jr nz, .subStageSix
 
-    ld de, $2cbe
+    ld de, SetupStageSixTransition
     call StoreAddressInFreeWramSlot
     jp FreeObjectAndRemoveHandler
 
 
-jr_001_46fa:
-    ld de, $2af4
+.subStageSix
+    ld de, SetupStageTransition
     call StoreAddressInFreeWramSlot
     jp FreeObjectAndRemoveHandler
 

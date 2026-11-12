@@ -40,9 +40,12 @@ DEF wStageEventParams EQU $CAB5
 DEF wEnableQuickSoftReset EQU $CAB9
 
 DEF wStageTransitionActive EQU $CAC5
+DEF wPlayerTransitionComplete EQU $CAC6
+DEF wPlayerExitPositionReached EQU $CAC7
 DEF wStageReady EQU $CAC9
 
 DEF wBossActive EQU $CACA
+DEF wPlayerExitAllowed EQU $CACB
 
 DEF wTextCopyPending EQU $CAD0
 DEF wTextCopySourcePointer EQU $CAD2

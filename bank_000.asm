@@ -4214,7 +4214,7 @@ InitPlayerObject:
     ld e, a
     xor a
     ld [de], a
-    ld de, $293a
+    ld de, WaitForStageReady
     jp SetCurrentHandlerAddress
 
 
@@ -4270,7 +4270,7 @@ UpdatePlayerState:
     call SetObjectPointer
     ld a, [wStageTransitionActive]
     or a
-    jr nz, jr_000_1774
+    jr nz, StartMovePlayerToNextStage
 
     ld a, [wPlayerInvincible]
     or a
@@ -4326,67 +4326,68 @@ SetPlayerMovementHandler:
     jp SetCurrentHandlerAddress
 
 
-jr_000_1774:
+StartMovePlayerToNextStage:
     ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
-    ld de, $1780
+    ld de, PlayStageTransitionAudio
     jp SetCurrentHandlerAddress
 
-    ; $1780
+PlayStageTransitionAudio:
     ld a, [wCurrentStage]
     cp $06
-    jr z, jr_000_1792
+    jr z, .startMoveToExit
 
     ld hl, $600e
     ld a, $01
     call SetupAudioPlayback
     ld [$cf9a], a
 
-jr_000_1792:
-    ld de, $1798
+.startMoveToExit
+    ld de, MoveToExitPosition
     jp SetCurrentHandlerAddress
 
-
+MoveToExitPosition:
     ld a, [bc]
     call SetObjectPointer
     ld de, $0000
     inc hl
     ld a, [hl+]
     cp $80
-    jr z, jr_000_17ab
+    jr z, .checkXPos ; check Y pos
 
     ld d, $08
-    jr c, jr_000_17ab
+    jr c, .checkXPos
 
-    ld d, $f8
+    ld d, $f8 ; set Y movement based on current position
 
-jr_000_17ab:
+.checkXPos
     ld a, [hl]
     cp $28
-    jr z, jr_000_17b6
+    jr z, .checkFinalPos ; check x position
 
     ld e, $08
-    jr c, jr_000_17b6
+    jr c, .checkFinalPos
 
-    ld e, $f8
+    ld e, $f8 ; set x movement based on current position
 
-jr_000_17b6:
+.checkFinalPos
     ld a, d
     or e
-    jr z, jr_000_17c0
+    jr z, .positionReached ; if d and e are both zero we have reach target
 
+    ; otherwise move player object
     call MoveObjectWithFractionalVelocity
     jp AdvanceToNextHandler
 
 
-jr_000_17c0:
+.positionReached
     ld a, $01
-    ld [$cac7], a
-    ld de, $17cb
+    ld [wPlayerExitPositionReached], a
+    ld de, WaitForPlayerExitPermission
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cacb]
+WaitForPlayerExitPermission:
+    ld a, [wPlayerExitAllowed]
     or a
     jp z, AdvanceToNextHandler
 
@@ -4397,7 +4398,7 @@ jr_000_17c0:
     ld [hl+], a
     ld [hl], a
     ld [wPlayerInvincible], a
-    ld de, $28f0
+    ld de, UpdatePlayerStageExitMovement
     jp SetCurrentHandlerAddress
 
 
@@ -7086,10 +7087,10 @@ FinalBossFiringPositionSequence:
     xor a
     ld [hl+], a
     ld [hl+], a
-    ld de, $28f0
+    ld de, UpdatePlayerStageExitMovement
     jp SetCurrentHandlerAddress
 
-
+UpdatePlayerStageExitMovement:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $000f
@@ -7097,11 +7098,11 @@ FinalBossFiringPositionSequence:
     ld a, [hl]
     xor $01
     ld [hl+], a
-    jr nz, jr_000_28ff
+    jr nz, .movePlayer
 
     dec [hl]
 
-jr_000_28ff:
+.movePlayer
     ld a, [hl]
     call CalculateYMovement
     ld hl, $ca16
@@ -7118,39 +7119,38 @@ jr_000_28ff:
     jp c, AdvanceToNextHandler
 
     ld a, $01
-    ld hl, $cac6
+    ld hl, wPlayerTransitionComplete ; mark player offscreen
     ld [hl+], a
     ld [hl], a
     ld a, [wCurrentStage]
     cp $06
-    jr z, jr_000_292d
+    jr z, .stageSevenNext
 
-jr_000_2927:
-    ld de, $293a
+.setWaitForStageReady:
+    ld de, WaitForStageReady
     jp SetCurrentHandlerAddress
 
 
-jr_000_292d:
+.stageSevenNext
     ld a, [$ca22]
     cp $0f
-    jr nz, jr_000_2927
+    jr nz, .setWaitForStageReady
 
     ld de, WaitForMotherAtenaSetup
     jp SetCurrentHandlerAddress
 
 
-    ; 293a
-    ; Wait for player entrance?
+WaitForStageReady:
     ld a, [wStageReady]
     or a
     jp z, AdvanceToNextHandler
 
     ; called right before player enters
-    ld de, $2947
+    ld de, ConfigurePlayerForNextStage
     jp SetCurrentHandlerAddress
 
 
-    ; 2947
+ConfigurePlayerForNextStage:
     ld a, [bc] ; bc is pointing to C100 which is 0
     call SetObjectPointer
     ld de, $000f
@@ -7162,10 +7162,10 @@ jr_000_292d:
     call ResetObjectAttributes
     ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
-    ld de, $2966
+    ld de, MovePlayerToStageStartPosition
     jp SetCurrentHandlerAddress
 
-    ; 2966
+MovePlayerToStageStartPosition:
     ld a, [bc]
     call SetObjectPointer
     ld de, $ff00 ; FF is like -1 since adding causes wrap around, 00 is of course, 0
@@ -7324,6 +7324,9 @@ Stage6AnnouncementGraphics: ; $2AD4
 Stage8PlayerGraphics:
     db $02, $00, $04, $00
 
+    ; 2AF4
+    ; stage 1 - 5
+SetupStageTransition:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7335,7 +7338,7 @@ Stage8PlayerGraphics:
 
     ld a, $01
     ld [wStageTransitionActive], a
-    ld bc, $2b6d
+    ld bc, NextStageObjInitTemplate
     call TryInitializeObjectInFreeSlot
     or a
     jp z, RemoveCurrentHandler
@@ -7344,22 +7347,22 @@ Stage8PlayerGraphics:
     call StopAudioPlayback
     ld a, [wWeaponPowerLevel]
     ld [$ca2c], a
-    ld de, $2b22
+    ld de, ConfigureNextStageObj
     jp SetCurrentHandlerAddress
 
-
+ConfigureNextStageObj:
     ld a, [bc]
     call SetObjectPointer
-    ld bc, $2b6d
+    ld bc, NextStageObjInitTemplate
     ld de, $3040
     call ResetObjectAttributes
-    ld de, $2b75
+    ld de, NextStageObjGraphics
     call SetObjectGraphicsPointer
-    ld de, $2b3b
+    ld de, WaitForStageTransition
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cac7]
+WaitForStageTransition:
+    ld a, [wPlayerExitPositionReached]
     or a
     jp z, AdvanceToNextHandler
 
@@ -7368,12 +7371,12 @@ Stage8PlayerGraphics:
     jp nz, AdvanceToNextHandler
 
     inc a
-    ld [$cacb], a
-    ld de, $2b53
+    ld [wPlayerExitAllowed], a
+    ld de, WaitAndSetRequestNextStageHandler
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cac6]
+WaitAndSetRequestNextStageHandler:
+    ld a, [wPlayerTransitionComplete]
     or a
     jp z, AdvanceToNextHandler
 
@@ -7388,8 +7391,18 @@ Stage8PlayerGraphics:
     jp FreeObjectAndRemoveHandler
 
 
-    db $25, $08, $08, $00, $00, $10, $10, $01, $ce, $00, $bc, $00, $e2, $00, $da, $00
-    db $00, $00, $d8, $00, $da, $00, $b4, $00, $c0, $00, $bc, $00
+    ; $2B6D: object initialization template.
+NextStageObjInitTemplate:
+    db $25             ; Two rows, five sprite columns.
+    db $08, $08        ; Collision center offset (Y, X).
+    db $00, $00        ; Hitbox minimum offset (Y, X).
+    db $10, $10        ; Hitbox maximum offset (Y, X).
+    db $01             ; Damage threshold.
+
+    ; $2B75: "NEXT" / "STAGE" graphics, five (tile, attributes) pairs per row.
+NextStageObjGraphics:
+    db $ce, $00, $bc, $00, $e2, $00, $da, $00, $00, $00 ; Row 1: NEXT, blank.
+    db $d8, $00, $da, $00, $b4, $00, $c0, $00, $bc, $00 ; Row 2: STAGE.
 
     adc $00
     cp h
@@ -7639,6 +7652,7 @@ UpdateHighScore:
     db $da, $d0, $d2, $00, $d8, $b8, $d0, $d6, $bc, $00, $9a, $71, $05, $d8, $b8, $d0
     db $d6, $bc, $00
 
+SetupStageSixTransition:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
@@ -7653,20 +7667,20 @@ UpdateHighScore:
     ld a, [$cf9a]
     call StopAudioPlayback
     call UpdateHighScore
-    ld de, $2cdf
+    ld de, WaitForStageSixTransition
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cac7]
+WaitForStageSixTransition:
+    ld a, [wPlayerExitPositionReached]
     or a
     jp z, AdvanceToNextHandler
 
-    ld [$cacb], a
-    ld de, $2cef
+    ld [wPlayerExitAllowed], a
+    ld de, WaitStageSixAndSetRequestNextStageHandler
     jp SetCurrentHandlerAddress
 
-
-    ld a, [$cac6]
+WaitStageSixAndSetRequestNextStageHandler:
+    ld a, [wPlayerTransitionComplete]
     or a
     jp z, AdvanceToNextHandler
 
@@ -7681,7 +7695,6 @@ UpdateHighScore:
     jp RemoveCurrentHandler
 
 
-    ; 2D09
 InitializeStageSevenCutscene:
     ld bc, FinalBossCutsceneInitTemplate
     call TryInitializeObjectInFreeSlot

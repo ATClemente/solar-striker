@@ -1766,8 +1766,8 @@ CheckPlayerCenterInEnemyHitbox:
     ld [wPlayerDeathRequested], a
     ret
 
-
-Call_000_0a0c:
+; Returns A = 0 if unchanged, nonzero if damage changed.
+CheckForNewEnemyDamage:
     ld a, [bc]
     call SetObjectPointer
     ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
@@ -1781,7 +1781,7 @@ Call_000_0a0c:
     or a ; set flags based on results
     ret z
 
-    ld a, [$cfa0]
+    ld a, [wSoundSuppressionTimer]
     or a
     ret nz
 
@@ -1985,7 +1985,7 @@ InitializeObjectAttributes:
     call CopyCoordinatePairWithOffset
     call CopyCoordinatePairWithOffset
     ld a, [bc]
-    ld [hl], a
+    ld [hl], a ; store damage threshold
     xor a
     ret
 
@@ -2179,8 +2179,7 @@ CheckPointInHitbox:
     dec c ; C = $FF: collision
     ret
 
-
-Jump_000_0bbb:
+HandleEnemyDefeat:
     ld a, d
     call AddPlayerScore
     ld hl, wSelectedObjectPointer
@@ -2190,9 +2189,9 @@ Jump_000_0bbb:
     ld de, OBJECT_SHOT_COLLISION_DISABLED_OFFSET
     add hl, de
     inc [hl]
-    ld a, [$cfa0]
+    ld a, [wSoundSuppressionTimer]
     or a
-    jr nz, jr_000_0bed
+    jr nz, .setSmokeGraphics
 
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -2205,7 +2204,7 @@ Jump_000_0bbb:
     add a
     ld l, a
     ld h, $00
-    ld de, $0c11
+    ld de, DefeatSoundPointers
     add hl, de
     ld a, [hl+]
     ld h, [hl]
@@ -2213,7 +2212,7 @@ Jump_000_0bbb:
     ld a, $01
     call SetupAudioPlayback
 
-jr_000_0bed:
+.setSmokeGraphics
     ld de, AssignSmokeGraphics
     jp SetCurrentHandlerAddress
 
@@ -2239,15 +2238,12 @@ GetCurrentPlaybackStatus:
     ld a, [hl]
     ret
 
-
-    db $2d, $73, $d8, $73, $00, $74
-
-    ld c, d
-    ld [hl], h
+DefeatSoundPointers:
+    dw $732d, $73d8, $7400, $744a
 
 UpdatePlayerStatus:
     call UpdatePlayerLivesHUD
-    ld hl, $cfa0
+    ld hl, wSoundSuppressionTimer
     ld a, [hl]
     or a
     jr z, jr_000_0c27
@@ -2375,7 +2371,7 @@ TryAwardExtraLife:
     inc a
     ld hl, $5d41
     call SetupAudioPlayback
-    ld [$cfa0], a
+    ld [wSoundSuppressionTimer], a
     ret
 
 IncrementPlayerLives:
@@ -4643,7 +4639,7 @@ QueuePlayerShot:
     ld a, [wWeaponPowerLevel]
     inc a
     ld [bc], a
-    ld a, [$cfa0]
+    ld a, [wSoundSuppressionTimer]
     or a
     call z, ChoosePlayerFiringSound
 
@@ -4814,7 +4810,7 @@ UpdateScriptedEnemyMovementHandler:
     call UpdateScriptedEnemyMovement
     ld d, $22
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld de, TryFireScriptedEnemyShot
     jp SetCurrentHandlerAddress
@@ -4902,7 +4898,7 @@ UpdateRotomechMovement:
     call UpdateScriptedEnemyMovement
     ld d, $22
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -5094,7 +5090,7 @@ UpdateBlazerStatus:
     ld d, $53
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld d, $06
     ld e, $00
@@ -5180,7 +5176,7 @@ UpdateArrowheadMovement:
     ld d, $22
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld de, TryFireArrowheadShot
     jp SetCurrentHandlerAddress
@@ -5235,7 +5231,7 @@ jr_000_1cd6:
     call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -5319,7 +5315,7 @@ UpdateHarrierVerticalMovement:
     ld d, $32
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld a, $28
     call CalculateYMovement
@@ -5367,7 +5363,7 @@ UpdateHarrierHorizontalMovement:
     ld d, $22
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld d, $60
     ld hl, $0011
@@ -5623,7 +5619,7 @@ AwardPowerUp:
     ld hl, $5e5b
     ld a, $01
     call SetupAudioPlayback
-    ld [$cfa0], a
+    ld [wSoundSuppressionTimer], a
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld b, [hl]
@@ -5707,7 +5703,7 @@ UpdateAnthropMovement:
     call UpdateScriptedEnemyMovement
     ld d, $52
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -5842,7 +5838,7 @@ UpdateTerraCannonStatus:
     ld d, $13
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld de, UpdateTerraCannonPosition
     jp SetCurrentHandlerAddress
@@ -6017,7 +6013,7 @@ UpdateVexorMovement:
     call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
@@ -6169,7 +6165,7 @@ UpdateAnthropMissileMovement:
     ld d, $52
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld de, CheckAnthropMissileOutOfBounds
     jp SetCurrentHandlerAddress
@@ -6347,7 +6343,7 @@ CheckStageFourBossCollision:
     jp SetCurrentHandlerAddress
 
 CheckForStageFourBossHit:
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .setStatusHandler
 
@@ -6466,7 +6462,7 @@ CheckStageFiveBossCollision:
     jp SetCurrentHandlerAddress
 
 CheckForStageFiveBossHit:
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .checkPlayerAboveBossBoundary
 
@@ -6573,7 +6569,7 @@ CheckFinalBossCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .tryShot
 
@@ -6779,7 +6775,7 @@ UpdateDestructorOrbStatus:
     ld d, $12
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_0bbb
+    jp c, HandleEnemyDefeat
 
     ld de, CheckDestructorOrbCollision
     jp SetCurrentHandlerAddress

@@ -77,7 +77,7 @@ CheckDestructorCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .applyMovementHandler
 
@@ -238,7 +238,7 @@ CheckUltraCrusherCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .setMovementHandler
 
@@ -355,7 +355,7 @@ CheckEpikhanCollision:
     push bc
     call CheckPlayerCenterInEnemyHitbox
     pop bc
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .scheduleMovement
 
@@ -468,7 +468,7 @@ UpdateOmniquadMovement:
 
     ld a, [$cac1]
     or a
-    jp nz, Jump_000_0bbb
+    jp nz, HandleEnemyDefeat
 
     ld de, CheckOmniquadCollision
     jp SetCurrentHandlerAddress
@@ -483,11 +483,11 @@ HandleOmniquadPartDefeat:
     ld d, $23
     ld a, [hl]
     or a
-    jp nz, Jump_000_0bbb
+    jp nz, HandleEnemyDefeat
 
     inc a
     ld [$cac1], a
-    jp Jump_000_0bbb
+    jp HandleEnemyDefeat
 
 CheckOmniquadCollision:
     call CheckPlayerCenterInEnemyHitbox
@@ -521,7 +521,7 @@ UpdateOmniquadStatus:
     cp $a0
     jp nc, FreeObjectAndRemoveHandler
 
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .setMovementHandler
 
@@ -691,7 +691,7 @@ CheckXenocryptPartCollision:
     push bc
     call CheckEnemyCollisionWithPlayer
     pop bc
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .setMovementHandler
 
@@ -719,7 +719,7 @@ DestroyXenocryptPart:
     ld a, $01
     call SetupAudioPlayback
     ld d, $33
-    jp Jump_000_0bbb
+    jp HandleEnemyDefeat
 
 
 XenocryptMovementScriptTable:
@@ -893,7 +893,7 @@ CheckQuasiObliteratorPartCollision:
     jp SetCurrentHandlerAddress
 
 HandleQuasiObliteratorPartHit:
-    call Call_000_0a0c
+    call CheckForNewEnemyDamage
     or a
     jr z, .setMovementHandler
 

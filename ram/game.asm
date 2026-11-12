@@ -64,4 +64,6 @@ DEF wPauseRequested EQU $CF9D
 DEF wPlayerScore EQU $CF88
 DEF wHighScore   EQU $CFF1
 
+DEF wSoundSuppressionTimer EQU $CFA0
+
 DEF wHardModeUnlocked EQU $CFFC

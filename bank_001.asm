@@ -39,7 +39,7 @@ ConfigureDestructor:
 
 
 UpdateDestructorMovement:
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jr c, HandleDestructorDefeat
 
@@ -176,7 +176,7 @@ ConfigureUltraCrusher:
     jp SetCurrentHandlerAddress
 
 UpdateUltraCrusherMovement:
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jr c, HandleUltraCrusherDefeat
 
@@ -303,7 +303,7 @@ ConfigureEpikhan:
     ; Apply scripted movement.
 UpdateEpikhanMovement:
     ; Returns object byte $0C in A, with HL pointing to byte $0D.
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jp c, HandleEpikhanDefeat ; object[$0C] < object[$0D]
 
@@ -462,7 +462,7 @@ ConfigureOmniquadPart:
     jp SetCurrentHandlerAddress
 
 UpdateOmniquadMovement:
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jr c, HandleOmniquadPartDefeat
 
@@ -641,7 +641,7 @@ ConfigureXenocryptPart:
     jp SetCurrentHandlerAddress
 
 UpdateXenocryptMovement:
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jr c, HandleXenocryptPartDefeat
 
@@ -815,7 +815,7 @@ ConfigureQuasiObliteratorPart:
     jp SetCurrentHandlerAddress
 
 UpdateQuasiObliteratorMovement:
-    call Call_001_4627
+    call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jr c, HandleQuasiObliteratorPartDefeat
 
@@ -933,7 +933,8 @@ QuasiObliteratorLeftPartDamageGraphics:
 QuasiObliteratorRightPartDamageGraphics:
     db $7e, $30, $7c, $30, $7e, $70, $7c, $70
 
-Call_001_4627:
+; Returns damage threshold in A, with HL pointing to accumulated damage.
+UpdateScriptedEnemyMovementNoDrift:
     ld a, [bc]
     call SetObjectPointer
     call ReadMovementScriptCommand

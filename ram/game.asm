@@ -24,6 +24,8 @@ DEF wMotherAtenaSetup EQU $CA2D
 DEF wCollisionPointY EQU $CA30
 DEF wCollisionPointX EQU $CA31
 
+DEF wPlayerShotDamage EQU $CA33
+
 DEF wEnemyShotSpawnY EQU $CA60 ; Zero means no pending shot request
 DEF wEnemyShotSpawnX EQU $CA61
 

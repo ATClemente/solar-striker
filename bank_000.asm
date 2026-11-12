@@ -1035,7 +1035,7 @@ RegisterPlayerShotInitHandlers:
     xor a
     ld [wPlayerInput], a
     ld [wVBlankOccurred], a
-    ld [$ca54], a
+    ld [wPlayerShotAllocationIndex], a
     ld a, $e7
     ldh [rLCDC], a
     ld a, $07
@@ -4417,7 +4417,7 @@ HandleShotRequest:
     jp z, AdvanceToNextHandler
 
     cp $01
-    jr z, jr_000_17f6
+    jr z, .tryFirePlayerShot
 
     inc a
     and $07
@@ -4425,7 +4425,7 @@ HandleShotRequest:
     jp AdvanceToNextHandler
 
 
-jr_000_17f6:
+.tryFirePlayerShot
     inc a
     ld [bc], a
     ld a, [wWeaponPowerLevel]
@@ -4433,11 +4433,11 @@ jr_000_17f6:
     jp SetCurrentHandlerAddress
 
 InitializePlayerShot:
-    ld bc, $18cb
+    ld bc, PlayerShotNarrowInitTemplate
     ld de, $0000
-    ld a, [$ca54]
+    ld a, [wPlayerShotAllocationIndex]
     inc a
-    ld [$ca54], a
+    ld [wPlayerShotAllocationIndex], a
     call TryInitializeObjectAtIndex
     jp c, RemoveCurrentHandler
 
@@ -4447,32 +4447,31 @@ InitializePlayerShot:
     ld l, a
     ld a, [wAllocatedObjectIndex]
     ld [hl], a
-    ld de, $1930
+    ld de, WaitForShotRequest
     jp SetCurrentHandlerAddress
 
-
-Call_000_1824:
+InitializePlayerShotAttributes:
     ld a, [wWeaponPowerLevel]
     or a
-    jr z, jr_000_1835
+    jr z, .setNarrowTemplate
 
     ld a, [hl+]
     ld d, a
     ld e, [hl]
     ld a, $12
     ld [bc], a
-    ld bc, $18d2
-    jr jr_000_183e
+    ld bc, PlayerShotWideInitTemplate
+    jr .resetAttributes
 
-jr_000_1835:
+.setNarrowTemplate
     ld a, [hl+]
     ld d, a
     ld a, [hl]
-    add $06
+    add $06 ; center narrow shot
     ld e, a
-    ld bc, $18cb
+    ld bc, PlayerShotNarrowInitTemplate
 
-jr_000_183e:
+.resetAttributes
     jp ResetObjectAttributes
 
 
@@ -4497,8 +4496,7 @@ CheckObjectOutOfBounds:
     ld a, $ff
     ret
 
-
-Call_000_1857:
+CheckNarrowShotCollision:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -4511,9 +4509,9 @@ Call_000_1857:
     inc bc
     ld a, [hl]
     ld [bc], a
-    jr jr_000_1895
+    jr CheckActiveObjectsForShotCollision
 
-Call_000_186b:
+CheckWideShotCollisionLeft:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -4527,9 +4525,9 @@ Call_000_186b:
     ld a, [hl]
     sub $04
     ld [bc], a
-    jr jr_000_1895
+    jr CheckActiveObjectsForShotCollision
 
-Call_000_1881:
+CheckWideShotCollisionRight:
     ld hl, wSelectedObjectPointer
     ld a, [hl+]
     ld h, [hl]
@@ -4544,21 +4542,22 @@ Call_000_1881:
     add $04
     ld [bc], a
 
-jr_000_1895:
-    ld hl, $c7c0
-    ld b, $0c
+; A = 1 on hit, A = 0 when no object was hit
+CheckActiveObjectsForShotCollision:
+    ld hl, wObjectTable + ($0010 * 4) ; start after player and player shots
+    ld b, $0c ; number of objects to check
 
-Jump_000_189a:
+CheckCurrentObjectForCollision:
     push hl
     ld a, [hl]
     or a
-    jp z, Jump_000_18c0
+    jp z, .moveToNextObject
 
     ld de, OBJECT_SHOT_COLLISION_DISABLED_OFFSET
     add hl, de
     ld a, [hl+]
     or a
-    jr nz, jr_000_18c0
+    jr nz, .moveToNextObject
 
     inc hl
     inc hl
@@ -4567,11 +4566,11 @@ Jump_000_189a:
     pop hl
     ld a, c
     or a
-    jr z, jr_000_18c0
+    jr z, .moveToNextObject
 
     ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET - OBJECT_HITBOX_MIN_Y_OFFSET
     add hl, de
-    ld a, [$ca33]
+    ld a, [wPlayerShotDamage]
     add [hl]
     ld [hl], a
     pop hl
@@ -4579,33 +4578,52 @@ Jump_000_189a:
     ret
 
 
-Jump_000_18c0:
-jr_000_18c0:
+.moveToNextObject
     pop hl
     ld de, $0010
     add hl, de
     dec b
-    jp nz, Jump_000_189a
+    jp nz, CheckCurrentObjectForCollision
 
     ld a, b
     ret
 
-; 18cb
-    db $11, $08, $04, $00, $01, $10, $07, $12, $08, $08, $00, $fe, $10, $12, $01, $02
-    db $02, $03, $03
+PlayerShotNarrowInitTemplate: ; $18CB
+    db $11             ; One row, one sprite column.
+    db $08, $04        ; Collision center offset (Y, X).
+    db $00, $01        ; Hitbox minimum offset (Y, X).
+    db $10, $07        ; Hitbox maximum offset (Y, X).
+    ; Damage threshold shares the next template's first byte ($12).
 
-    inc b
+PlayerShotWideInitTemplate: ; $18D2
+    db $12             ; One row, two sprite columns; also the preceding template's damage threshold.
+    db $08, $08        ; Collision center offset (Y, X).
+    db $00, $fe        ; Hitbox minimum offset (Y, X).
+    db $10, $12        ; Hitbox maximum offset (Y, X).
+    ; Damage threshold shares the damage table's first byte ($01).
+PlayerShotDamageByPowerLevel: ; $18D9: damage for weapon power levels 0-5.
+    db $01, $02, $02, $03, $03, $04
 
-    db $eb, $18, $ed, $18, $ed, $18, $f1, $18, $f1, $18
+PlayerShotGraphicsByPowerLevel: ; $18DF: one pointer per weapon power level.
+    dw PlayerShotGraphicsSingle   ; Level 0.
+    dw PlayerShotGraphicsDouble   ; Level 1.
+    dw PlayerShotGraphicsDouble   ; Level 2.
+    dw PlayerShotGraphicsTriple  ; Level 3.
+    dw PlayerShotGraphicsTriple  ; Level 4.
+    dw PlayerShotGraphicsMaxPower ; Level 5.
 
-    push af
-    db $18
+; Player-shot graphics: (tile, attributes) pairs.
+PlayerShotGraphicsSingle: ; $18EB: one sprite.
+    db $0c, $00
 
-    db $0c, $00, $0c, $00, $0c, $20, $0e, $00, $0e, $20
+PlayerShotGraphicsDouble: ; $18ED: two sprites; the second is flipped horizontally.
+    db $0c, $00, $0c, $20
 
-    inc e
-    nop
-    ld e, $00
+PlayerShotGraphicsTriple: ; $18F1: two sprites; the second is flipped horizontally.
+    db $0e, $00, $0e, $20
+
+PlayerShotGraphicsMaxPower: ; $18F5: two sprites.
+    db $1c, $00, $1e, $00
 
 FindEmptyShotSlot:
     ld bc, wWeaponShotSlots
@@ -4650,105 +4668,105 @@ PlayPlayerFiringSound:
     ld a, $01
     jp SetupAudioPlayback
 
-
+WaitForShotRequest:
     ld a, [bc]
     ld l, a
     ld h, $00
-    ld de, $ca50
+    ld de, wWeaponShotSlots - 1
     add hl, de
     ld a, [hl]
     or a
     jp z, AdvanceToNextHandler
 
-    ld de, $1943
+    ld de, ConfigurePlayerShot
     jp SetCurrentHandlerAddress
 
-
+ConfigurePlayerShot:
     ld a, [bc]
     call SetObjectPointer
     ld b, h
     ld c, l
     ld hl, wPlayerYPos
-    call Call_000_1824
+    call InitializePlayerShotAttributes
     ld a, [wWeaponPowerLevel]
     add a
     ld l, a
     ld h, $00
-    ld de, $18df
+    ld de, PlayerShotGraphicsByPowerLevel
     add hl, de
     ld a, [hl+]
     ld d, [hl]
     ld e, a
     call SetObjectGraphicsPointer
-    ld de, $1966
+    ld de, UpdateShotPosition
     jp SetCurrentHandlerAddress
 
-
+UpdateShotPosition:
     ld a, [bc]
     call SetObjectPointer
     inc hl
     ld a, [hl+]
     cp $e0
-    jr nc, jr_000_1984
+    jr nc, .deactivateShot ; y pos is >= $e0
 
     ld a, [hl]
     add $20
     cp $d0
-    jr nc, jr_000_1984
+    jr nc, .deactivateShot
 
     ld d, $f8
     ld e, $00
     call MoveObject
-    ld de, $198a
+    ld de, CheckPlayerShotCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_1984:
-    ld de, $19c1
+.deactivateShot
+    ld de, DeactivatePlayerShot
     jp SetCurrentHandlerAddress
 
-
+CheckPlayerShotCollision:
     ld a, [bc]
     call SetObjectPointer
     ld a, [wWeaponPowerLevel]
     ld l, a
     ld h, $00
-    ld de, $18d9
+    ld de, PlayerShotDamageByPowerLevel
     add hl, de
     ld a, [hl]
-    ld [$ca33], a
+    ld [wPlayerShotDamage], a
     ld a, [wWeaponPowerLevel]
     or a
-    jr z, jr_000_19af
+    jr z, .narrowShot
 
-    call Call_000_186b
+    call CheckWideShotCollisionLeft
     or a
-    jr nz, jr_000_19b5
+    jr nz, .deactivateShot
 
-    call Call_000_1881
-    jr z, jr_000_19bb
+    call CheckWideShotCollisionRight
+    jr z, .setUpdatePositionHandler
 
-    jr jr_000_19b5
+    jr .deactivateShot
 
-jr_000_19af:
-    call Call_000_1857
+.narrowShot
+    call CheckNarrowShotCollision
     or a
-    jr z, jr_000_19bb
+    jr z, .setUpdatePositionHandler
 
-jr_000_19b5:
-    ld de, $19c1
+.deactivateShot
+    ld de, DeactivatePlayerShot
     jp SetCurrentHandlerAddress
 
 
-jr_000_19bb:
-    ld de, $1966
+.setUpdatePositionHandler
+    ld de, UpdateShotPosition
     jp SetCurrentHandlerAddress
 
-
+DeactivatePlayerShot:
     ld a, [bc]
     ld l, a
     ld h, $00
-    ld de, $ca50
+    ld de, wWeaponShotSlots - 1
     add hl, de
     xor a
     ld [hl], a
@@ -4759,7 +4777,7 @@ jr_000_19bb:
     inc hl
     xor a
     ld [hl], a
-    ld de, $1930
+    ld de, WaitForShotRequest
     jp SetCurrentHandlerAddress
 
 

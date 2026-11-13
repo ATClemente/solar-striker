@@ -81,7 +81,7 @@ RST_38::
     rst $38
 
 VBlankInterrupt::
-    jp Jump_000_02e5
+    jp HandleVBlank
 
 
     cp a
@@ -90,7 +90,7 @@ VBlankInterrupt::
     rst $38
 
 LCDCInterrupt::
-    jp Jump_000_030c
+    jp HandleLCDInterrupt
 
 
     cp $ff
@@ -99,7 +99,7 @@ LCDCInterrupt::
     rst $38
 
 TimerOverflowInterrupt::
-    jp Jump_000_0315
+    jp HandleTimerOverflow
 
 
     cp a
@@ -405,7 +405,7 @@ FinishTitleScreenSetup:
     xor a
     ldh [rTMA], a
     ldh [rIF], a
-    ld de, $04f5
+    ld de, HandleTitleScreenInput
     call StoreAddressInFreeWramSlot
     ld hl, $5ddb
     xor a
@@ -526,7 +526,7 @@ ReturnToTitleScreen:
     jp InitTitleScreen
 
 
-Jump_000_02e5:
+HandleVBlank:
     di
     push af
     push bc
@@ -552,7 +552,7 @@ Jump_000_02e5:
     reti
 
 
-Jump_000_030c:
+HandleLCDInterrupt:
     push af
     ldh a, [rLCDC]
     and $fd
@@ -561,7 +561,7 @@ Jump_000_030c:
     reti
 
 
-Jump_000_0315:
+HandleTimerOverflow:
     push af
     di
     ld a, $03

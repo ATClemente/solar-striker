@@ -2928,7 +2928,7 @@ SetupDataPairOffset:
     ld h, $00
 
 WriteDataPairBytes:
-    ld de, $0fd5
+    ld de, FiringTimingTable
     add hl, de
     pop de
     ld a, [hl+]
@@ -2956,7 +2956,13 @@ TryApplyHardModeOverrides:
     ret
 
 
-    ; $0FD5: two-byte entries indexed by wStageEventParams + 1.
+    ; $0FD5: two-byte entries indexed by wStageEventParams + 1 (low nibble of 4th event byte).
+    ; stored in handler data offset $08-$09
+    ; first byte is when to fire, second byte is when to reset cycle
+    ; Example: $1C, $40 attempts firing at count 28 and resets at count 64.
+    ; Subsequent firing attempts are 64 timer updates apart.
+    ; counter is stored in offset $07
+FiringTimingTable:
     db $e0, $f0 ; index $00
     db $1c, $40 ; index $01
     db $1c, $38 ; index $02
@@ -4111,7 +4117,7 @@ FinishPlayerDeathSequence:
     ld de, PlayerMovementHandler
     jp SetCurrentHandlerAddress
 
-; 167C
+PlayerDirectionLookupTable:
     db $ff ; $0: None
     db $02 ; $1: Right
     db $06 ; $2: Left
@@ -4145,8 +4151,15 @@ PlayerSpriteData:
 PlayerBlinkSpriteData:
     db $00, $00, $00, $00
     
-    ; 16a3
-    db $d0, $00, $de, $22, $00, $30, $22, $22, $30, $00, $22, $de, $00, $d0, $de, $de
+PlayerMovementTable:
+    db $d0, $00 ; Up
+    db $de, $22 ; Up-Right
+    db $00, $30 ; Right
+    db $22, $22 ; Down-Right
+    db $30, $00 ; Down
+    db $22, $de ; Down-Left
+    db $00, $d0 ; Left
+    db $de, $de ; Up-left
 
 InitPlayerObject:
     ld bc, PlayerInitTemplate
@@ -4181,7 +4194,7 @@ PlayerMovementHandler:
     and $0f
     ld l, a
     ld h, $00
-    ld de, $167c
+    ld de, PlayerDirectionLookupTable
     add hl, de
     ld a, [hl]
     ld [$ca25], a ; store the movement input calculated
@@ -4192,7 +4205,7 @@ PlayerMovementHandler:
     add a
     ld e, a
     ld d, $00
-    ld hl, $16a3
+    ld hl, PlayerMovementTable
     add hl, de
     ld a, [hl+] ; load the y movement amount in a, point hl at x
     push hl

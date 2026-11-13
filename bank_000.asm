@@ -331,11 +331,11 @@ InitTitleScreen:
     call CopyMemory
     ld a, $03
     ld [$2100], a ; Set ROM bank 3
-    ld hl, Data_003_58b0
+    ld hl, TitleScreenBlockDefinitions
     ld de, $d000 ; WRAM
     ld bc, $0080
     call CopyMemory
-    ld hl, Data_003_5930
+    ld hl, TitleScreenBackgroundMap
     ld de, $d200 ; WRAM
     ld bc, $0090
     call CopyMemory
@@ -2708,15 +2708,15 @@ LoadStageDataToWram:
 StageBackgroundDataTable:
     ; ROM bank 3 source pointers: block definitions, background map.
     ; Copied to $D000 ($0200 bytes) and $D200 ($0550 bytes), respectively.
-    dw $4000, $41B0 ; Stage 0
-    dw $4000, $42A0 ; Stage 1
-    dw $4000, $4390 ; Stage 2
-    dw $4480, $4530 ; Stage 3
-    dw $4480, $4620 ; Stage 4
-    dw $4B70, $4D50 ; Stage 5
-    dw $4B70, $52A0 ; Stage 6
-    dw $5AD0, $5B50 ; Stage 7
-    dw $57F0, $5820 ; Stage 8
+    dw BackgroundBlockDefinitions_0, BackgroundMap_0 ; Stage 0
+    dw BackgroundBlockDefinitions_0, BackgroundMap_1 ; Stage 1
+    dw BackgroundBlockDefinitions_0, BackgroundMap_2 ; Stage 2
+    dw BackgroundBlockDefinitions_1, BackgroundMap_3 ; Stage 3
+    dw BackgroundBlockDefinitions_1, BackgroundMap_4 ; Stage 4
+    dw BackgroundBlockDefinitions_2, BackgroundMap_5 ; Stage 5
+    dw BackgroundBlockDefinitions_2, BackgroundMap_6 ; Stage 6
+    dw BackgroundBlockDefinitions_3, BackgroundMap_7 ; Stage 7
+    dw BackgroundBlockDefinitions_4, BackgroundMap_8 ; Stage 8
 
 StageTileGraphicsTable:
     ; Bytes to copy, source address
@@ -2740,15 +2740,15 @@ StageTileGraphicsTable:
     dw $01A0, $6590
 
 StageEventDataPointerTable:
-    dw $6000 ; Stage 0
-    dw $6020 ; Stage 1
-    dw $6420 ; Stage 2
-    dw $6820 ; Stage 3
-    dw $6c20 ; Stage 4
-    dw $7020 ; Stage 5
-    dw $7420 ; Stage 6
-    dw $7820 ; Stage 7
-    dw $7840 ; Stage 8
+    dw Stage0EventStream ; Stage 0
+    dw Stage1EventStream ; Stage 1
+    dw Stage2EventStream ; Stage 2
+    dw Stage3EventStream ; Stage 3
+    dw Stage4EventStream ; Stage 4
+    dw Stage5EventStream ; Stage 5
+    dw Stage6EventStream ; Stage 6
+    dw Stage7EventStream ; Stage 7
+    dw Stage8EventStream ; Stage 8
 
 StageEventHandlerTable:
     ; Indexed by event type; each entry is a little-endian handler address.
@@ -2796,10 +2796,6 @@ StageEventHandlerTable:
     dw InitializeVexor ; event type $29
     dw InitializeWarhawk ; event type $2a
     dw InitializeUltraCrusher ; event type $2b
-
-; Preserve addresses referenced by disassembled data below.
-DEF jr_000_0efc EQU StageEventHandlerTable + $45
-DEF jr_000_0f0c EQU StageEventHandlerTable + $55
 
 ; A = index, HL = X coordinate table
 ; Returns A and E = table[index] + wHorizontalScrollOffset

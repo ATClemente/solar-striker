@@ -12,6 +12,7 @@ SECTION "ROM Bank $003", ROMX[$4000], BANK[$3]
 
     ; $4000: stages 0/1/2 background block definitions (four tile IDs per 2x2 block).
     ; StageBackgroundDataTable selects this source; copy $0200 bytes to WRAM $D000.
+BackgroundBlockDefinitions_0:
     db $00, $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $02, $00, $00, $02, $00
     db $00, $03, $00, $00, $00, $04, $00, $05, $04, $00, $06, $00, $07, $08, $0b, $0c
     db $09, $0a, $0d, $0e, $0f, $10, $11, $12, $00, $00, $00, $13, $04, $00, $14, $00
@@ -40,6 +41,7 @@ SECTION "ROM Bank $003", ROMX[$4000], BANK[$3]
     db $9f, $ff, $bc, $ff, $1d, $fc, $9f, $f7, $be, $eb, $bf, $fb, $be, $df, $fe, $ff
     db $ba, $bb, $ea, $f7, $3f, $f7, $b2, $17, $ae, $f5, $bf, $ff, $fe, $bb, $c7, $76
     ; $41B0: stage 0 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_0:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01
     db $00, $01, $00, $01, $01, $09, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00
     db $01, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $04
@@ -160,6 +162,7 @@ jr_003_4251:
     rst $38
 
     ; $42A0: stage 1 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_1:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01
     db $00, $01, $00, $01, $01, $09, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00
     db $01, $00, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $04
@@ -176,6 +179,7 @@ jr_003_4251:
     db $00, $01, $00, $00, $00, $01, $01, $00, $00, $01, $00, $00, $00, $00, $01, $01
     db $ff, $bd, $ae, $7c, $e8, $ff, $8a, $bf, $6c, $ff, $4f, $fd, $ca, $ff, $ae, $db
     ; $4390: stage 2 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_2:
     db $00, $1e, $1f, $00, $00, $00, $00, $1e, $1f, $00, $00, $00, $00, $1e, $00, $00
     db $00, $00, $00, $1f, $00, $00, $00, $20, $21, $22, $00, $00, $20, $21, $22, $00
     db $00, $00, $00, $1f, $00, $00, $00, $00, $00, $1f, $00, $00, $00, $00, $1f, $00
@@ -192,6 +196,7 @@ jr_003_4251:
     db $1e, $1f, $1e, $00, $00, $00, $00, $1f, $00, $00, $00, $1e, $00, $00, $00, $00
     db $ff, $74, $75, $51, $5b, $d7, $fb, $fd, $ff, $9e, $73, $65, $ad, $d5, $ff, $ed
     ; $4480: stages 3/4 background block definitions; copy $0200 bytes to WRAM $D000.
+BackgroundBlockDefinitions_1:
     db $00, $00, $00, $00, $01, $02, $03, $04, $03, $04, $0d, $0e, $05, $06, $05, $06
     db $07, $08, $0f, $10, $09, $0a, $11, $12, $0b, $0c, $09, $0a, $00, $13, $00, $18
     db $14, $00, $19, $00, $00, $15, $00, $00, $00, $16, $00, $1a, $17, $00, $1b, $00
@@ -204,6 +209,7 @@ jr_003_4251:
     db $43, $44, $51, $52, $45, $46, $53, $54, $47, $48, $55, $56, $49, $4a, $57, $58
     db $59, $5a, $5f, $60, $5b, $5c, $61, $61, $5d, $5e, $62, $63, $2b, $1d, $aa, $55
     ; $4530: stage 3 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_3:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $03, $03, $00, $03, $03, $00, $03, $03, $00, $00, $00, $02, $00, $00, $03
     db $03, $00, $03, $03, $00, $03, $03, $00, $00, $05, $01, $02, $00, $03, $03, $00
@@ -220,6 +226,7 @@ jr_003_4251:
     db $00, $05, $01, $00, $00, $03, $03, $04, $03, $03, $04, $03, $03, $00, $00, $06
     db $00, $00, $00, $03, $03, $00, $03, $03, $00, $03, $03, $00, $00, $00, $ff, $43
     ; $4620: stage 4 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_4:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0c
     db $0d, $16, $17, $15, $11, $12, $00, $00, $00, $07, $08, $11, $0c, $0d, $11, $12
     db $13, $14, $0f, $10, $00, $00, $00, $07, $08, $0f, $08, $15, $0a, $0b, $00, $13
@@ -864,6 +871,7 @@ jr_003_4b6a:
     add b
     ld h, [hl]
     ; $4B70: stages 5/6 background block definitions; copy $0200 bytes to WRAM $D000.
+BackgroundBlockDefinitions_2:
     nop
     nop
     nop
@@ -1283,9 +1291,10 @@ jr_003_4ceb:
     nop
     nop
     db $10
+    db $01
     ; $4D50: stage 5 background map (block IDs); copy $0550 bytes to WRAM $D200.
-    ; Source begins at byte offset +1 in the following instruction encoding.
-    ld bc, $0000
+BackgroundMap_5:
+    db $00, $00
     nop
     nop
     nop
@@ -2552,6 +2561,7 @@ jr_003_5286:
     db $fc
     ld sp, hl
     ; $52A0: stage 6 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_6:
     nop
     nop
     nop
@@ -3913,7 +3923,9 @@ jr_003_52bf:
     dec l
     ; $57F0: stage 8 background block definitions; copy $0200 bytes to WRAM $D000.
     ; Source begins at byte offset +2 in the following instruction encoding.
-    ld [$007e], a
+    db $ea, $7e
+BackgroundBlockDefinitions_4:
+    db $00
     nop
     nop
     nop
@@ -3954,9 +3966,10 @@ Jump_003_5811:
     ld [bc], a
     ld h, d
     db $10
+    db $01
     ; $5820: stage 8 background map (block IDs); copy $0550 bytes to WRAM $D200.
-    ; Source begins at byte offset +1 in the following instruction encoding.
-    ld bc, $0000
+BackgroundMap_8:
+    db $00, $00
     nop
     nop
     nop
@@ -4089,7 +4102,8 @@ jr_003_5835:
     nop
     rst $38
 
-Data_003_58b0:
+; Four tile IDs per 2x2 block; copied to $D000-$D07F.
+TitleScreenBlockDefinitions:
     db $00, $00, $00, $00, $01, $02, $02, $01, $03, $03, $00, $00, $00, $04, $13, $14
     db $05, $06, $15, $16, $07, $08, $17, $18, $09, $0a, $19, $1a, $0b, $0c, $1b, $1c
     db $0d, $0e, $1d, $1e, $0f, $10, $1f, $20, $11, $12, $21, $22, $23, $24, $32, $33
@@ -4098,8 +4112,8 @@ Data_003_58b0:
     db $44, $45, $00, $54, $46, $47, $00, $55, $48, $49, $56, $57, $4a, $4b, $58, $59
     db $4c, $4d, $00, $00, $4e, $4f, $5a, $5b, $50, $51, $00, $00, $5c, $5d, $62, $62
     db $5e, $5f, $62, $62, $60, $61, $62, $62, $48, $09, $00, $04, $00, $00, $00, $00
-    ; End of startup data copied to $D000–$D07F (2×2 block tile definitions?)
-Data_003_5930:
+; Background block IDs; copied to $D200-$D28F.
+TitleScreenBackgroundMap:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -4128,6 +4142,7 @@ Data_003_5930:
     db $a1, $60, $08, $04, $02, $14, $80, $00, $20, $a1, $00, $06, $a0, $00, $00, $01
     db $00, $88, $8a, $02, $00, $02, $02, $00, $80, $10, $20, $28, $00, $00, $00, $12
     ; $5AD0: stage 7 background block definitions; copy $0200 bytes to WRAM $D000.
+BackgroundBlockDefinitions_3:
     db $00, $00, $00, $00, $00, $00, $05, $06, $01, $02, $07, $08, $03, $04, $00, $00
     db $00, $09, $0a, $0b, $00, $00, $10, $11, $0c, $0d, $12, $13, $0e, $0f, $14, $15
     db $00, $00, $00, $1d, $00, $00, $1e, $1f, $00, $00, $20, $21, $01, $16, $22, $23
@@ -4137,6 +4152,7 @@ Data_003_5930:
     db $3b, $3c, $4f, $50, $00, $18, $00, $80, $00, $90, $00, $00, $28, $00, $00, $2d
     db $00, $07, $00, $0c, $20, $08, $00, $00, $00, $00, $00, $88, $00, $08, $00, $20
     ; $5B50: stage 7 background map (block IDs); copy $0550 bytes to WRAM $D200.
+BackgroundMap_7:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $0f, $10, $11, $12, $13, $14, $15, $16, $17, $18, $00, $00, $00, $00
     db $00, $00, $00, $08, $09, $0a, $0b, $0c, $0d, $0e, $00, $00, $00, $00, $00, $00
@@ -5101,6 +5117,7 @@ jr_003_5fec:
     ; $6000: stage 0 source; table at $0EA5 selects this address.
     ; LoadStageDataToWram copies $0400 bytes to WRAM $D800.
     ; Grouped in five-byte lines for readability; event structure/use unconfirmed.
+Stage0EventStream:
     db $b6, $85, $26, $e6, $bf
     db $ff, $ae, $ef, $ee, $fd
     db $b4, $ef, $8a, $df, $aa
@@ -5112,6 +5129,7 @@ jr_003_5fec:
     ; $6020: stage 1 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage1EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $40, $00, $07, $60, $00
@@ -5282,6 +5300,7 @@ jr_003_5fec:
     ; $6420: stage 2 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage2EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $30, $00, $07, $70, $00
@@ -5449,6 +5468,7 @@ jr_003_5fec:
     ; $6820: stage 3 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage3EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $40, $00, $16, $12, $00
@@ -5627,6 +5647,7 @@ jr_003_5fec:
     ; $6C20: stage 4 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage4EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $40, $00, $29, $02, $01
@@ -5777,6 +5798,7 @@ jr_003_5fec:
     ; $7020: stage 5 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage5EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $40, $00, $07, $16, $10
@@ -5961,6 +5983,7 @@ jr_003_5fec:
     ; $7420: stage 6 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage6EventStream:
     db $04, $00, $04, $00, $00
     db $20, $00, $13, $00, $00
     db $40, $00, $0d, $16, $02
@@ -6160,6 +6183,7 @@ jr_003_5fec:
     ; $7820: stage 7 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage7EventStream:
     db $00, $00, $02, $00, $00
     db $08, $00, $13, $00, $00
     db $20, $00, $00, $00, $00
@@ -6171,6 +6195,7 @@ jr_003_5fec:
     ; $7840: stage 8 event stream; table at $0EA5 selects this source.
     ; Copy $0400 bytes to WRAM $D800; the event reader uses these records to schedule handlers.
     ; Tick low, tick high, event type, packed parameters (two bytes).
+Stage8EventStream:
     db $00, $00, $02, $00, $00
     db $10, $00, $13, $00, $00
     db $20, $00, $00, $00, $00

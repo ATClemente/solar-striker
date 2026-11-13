@@ -346,9 +346,9 @@ InitTitleScreen:
     ld bc, $0ff0
     ld hl, wShadowOAM
     call ZeroMemory
-    ; Store $9AA2 to $CA88–$CA89,
+    ; Store $9AA2 to wBackgroundRowPosition,
     ; $9AA2 is in the first tilemap
-    ld hl, $ca88
+    ld hl, wBackgroundRowPosition
     ld a, $a2
     ld [hl+], a
     ld a, $9a
@@ -980,7 +980,7 @@ InitializeNewGame:
     call CopyStageTileGraphicsToVram
     ld de, StageBackgroundDataTable
     call LoadStageDataToWram
-    ld hl, $ca88
+    ld hl, wBackgroundRowPosition
     ld de, $9b82
     ld a, e
     ld [hl+], a
@@ -1071,7 +1071,7 @@ SetupNextStage:
     ld de, StageBackgroundDataTable
     call LoadStageDataToWram
     call ClearTileMap9800
-    ld hl, $ca88
+    ld hl, wBackgroundRowPosition
     ld de, $9b82
     ld a, e
     ld [hl+], a
@@ -1086,7 +1086,7 @@ SetupNextStage:
     ld [hl], a
     ld [wGameOverRequested], a
     ld [wPlayerDeathRequested], a
-    ld [$ca81], a
+    ld [wDisableBackgroundScroll], a
     ld [wVBlankOccurred], a
     ld [wStageTransitionActive], a
     ld [wBackgroundScrollTimer], a
@@ -1165,7 +1165,7 @@ SetupNextStage:
 .finishSetup
     ld a, $07
     ldh [rTAC], a
-    ld [$ca81], a
+    ld [wDisableBackgroundScroll], a
     ld a, $e7
     ldh [rLCDC], a
 
@@ -1271,7 +1271,7 @@ SetupGameOverScreen:
     ld hl, wShadowOAM
     ld bc, $0c00
     call ZeroMemory
-    ld hl, $ca88
+    ld hl, wBackgroundRowPosition
     ld a, $82
     ld [hl+], a
     ld a, $9b
@@ -2565,13 +2565,13 @@ IncreaseScrollSpeed:
 
 DisableBackgroundScroll:
     ld a, $01
-    ld [$ca81], a
+    ld [wDisableBackgroundScroll], a
     jp RemoveCurrentHandler
 
 
 EnableBackgroundScroll:
     xor a
-    ld [$ca81], a
+    ld [wDisableBackgroundScroll], a
     jp RemoveCurrentHandler
 
 SetAlternatePlayerExitFlag:
@@ -2671,7 +2671,7 @@ LoadStageDataToWram:
     ld l, a
     ld de, $d000
     ld bc, $0200
-    call CopyMemory
+    call CopyMemory ;  copy block definitions
     pop hl
     inc hl
     inc hl
@@ -2680,9 +2680,9 @@ LoadStageDataToWram:
     ld l, a
     ld de, $d200
     ld bc, $0550
-    call CopyMemory
+    call CopyMemory ; copy background map
     ld a, [wCurrentStage]
-    ld de, $0ea5
+    ld de, StageEventDataPointerTable
     add a
     ld l, a
     ld h, $00
@@ -2692,7 +2692,7 @@ LoadStageDataToWram:
     ld l, a
     ld de, $d800
     ld bc, $0400
-    call CopyMemory
+    call CopyMemory ; copy stages events
     ld a, $01
     ld [$2100], a
     ret
@@ -2731,24 +2731,16 @@ StageTileGraphicsTable:
     ; Stage 8
     dw $01A0, $6590
 
-
-    nop
-    ld h, b
-
-    db $20, $60, $20, $64
-
-    jr nz, @+$6a
-
-    jr nz, @+$6e
-
-    jr nz, @+$72
-
-    jr nz, jr_000_0f27
-
-    jr nz, jr_000_0f2d
-
-    ld b, b
-    ld a, b
+StageEventDataPointerTable:
+    dw $6000 ; Stage 0
+    dw $6020 ; Stage 1
+    dw $6420 ; Stage 2
+    dw $6820 ; Stage 3
+    dw $6c20 ; Stage 4
+    dw $7020 ; Stage 5
+    dw $7420 ; Stage 6
+    dw $7820 ; Stage 7
+    dw $7840 ; Stage 8
 
 StageEventHandlerTable:
     ; Indexed by event type; each entry is a little-endian handler address.
@@ -3546,34 +3538,34 @@ ScrollBackground:
 
 jr_000_138d:
     ld a, $01
-    ld [$ca87], a ; set ca87 to 1
-    ld a, [$ca81] ; check if ca81 is 0
+    ld [wBlockDrawIdle], a
+    ld a, [wDisableBackgroundScroll]
     or a
     ret nz ; return if not zero
 
     ld hl, rSCY
     dec [hl] ; move rSCY down (Y scroll)
-    ld de, $ca84 
+    ld de, wCurrentBlockId
     ld a, [de]
     cp $ff
-    ret z ; return if ca84 is equal to FF
+    ret z ; return if wCurrentBlockId is equal to FF
 
     inc de 
-    inc de ; move de to ca86
+    inc de ; move de to wBackgroundRowComplete
     ld a, [hl] 
     and $0f 
     jr nz, jr_000_13ba ; jump if bottom 4 bits are not zero, or when scy is not a multiple of 16
 
     ; scy was a multiple of 16
-    ld [de], a ; store 0 in ca86 
-    ld hl, $ca8a
-    ld bc, $ca90
-    ld a, [hl+] ; story ca8a byte in a, move hl to ca8b
+    ld [de], a ; store 0 in wBackgroundRowComplete
+    ld hl, wBackgroundDrawRowPosition
+    ld bc, wBlockDrawDestination
+    ld a, [hl+] ; store wBackgroundDrawRowPosition byte in a, move hl to wBackgroundDrawRowPosition + 1
     and $f0 
     or $02 ; keep top four bits and set second bit
-    ld [bc], a ; store at ca90
+    ld [bc], a ; store at wBlockDrawDestination
     inc bc ; move bc to ca91
-    ld a, [hl+] ; store ca8b byte in a
+    ld a, [hl+] ; store wBackgroundDrawRowPosition + 1 byte in a
     ld [bc], a ; put that byte at ca91
     ret
 
@@ -3581,38 +3573,38 @@ jr_000_138d:
 jr_000_13ba:
     ld a, [de]
     or a
-    ret nz ; check if ca86 is 0, return if NOT zero
+    ret nz ; check if wBackgroundRowComplete is 0, return if NOT zero
 
-    ld a, [$ca87]
+    ld a, [wBlockDrawIdle]
     or a
-    ret z ; return if ca87 is 0
+    ret z ; return if wBlockDrawIdle is 0
 
     call ReadNextMapBlock
-    ld hl, $ca85 
+    ld hl, wCurrentRowBlockCounter
     inc [hl]
     ld a, [hl+]
     cp $0e
-    ret nz ; increment the value at ca85 and compare to 14, return if NOT 14
+    ret nz ; increment the value at wCurrentRowBlockCounter and compare to 14, return if NOT 14
 
     inc a
-    ld [hl-], a ; inc a and store in ca86
+    ld [hl-], a ; inc a and store in wBackgroundRowComplete
     xor a
-    ld [hl], a ; zero out ca85
+    ld [hl], a ; zero out wCurrentRowBlockCounter
     jp MoveMapPositionUpOneBlockRow
 
 
 ; Draw the initial background as 14 columns by 11 rows of 2x2 tile blocks.
-; Initialize the drawing position ($CA8A–$CA8B) from $CA88–$CA89.
-; Set the map read pointer ($CA8E–$CA8F) to the block IDs at $D200.
+; Initialize the drawing position (wBackgroundDrawRowPosition) from wBackgroundRowPosition.
+; Set the map read pointer (wMapReadPointer) to the block IDs at $D200.
 DrawInitialBackground:
-    ld de, $ca88
-    ld hl, $ca8a
+    ld de, wBackgroundRowPosition ; caller sets this as starting point in BG map
+    ld hl, wBackgroundDrawRowPosition ; put this value in wBackgroundDrawRowPosition
     ld a, [de]
     ld [hl+], a
     inc de
     ld a, [de]
     ld [hl], a
-    ld hl, $ca8e
+    ld hl, wMapReadPointer
     xor a
     ld [hl+], a
     ld a, $d2
@@ -3620,8 +3612,8 @@ DrawInitialBackground:
     ld b, $0b ; 11
 
 CopyBlockRow:
-    ld hl, $ca8a
-    ld de, $ca90
+    ld hl, wBackgroundDrawRowPosition
+    ld de, wBlockDrawDestination
     ld a, [hl+]
     ld [de], a
     inc de
@@ -3643,105 +3635,105 @@ ProcessBackgroundBlock:
     dec b
     jr nz, CopyBlockRow ; Loop 11 times
 
-    ld hl, $ca8a
-    ld de, $ca90
+    ld hl, wBackgroundDrawRowPosition
+    ld de, wBlockDrawDestination
     ld a, [hl+]
     ld [de], a
     inc de
     ld a, [hl+]
     ld [de], a
     ld a, $01
-    ld [$ca87], a
+    ld [wBlockDrawIdle], a
     xor a
-    ld [$ca85], a
+    ld [wCurrentRowBlockCounter], a
     ret
 
 ReadNextMapBlock:
-    ld hl, $ca8e
+    ld hl, wMapReadPointer
     ld a, [hl+]
     ld e, a
-    ld a, [hl-]
-    ld d, a
-    ld bc, $ca84
-    ld a, [de]
-    ld [bc], a
+    ld a, [hl-] ; put HL back to wMapReadPointer
+    ld d, a ; sets DE to background map byte address
+    ld bc, wCurrentBlockId
+    ld a, [de] ; check the byte in the background map
+    ld [bc], a ; load to wCurrentBlockId and check if its FF if so return
     cp $ff
     ret z
 
-    inc de
+    inc de ; move DE to the next background map byte
     ld a, e
     ld [hl+], a
-    ld [hl], d
-    ld a, [bc]
+    ld [hl], d ; store next background map byte address back in wMapReadPointer
+    ld a, [bc] ; put the byte into HL to start creating a pointer
     ld h, $00
     ld l, a
     ld de, $d000
-    add hl, hl
-    add hl, hl
-    add hl, de
+    add hl, hl ; double
+    add hl, hl ; double, four byte entries because block is 2x2 tiles
+    add hl, de ; point at a byte in D000 (four byte block definition)
     ld d, h
     ld a, l
-    ld hl, $ca8c
+    ld hl, wMapBlockPointer
     ld [hl+], a
-    ld [hl], d
+    ld [hl], d ; store the pointer in wMapBlockPointer
     xor a
-    ld [$ca87], a
+    ld [wBlockDrawIdle], a
     ret
 
 DrawMapBlock:
-    ld a, [$ca87]
+    ld a, [wBlockDrawIdle]
     or a
     ret nz
 
-    ld hl, $ca8c
+    ld hl, wMapBlockPointer
     ld a, [hl+]
     ld d, [hl]
-    ld e, a
-    ld hl, $ca90
+    ld e, a ; save the pointer we stored in wMapBlockPointer, to DE
+    ld hl, wBlockDrawDestination
     ld a, [hl+]
     ld h, [hl]
-    ld l, a
+    ld l, a ; store the address of where the next block goes to HL
+    ld a, [de] ; get the tile byte into a
+    ld [hl+], a ; write to tile to the address and move to next tile (same row)
+    inc de ; move pointer to next byte
     ld a, [de]
-    ld [hl+], a
-    inc de
-    ld a, [de]
-    ld [hl+], a
-    inc de
+    ld [hl+], a ; load the next tile and increment HL
+    inc de ; move pointer to next byte
     ld bc, $001e
-    add hl, bc
+    add hl, bc ; Add $001e to skip the remaining row and end up at the right spot on the next row
     ld a, [de]
     ld [hl+], a
     inc de
     ld a, [de]
-    ld [hl+], a
-    ld hl, $ca90
+    ld [hl+], a ; load the last two tiles
+    ld hl, wBlockDrawDestination
     inc [hl]
-    inc [hl]
+    inc [hl] ; increment wBlockDrawDestination to where the next block will start
     ld a, $01
-    ld [$ca87], a
+    ld [wBlockDrawIdle], a
     ret
 
 
 MoveMapPositionUpOneBlockRow:
-    ld hl, $ca88
+    ld hl, wBackgroundRowPosition
     ld d, h
-    ld e, l
+    ld e, l ; put wBackgroundRowPosition in DE also
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $ffc0
+    ld bc, $ffc0 ; twos compliment of $0040 (2 rows worth of 32 tiles)
     add hl, bc
     ld a, l
-    ld b, a
+    ld b, a ; low part of the result in B
     ld [de], a
     ld a, h
-    cp $97
+    cp $97 ; if we've gone past the top of the background tilemap wrap back around
     jr nz, StoreMapRowPosition
 
     ld a, $9b
 
 StoreMapRowPosition:
-    ld hl, $ca8b
+    ld hl, wBackgroundDrawRowPosition + 1
     inc de
     ld [de], a
     ld [hl-], a
@@ -5733,7 +5725,7 @@ ConfigureTerraCannon:
 UpdateTerraCannonPosition:
     ld a, [bc]
     call SetObjectPointer
-    ld a, [$ca81]
+    ld a, [wDisableBackgroundScroll]
     or a
     jr nz, .stopMovement
 

@@ -44,6 +44,19 @@ DEF wBackgroundScrollDelay EQU $06
 
 DEF wStageTickCounter EQU $CA82
 
+DEF wDisableBackgroundScroll EQU $CA81
+DEF wCurrentBlockId EQU $CA84
+DEF wCurrentRowBlockCounter EQU $CA85
+DEF wBackgroundRowComplete EQU $CA86
+DEF wBlockDrawIdle         EQU $CA87
+
+; All pointers/addresses below are two bytes.
+DEF wBackgroundRowPosition       EQU $CA88
+DEF wBackgroundDrawRowPosition   EQU $CA8A
+DEF wMapBlockPointer             EQU $CA8C
+DEF wMapReadPointer              EQU $CA8E
+DEF wBlockDrawDestination        EQU $CA90
+
 DEF wStageEventPointer EQU $CAB2
 DEF wStageEventParams EQU $CAB5
 

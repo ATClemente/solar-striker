@@ -369,12 +369,12 @@ InitTitleScreen:
     jr nz, DrawPushSelectButton
 
     ; Draw Push Start Button
-    ld de, $3e9b
+    ld de, TitleScreenStartPromptTilePackets
     call DrawBackgroundTilePackets
     jr DrawHighScoreSetup
 
 DrawPushSelectButton:
-    ld de, $3ec7
+    ld de, TitleScreenStartSelectPromptTilePackets
     call DrawBackgroundTilePackets
 
 DrawHighScoreSetup:
@@ -988,7 +988,7 @@ InitializeNewGame:
     ld [hl+], a
     ld [hl], d
     call DrawInitialBackground
-    ld de, $3ef4
+    ld de, InitialHUDTilePackets
     call DrawBackgroundTilePackets
     ld de, $cae0
     ld hl, ScoreLabelTiles
@@ -1259,11 +1259,11 @@ SetupGameOverScreen:
     call CopyMemory
     ld a, $03
     ld [$2100], a
-    ld hl, $59c0
+    ld hl, GameOverBlockDefinitions
     ld de, $d000
     ld bc, $0200
     call CopyMemory
-    ld hl, $5a20
+    ld hl, GameOverBackgroundMap
     ld de, $d200
     ld bc, $0090
     call CopyMemory
@@ -1279,11 +1279,11 @@ SetupGameOverScreen:
     ld a, $9b
     ld [hl], a
     call DrawInitialBackground
-    ld de, $2c9b
+    ld de, GameOverTilePackets
     call DrawBackgroundTilePackets
-    ld de, $2ca8
+    ld de, TopScoreTilePackets
     call DrawBackgroundTilePackets
-    ld de, $2cb5
+    ld de, ScoreTilePackets
     call DrawBackgroundTilePackets
     call UpdateHighScore
     ld c, $07
@@ -1437,6 +1437,7 @@ GetPacketDestinationAndMode:
     inc de
     call WriteTilePacket
 
+; DE contains start of packet data
 DrawBackgroundTilePackets:
     ld a, [de]
     cp $00
@@ -1451,8 +1452,8 @@ DrawBackgroundTilePackets:
 ;11	    Repeat one byte down the tile map
 WriteTilePacket:
     push af
-    and $3f
-    ld b, a
+    and $3f ; mask off control bits (top two)
+    ld b, a ; store number of bytes to copy
     pop af
     rlca
     rlca
@@ -7595,9 +7596,20 @@ UpdateHighScore:
     ret
 
 
-    db $99, $cf, $09, $c0, $b4, $cc, $bc, $00, $d0, $de, $bc, $d6, $00, $9a, $0f, $09
-    db $da, $d0, $d2, $00, $d8, $b8, $d0, $d6, $bc, $00, $9a, $71, $05, $d8, $b8, $d0
-    db $d6, $bc, $00
+; $2C9B — GAME OVER at $99CF
+GameOverTilePackets:
+    db $99, $cf, $09, $c0, $b4, $cc, $bc, $00, $d0, $de, $bc, $d6
+    db $00
+
+; $2CA8 — TOP SCORE at $9A0F
+TopScoreTilePackets:
+    db $9a, $0f, $09, $da, $d0, $d2, $00, $d8, $b8, $d0, $d6, $bc
+    db $00
+
+; $2CB5 — SCORE at $9A71
+ScoreTilePackets:
+    db $9a, $71, $05, $d8, $b8, $d0, $d6, $bc
+    db $00
 
 SetupStageSixTransition:
     ld hl, wCurrentHandlerDataPointer
@@ -9322,6 +9334,7 @@ MovementUpToLeftCommands: ; $3E90: Blend upward movement into leftward movement.
     ; All controls below have mode 0: copy the following bytes to the destination.
     ; wHardModeUnlocked = 0 selects the sequence at ROM $3E9B.
     ; ROM $3E9B: HL = $99EB, copy 4 bytes to $99EB-$99EE.
+TitleScreenStartPromptTilePackets:
     db $99, $eb, $04, $d2, $dc, $d8, $c2
     ; ROM $3EA2: HL = $9A08, copy 12 bytes to $9A08-$9A13.
     db $9a, $08, $0c, $d8, $da, $b4, $d6, $da, $ff, $b6, $dc, $da, $da, $d0, $ce
@@ -9333,6 +9346,7 @@ MovementUpToLeftCommands: ; $3E90: Blend upward movement into leftward movement.
 
     ; wHardModeUnlocked != 0 selects the sequence at ROM $3EC7.
     ; ROM $3EC7: HL = $99EB, copy 4 bytes to $99EB-$99EE.
+TitleScreenStartSelectPromptTilePackets:
     db $99, $eb, $04, $d2, $dc, $d8, $c2
     ; ROM $3ECE: HL = $9A07, copy 13 bytes to $9A07-$9A13.
     db $9a, $07, $0d, $d8, $bc, $ca, $bc, $b8, $da, $bf, $b6, $dc, $da, $da, $d0, $ce
@@ -9342,8 +9356,12 @@ MovementUpToLeftCommands: ; $3E90: Blend upward movement into leftward movement.
     db $9a, $88, $0c, $fc, $a2, $b2, $b0, $b2, $ff, $ea, $eb, $ec, $ed, $ee, $ef
     db $00 ; ROM $3EF3: end of sequence.
 
-    db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00, $f0, $f0, $f0, $f0, $f0, $f0, $f0
-    db $f0, $00, $00, $fa, $f0, $f3, $00
+    ; 3EF4
+InitialHUDTilePackets:
+    db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00, 
+    db $f0, $f0, $f0, $f0, $f0, $f0, $f0, $f0,
+    db $00, $00, $fa, $f0, $f3, 
+    db $00
 
     ldh a, [$fff0]
     ldh a, [$fff0]

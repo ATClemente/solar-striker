@@ -399,9 +399,9 @@ FinishTitleScreenSetup:
     ld a, $40
     ldh [rOBP1], a
     ld a, $88
-    ldh [rLYC], a
+    ldh [rLYC], a ; target scanline 136
     ld a, $40
-    ldh [rSTAT], a
+    ldh [rSTAT], a ; enable LY=LYC interrupt
     xor a
     ldh [rTMA], a
     ldh [rIF], a
@@ -537,7 +537,7 @@ HandleVBlank:
     ldh [rIE], a
     ld a, [wOAMReady]
     and a
-    call nz, $ff80
+    call nz, hOAMDMARoutine
     ld a, $01
     ld [wVBlankOccurred], a
     ldh a, [rLCDC]
@@ -551,7 +551,9 @@ HandleVBlank:
     pop af
     reti
 
-
+; Runs on scanline 136
+; Disables sprites to keep sprites out of bottom
+; eight scanlines where the HUD appears
 HandleLCDInterrupt:
     push af
     ldh a, [rLCDC]
@@ -1354,11 +1356,11 @@ INCLUDE "engine/joypad.asm"
 
 
 CopyDMARoutineToHRAMLoopSetup:
-    ld c, $80 ; 128
-    ld b, $0a ; 10
-    ld hl, $085c 
+    ld c, $80
+    ld b, $0a
+    ld hl, OAMDMARoutine
 
-; Copy $085C–$0865 to $FF80–$FF89, opcodes
+; Copy OAMDMARoutine to hOAMDMARoutine, opcodes
 ; Copied routine starts OAM DMA and then waits
 ; https://gbdev.io/pandocs/OAM_DMA_Transfer.html
 CopyDMARoutineToHRAM:
@@ -1370,8 +1372,14 @@ CopyDMARoutineToHRAM:
 
     ret
 
-    ; $085c
-    db $3e, $c0, $e0, $46, $3e, $28, $3d, $20, $fd, $c9
+OAMDMARoutine:
+    ld a, $c0
+    ldh [rDMA], a
+    ld a, $28
+.wait
+    dec a
+    jr nz, .wait
+    ret
 
 DisableLCD:
     ldh a, [rLY] ; Read the current scanline into A

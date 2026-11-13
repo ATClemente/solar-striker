@@ -96,3 +96,7 @@ DEF wHardModeUnlocked EQU $CFFC
 
 DEF wGameOverFadeTimer EQU $CF97
 DEF wGameOverExitTimer EQU $CF98
+
+
+
+DEF hOAMDMARoutine EQU $FF80

@@ -5176,18 +5176,17 @@ ConfigureMiditron:
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_1cd6
+    jr z, SetAlternateFireEnemyMovementHandler
 
-    ld de, $1d1b
+    ld de, CheckAlternateFireEnemyCollision
     jp SetCurrentHandlerAddress
 
 
-Jump_000_1cd6:
-jr_000_1cd6:
-    ld de, $1cdc
+SetAlternateFireEnemyMovementHandler:
+    ld de, UpdateAlternateFireEnemyMovement
     jp SetCurrentHandlerAddress
 
-    ; 1cdc
+UpdateAlternateFireEnemyMovement:
     call UpdateScriptedEnemyMovement
     ld d, $32
     cp [hl]
@@ -5202,33 +5201,33 @@ jr_000_1cd6:
     cp $e0
     jp nc, FreeObjectAndRemoveHandler
 
-    ld de, $1cf8
+    ld de, TryFireAlternateShot
     jp SetCurrentHandlerAddress
 
-    ; 1cf8
+TryFireAlternateShot:
     ld a, [bc]
     call SetObjectPointer
     call CheckEnemyShotTimer
     or a
-    jr nz, jr_000_1d15
+    jr nz, .setCollisionHandler
 
     ld de, wEnemyShotSpawnY
     ld a, [de]
     or a
-    jr nz, jr_000_1d15
+    jr nz, .setCollisionHandler
 
     ld bc, $0806
     call StoreOffsetObjectPosition
     ld de, TrySpawnAlternateEnemyProjectile
     call StoreAddressInFreeWramSlot
 
-jr_000_1d15:
-    ld de, $1d1b
+.setCollisionHandler
+    ld de, CheckAlternateFireEnemyCollision
     jp SetCurrentHandlerAddress
 
-    ; 1D1B
+CheckAlternateFireEnemyCollision:
     call CheckEnemyCollisionWithPlayer
-    ld de, $1cdc
+    ld de, UpdateAlternateFireEnemyMovement
     jp SetCurrentHandlerAddress
 
 
@@ -5931,7 +5930,7 @@ ConfigureMack:
     call InitializeMovementScript
     ld de, MackGraphics
     call SetObjectGraphicsPointer
-    jp Jump_000_1cd6
+    jp SetAlternateFireEnemyMovementHandler
 
 
 MackInitTemplate:
@@ -6046,14 +6045,14 @@ ConfigureWarhawk:
     call SetObjectGraphicsPointer
     ld a, [wCurrentHandlerIndex]
     and $01
-    jr z, jr_000_2272
+    jr z, .setMovementHandler
 
-    ld de, $1d1b
+    ld de, CheckAlternateFireEnemyCollision
     jp SetCurrentHandlerAddress
 
 
-jr_000_2272:
-    ld de, $1cdc
+.setMovementHandler
+    ld de, UpdateAlternateFireEnemyMovement
     jp SetCurrentHandlerAddress
 
 

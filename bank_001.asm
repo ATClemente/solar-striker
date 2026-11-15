@@ -1001,23 +1001,21 @@ BossPartDestructionSmokeOffsets:
     db $08, $08, $10, $10, $10, $00, $00, $10, $00, $00
 
     ; 4690
+AssignBossPartIndex:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0011
+    ld de, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, de
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
-
-jr_001_469e:
     ld [hl], a
     inc a
     ld [de], a
     ret
 
-
-jr_001_46a2:
+AdvanceBossDestructionCounter:
     ld a, [bc]
     call SetObjectPointer
     ld hl, $001c

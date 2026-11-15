@@ -62,6 +62,9 @@ DEF wStageEventParams EQU $CAB5
 
 DEF wEnableQuickSoftReset EQU $CAB9
 
+DEF HANDLER_BOSS_PART_INDEX_OFFSET EQU $11
+DEF wNextBossPartIndex EQU $CAC0
+
 DEF wStageTransitionActive EQU $CAC5
 DEF wPlayerTransitionComplete EQU $CAC6
 DEF wPlayerExitPositionReached EQU $CAC7

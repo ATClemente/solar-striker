@@ -6213,7 +6213,7 @@ InitializeStageFourBossHorizontalPart:
     jp z, RemoveCurrentHandler
 
 RegisterStageFourBossPart:
-    call $4690
+    call AssignBossPartIndex
     ld de, ConfigureStageFourBoss
     jp SetCurrentHandlerAddress
 
@@ -6273,7 +6273,7 @@ UpdateStageFourBossStatus:
     add hl, de
     ld a, [hl+]
     cp [hl]
-    jr c, jr_000_23e4
+    jr c, HandleStationaryBossDefeat
 
     ld de, $0000
     call MoveObject
@@ -6281,8 +6281,7 @@ UpdateStageFourBossStatus:
     jp SetCurrentHandlerAddress
 
 
-Jump_000_23e4:
-jr_000_23e4:
+HandleStationaryBossDefeat:
     ld a, $01
     ld [$cac1], a
     ld [wPlayerInvincible], a
@@ -6290,7 +6289,7 @@ jr_000_23e4:
     call StoreAddressInFreeWramSlot
     ld a, $14
     call AddPlayerScore
-    ld de, $2415
+    ld de, StartStationaryBossDestructionSequence
     jp SetCurrentHandlerAddress
 
 CheckStageFourBossCollision:
@@ -6309,7 +6308,7 @@ CheckForStageFourBossHit:
     ld de, UpdateStageFourBossStatus
     jp SetCurrentHandlerAddress
 
-    ; 2415
+StartStationaryBossDestructionSequence:
     ld hl, $0018
     add hl, bc
     ld a, [hl]
@@ -6317,12 +6316,12 @@ CheckForStageFourBossHit:
     and $07
     jp nz, AdvanceToNextHandler
 
-    call $46a2
+    call AdvanceBossDestructionCounter
     cp $07
-    jp z, $46ea
+    jp z, FinishBossExitAndStartStageTransition
 
-    ld hl, $2449
-    call $465d
+    ld hl, SmokeSpawnOffsetTable
+    call TriggerSmokeEffect
     jp AdvanceToNextHandler
 
 
@@ -6335,7 +6334,8 @@ StageFourBossVerticalInitTemplate:
 StageFourBossHorizontalInitTemplate:
     db $14, $08, $10, $00, $00, $10, $20, $f0
 
-    ; $2449: smoke spawn offsets (Y, X)
+    ; Smoke spawn offsets (Y, X)
+SmokeSpawnOffsetTable:
     db $00, $00
     db $10, $10
     db $10, $f0
@@ -6367,7 +6367,7 @@ InitializeStageFiveBossCenter:
     or a
     jp z, RemoveCurrentHandler
 
-    call $4690
+    call AssignBossPartIndex
     ld de, ConfigureStageFiveBossCenter
     jp SetCurrentHandlerAddress
 
@@ -6403,7 +6403,7 @@ UpdateStageFiveBossStatus:
     add hl, de
     ld a, [hl+]
     cp [hl]
-    jp c, Jump_000_23e4
+    jp c, HandleStationaryBossDefeat
 
     ld de, $0000
     call MoveObject
@@ -6465,7 +6465,7 @@ InitializeFinalBossCenter:
     or a
     jp z, RemoveCurrentHandler
 
-    call $4690
+    call AssignBossPartIndex
     ld de, ConfigureFinalBossCenter
     jp SetCurrentHandlerAddress
 
@@ -6518,7 +6518,7 @@ HandleFinalBossDefeat:
     ld a, $24
     call AddPlayerScore
     call IncrementPlayerLives
-    ld de, $2415
+    ld de, StartStationaryBossDestructionSequence
     jp SetCurrentHandlerAddress
 
 CheckFinalBossCollision:

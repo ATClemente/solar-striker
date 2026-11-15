@@ -882,12 +882,12 @@ CopyQueuedTextToTilemap:
     ld h, [hl]
     ld l, a
 
-jr_000_04c8:
+.copyBytes:
     ld a, [hl+]
     ld [de], a
     inc de
     dec b
-    jr nz, jr_000_04c8
+    jr nz, .copyBytes
 
     ld a, b
     ld [wTextCopyPending], a
@@ -1061,7 +1061,7 @@ RunStageTransition:
     ; This runs for stage 8
     ld a, $02
     ld [$2100], a
-    ld hl, $7950
+    ld hl, Stage8SpriteTileGraphics
     ld de, $8000
     ld bc, $0800
     call CopyMemory
@@ -1253,7 +1253,7 @@ SetupGameOverScreen:
     call DisableLCD
     ld a, $02
     ld [$2100], a
-    ld hl, $6230
+    ld hl, GameOverBackgroundTileGraphics
     ld de, $9000
     ld bc, $0360
     call CopyMemory
@@ -2722,23 +2722,23 @@ StageBackgroundDataTable:
 StageTileGraphicsTable:
     ; Bytes to copy, source address
     ; Stage 0
-    dw $0350, $5000
+    dw $0350, Stage0To2BackgroundTileGraphics
     ; Stage 1
-    dw $0350, $5000 
+    dw $0350, Stage0To2BackgroundTileGraphics 
     ; Stage 2
-    dw $0350, $5000
+    dw $0350, Stage0To2BackgroundTileGraphics
     ; Stage 3
-    dw $0640, $5400
+    dw $0640, Stage3And4BackgroundTileGraphics
     ; Stage 4
-    dw $0640, $5400
+    dw $0640, Stage3And4BackgroundTileGraphics
     ; Stage 5
-    dw $06B0, $5A40
+    dw $06B0, Stage5And6BackgroundTileGraphics
     ; Stage 6
-    dw $06B0, $5A40
+    dw $06B0, Stage5And6BackgroundTileGraphics
     ; Stage 7
-    dw $0510, $6D70
+    dw $0510, Stage7BackgroundTileGraphics
     ; Stage 8
-    dw $01A0, $6590
+    dw $01A0, Stage8BackgroundTileGraphics
 
 StageEventDataPointerTable:
     dw Stage0EventStream ; Stage 0
@@ -2820,7 +2820,6 @@ jr_000_0f27:
 XenocryptStartingXCoords: ; $0F29
     db $48, $50, $58, $60
 
-jr_000_0f2d:
 QuasiObliteratorStartingXCoords: ; $0F2D, left/right part X coordinates.
     db $48, $58
 

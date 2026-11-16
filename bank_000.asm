@@ -1529,67 +1529,67 @@ GetDirectionToPlayer:
     ld e, a ; D = source Y, E = source X
     add $18
     sub c
-    jr c, jr_000_0902 ; Player X > source X + 24
+    jr c, .playerRight ; Player X > source X + 24
 
     ld a, e
     sub $18
     sub c
-    jr nc, jr_000_0917 ; Player X <= source X - 24
+    jr nc, .playerLeft ; Player X <= source X - 24
 
     ld a, d
     sub b
-    jr c, jr_000_08ff ; Player is below the source
+    jr c, .playerBelow ; Player is below the source
 
     xor a ; Up
     ret
 
-jr_000_08ff:
+.playerBelow
     ld a, $04 ; Down
     ret
 
 ; Player is right of the horizontal band.
-jr_000_0902:
+.playerRight
     ld a, d
     add $18
     sub b
-    jr c, jr_000_0911
+    jr c, .downRight
 
     ld a, d
     sub $18
     sub b
-    jr nc, jr_000_0914
+    jr nc, .upRight
 
     ld a, $02 ; Right
     ret
 
-jr_000_0911:
+.downRight
     ld a, $03 ; Down-right
     ret
 
-jr_000_0914:
+.upRight
     ld a, $01 ; Up-right
     ret
 
 ; Player is at or left of the horizontal band's left edge.
-jr_000_0917:
+.playerLeft
     ld a, d
     add $18
     sub b
-    jr c, jr_000_0926
+    jr c, .downLeft
 
     ld a, d
     sub $18
     sub b
-    jr nc, jr_000_0929
+    jr nc, .upLeft
 
     ld a, $06 ; Left
     ret
 
-jr_000_0926:
+.downLeft:
     ld a, $05 ; Down-left
     ret
 
-jr_000_0929:
+.upLeft
     ld a, $07 ; Up-left
     ret
 
@@ -2025,10 +2025,10 @@ ClearSelectedObject:
     ld b, $10
     xor a
 
-jr_000_0b19:
+.clearBytes
     ld [hl+], a
     dec b
-    jr nz, jr_000_0b19
+    jr nz, .clearBytes
 
     ret
 
@@ -2096,7 +2096,7 @@ SetObjectPointer:
 ; Returns whole-pixel displacement in A and $CA16, retaining fractional movement.
 CalculateYMovement:
     bit 7, a
-    jr z, jr_000_0b72 ; jump if bit 7 (top bit) in a is zero
+    jr z, .positiveSign ; jump if bit 7 (top bit) in a is zero
 
     ld hl, $0003 ; Handler data: negative Y fractional remainder
     add hl, bc
@@ -2105,22 +2105,22 @@ CalculateYMovement:
     call AccumulateFractionalMovement
     cpl
     inc a
-    jr jr_000_0b79
+    jr .return
 
 ; A is nonnegative.
-jr_000_0b72:
+.positiveSign
     ld hl, $0004 ; Handler data: positive Y fractional remainder
     add hl, bc
     call AccumulateFractionalMovement
 
-jr_000_0b79:
+.return
     ld [$ca16], a
     ret
 
 
 CalculateXMovement:
     bit 7, a
-    jr z, jr_000_0b8e ; jump if bit 7 is 0
+    jr z, .positiveSign ; jump if bit 7 is 0
 
     ld hl, $0005
     add hl, bc
@@ -2129,14 +2129,14 @@ CalculateXMovement:
     call AccumulateFractionalMovement
     cpl
     inc a
-    jr jr_000_0b95
+    jr .return
 
-jr_000_0b8e:
+.positiveSign
     ld hl, $0006
     add hl, bc
     call AccumulateFractionalMovement
 
-jr_000_0b95:
+.return
     ld [$ca17], a
     ret
 
@@ -2248,14 +2248,14 @@ UpdatePlayerStatus:
     ld hl, wSoundSuppressionTimer
     ld a, [hl]
     or a
-    jr z, jr_000_0c27
+    jr z, .updateInvincibility
 
     ; Increment counter; wrap from 63 to 0
     inc a
     and $3f
     ld [hl], a
 
-jr_000_0c27:
+.updateInvincibility
     ld a, [$ca2a]
     or a
     jr z, UpdatePlayerInvincibilityTimer
@@ -2264,7 +2264,7 @@ jr_000_0c27:
     jp AdvanceToNextHandler
 
 UpdatePlayerInvincibilityTimer:
-    ld hl, $ca68
+    ld hl, wPlayerInvincibilityTimer
     ld de, wPlayerDeathRequested
     ld a, [hl]
     or a
@@ -2807,11 +2807,7 @@ GetStartingXCoord:
 
 
 EnemySpawnXCoords:
-    db $08, $18, $20, $28, $30, $38, $48, $50, $58, $68, $70, $78, $80, $88
-
-jr_000_0f27:
-    sbc b
-    and b
+    db $08, $18, $20, $28, $30, $38, $48, $50, $58, $68, $70, $78, $80, $88, $98, $a0
 
 XenocryptStartingXCoords: ; $0F29
     db $48, $50, $58, $60
@@ -2839,13 +2835,11 @@ OmniquadStartingCoordinates:
     db $10, $60 ; right
     db $00, $50 ; above
 
-    jr nz, jr_000_0f90
-
-    jr @+$3a
-
-    jr jr_000_0fa4
-
-    jr nc, jr_000_0f9e
+    ;Unused?
+    db $20, $48
+    db $18, $38
+    db $18, $58
+    db $30, $50
 
 StageFourBossStartingCoordinates:
     db $38, $48 ; center
@@ -2889,7 +2883,6 @@ StageFiveBossShotCoordinates: ; $0F80, (Y, X) pairs
     db $2c, $60
     db $2c, $68
     db $34, $78
-jr_000_0f90:
     db $1c, $98
     db $1c, $a0
     db $34, $30
@@ -2897,7 +2890,6 @@ jr_000_0f90:
     db $2c, $48
     db $2c, $60
     db $2c, $68
-jr_000_0f9e:
     db $34, $78
 
 FinalBossStartingCoordinates: ; $0FA0, (Y, X)
@@ -2905,8 +2897,6 @@ FinalBossStartingCoordinates: ; $0FA0, (Y, X)
 
 FinalBossShotCoordinates:
     db $38, $2c
-
-jr_000_0fa4:
     db $38, $7c
     db $88, $1c
     db $88, $8c
@@ -2974,9 +2964,6 @@ FiringTimingTable:
     db $08, $1c ; index $0d
     db $04, $18 ; index $0e
     db $04, $10 ; index $0f
-
-; Preserve the address referenced by disassembled data above.
-DEF jr_000_0ff2 EQU $0ff2
 
 ; Allocate a separate smoke object at the coordinates in $CA34-$CA35.
 InitializeSmokeObject:
@@ -3538,11 +3525,11 @@ ScrollBackground:
     inc [hl]
     ld a, [hl+] ; store in a and move hl to ca83
     or a
-    jr nz, jr_000_138d ; if a not zero
+    jr nz, .updateScroll ; if a not zero
 
     inc [hl] ; inc ca83 byte by 1
 
-jr_000_138d:
+.updateScroll
     ld a, $01
     ld [wBlockDrawIdle], a
     ld a, [wDisableBackgroundScroll]
@@ -3560,7 +3547,7 @@ jr_000_138d:
     inc de ; move de to wBackgroundRowComplete
     ld a, [hl] 
     and $0f 
-    jr nz, jr_000_13ba ; jump if bottom 4 bits are not zero, or when scy is not a multiple of 16
+    jr nz, .nextMapBlock ; jump if bottom 4 bits are not zero, or when scy is not a multiple of 16
 
     ; scy was a multiple of 16
     ld [de], a ; store 0 in wBackgroundRowComplete
@@ -3576,7 +3563,7 @@ jr_000_138d:
     ret
 
 ; scy was not a multiple of 16
-jr_000_13ba:
+.nextMapBlock
     ld a, [de]
     or a
     ret nz ; check if wBackgroundRowComplete is 0, return if NOT zero
@@ -5846,8 +5833,6 @@ ConfigureSkimbot:
     ld de, SkimbotMovementScript
     call InitializeMovementScript
     ld de, SkimbotGraphics
-
-jr_000_2114:
     jp SetEnemyGraphicsAndStartUpdateCycle
 
 
@@ -6578,8 +6563,6 @@ UpdateUltraCrusherShotTimer:
 
     ld [hl], a
     ld de, TryFireUltraCrusherLaser
-
-jr_000_25f0:
     jp SetCurrentHandlerAddress
 
 TryFireUltraCrusherLaser:
@@ -9298,8 +9281,6 @@ MovementDownRightToRightCommands: ; $3E0C: Blend down-right movement into rightw
     and b
     xor b
     and b
-
-jr_000_3e39:
     and b
     and b
     jr nz, jr_000_3ddd

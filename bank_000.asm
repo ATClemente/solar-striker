@@ -28,7 +28,6 @@ RST_10::
     xor a
     rst $38
 
-Jump_000_0012:
     cp [hl]
     cp a
     xor e
@@ -226,7 +225,6 @@ JoypadTransitionInterrupt::
     rst $28
     rst $38
 
-Call_000_00dc:
     xor e
     rst $38
     xor a
@@ -6991,7 +6989,7 @@ FinalBossFiringPositionSequence:
     db $02, $00, $00, $02, $03, $01, $03, $01
     db $01, $02, $03, $02, $01, $00, $03, $00
 
-    ; $2892: following routine.
+StartAlternatePlayerExit: ; unused?
     ld a, [$cac8]
     or a
     jp z, AdvanceToNextHandler
@@ -7000,10 +6998,10 @@ FinalBossFiringPositionSequence:
     call SetObjectPointer
     ld de, PlayerSpriteData
     call SetObjectGraphicsPointer
-    ld de, $28a9
+    ld de, MovePlayerUp
     jp SetCurrentHandlerAddress
 
-
+MovePlayerUp:
     ld a, [bc]
     call SetObjectPointer
     ld de, $f800
@@ -7021,10 +7019,10 @@ FinalBossFiringPositionSequence:
 
     xor a
     ld [hl], a
-    ld de, $28cc
+    ld de, MovePlayerDownLeft
     jp SetCurrentHandlerAddress
 
-
+MovePlayerDownLeft:
     ld a, [bc]
     call SetObjectPointer
     ld de, $08f8
@@ -7712,7 +7710,7 @@ UpdateFinalBossCutsceneDestruction:
 
     push hl
     ld hl, FinalBossCutsceneDestructionSmokeOffsets
-    call $465d
+    call TriggerSmokeEffect
     pop hl
     ld a, [hl]
     cp $04

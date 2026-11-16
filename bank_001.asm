@@ -93,7 +93,7 @@ StartBossDestructionSequence:
     ld a, $53
     call AddPlayerScore
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
@@ -103,7 +103,7 @@ StartBossDestructionSequence:
 
 HandleDestructorExit:
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld hl, wPlayerInvincible
     ld [hl+], a
     ld [hl], a
@@ -252,7 +252,7 @@ CheckUltraCrusherCollision:
 
 HandleUltraCrusherExit:
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
@@ -369,7 +369,7 @@ CheckEpikhanCollision:
 
 HandleEpikhanExit:
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
@@ -414,9 +414,9 @@ InitializeOmniquadPart:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0011
+    ld de, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, de
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
     ld [hl], a
     inc a
@@ -428,7 +428,7 @@ ConfigureOmniquadPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     add a
@@ -441,7 +441,7 @@ ConfigureOmniquadPart:
     ld e, a
     call InitializeMovementScript
     pop bc
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     push af
@@ -466,7 +466,7 @@ UpdateOmniquadMovement:
     cp [hl]
     jr c, HandleOmniquadPartDefeat
 
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, HandleEnemyDefeat
 
@@ -478,7 +478,7 @@ HandleOmniquadPartDefeat:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0011
+    ld de, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, de
     ld d, $23
     ld a, [hl]
@@ -486,7 +486,7 @@ HandleOmniquadPartDefeat:
     jp nz, HandleEnemyDefeat
 
     inc a
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     jp HandleEnemyDefeat
 
 CheckOmniquadCollision:
@@ -495,7 +495,7 @@ CheckOmniquadCollision:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0011
+    ld bc, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     or a
@@ -529,7 +529,7 @@ UpdateOmniquadStatus:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0011
+    ld bc, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     or a
@@ -587,7 +587,7 @@ InitializeXenocrypt:
     jp RemoveCurrentHandler
 
 InitializeXenocryptPart:
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
     xor $07
     add $02
@@ -601,9 +601,9 @@ InitializeXenocryptPart:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0011
+    ld de, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, de
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
     ld [hl], a
     inc a
@@ -615,7 +615,7 @@ ConfigureXenocryptPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     add a
@@ -628,7 +628,7 @@ ConfigureXenocryptPart:
     ld e, a
     call InitializeMovementScript
     pop bc
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     ld hl, XenocryptStartingXCoords
@@ -755,7 +755,7 @@ InitializeQuasiObliterator:
     jp RemoveCurrentHandler
 
 InitializeQuasiObliteratorPart:
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
     xor $07
     ld [wStageEventParams + 1], a
@@ -768,9 +768,9 @@ InitializeQuasiObliteratorPart:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0011
+    ld de, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, de
-    ld de, $cac0
+    ld de, wNextBossPartIndex
     ld a, [de]
     ld [hl], a
     inc a
@@ -782,7 +782,7 @@ ConfigureQuasiObliteratorPart:
     ld a, [bc]
     push bc
     call SetObjectPointer
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld de, QuasiObliteratorLeftMovementScript
     ld a, [hl]
@@ -794,7 +794,7 @@ ConfigureQuasiObliteratorPart:
 .setMovementScript
     call InitializeMovementScript
     pop bc
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     push af
@@ -828,7 +828,7 @@ HandleQuasiObliteratorPartDefeat:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0011
+    ld bc, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld de, QuasiObliteratorRightPartBaseGraphics
     ld a, [hl]
@@ -878,7 +878,7 @@ CheckQuasiObliteratorPartCollision:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0011
+    ld bc, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld de, QuasiObliteratorRightPartBaseGraphics
     ld a, [hl]
@@ -901,7 +901,7 @@ HandleQuasiObliteratorPartHit:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0011
+    ld bc, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld de, QuasiObliteratorRightPartDamageGraphics
     ld a, [hl]
@@ -1000,7 +1000,6 @@ TriggerSmokeEffect:
 BossPartDestructionSmokeOffsets:
     db $08, $08, $10, $10, $10, $00, $00, $10, $00, $00
 
-    ; 4690
 AssignBossPartIndex:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -1018,7 +1017,7 @@ AssignBossPartIndex:
 AdvanceBossDestructionCounter:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $001c
+    ld hl, HANDLER_BOSS_SMOKE_SPAWN_COUNTER_OFFSET
     add hl, bc
     ld a, [hl]
     inc [hl]
@@ -1028,7 +1027,7 @@ AdvanceBossDestructionCounter:
 UpdateStageFourBossPartStatus:
     ld a, [bc]
     call SetObjectPointer
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, FreeObjectAndRemoveHandler
 

@@ -2561,7 +2561,7 @@ UnpackStageEventParameters:
 
 
 IncreaseScrollSpeed:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 
@@ -2596,7 +2596,7 @@ SetStageReady:
     ld a, $01
     ld [wStageReady], a
     xor a
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     jp RemoveCurrentHandler
 
 
@@ -6220,7 +6220,7 @@ RegisterStageFourBossPart:
 ConfigureStageFourBoss:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     push af
@@ -6253,7 +6253,7 @@ CheckStageFourBossPartAndSetupHandler:
     add hl, de
     xor a
     ld [hl], a
-    ld hl, $0011
+    ld hl, HANDLER_BOSS_PART_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     or a
@@ -6283,7 +6283,7 @@ UpdateStageFourBossStatus:
 
 HandleStationaryBossDefeat:
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
@@ -6309,7 +6309,7 @@ CheckForStageFourBossHit:
     jp SetCurrentHandlerAddress
 
 StartStationaryBossDestructionSequence:
-    ld hl, $0018
+    ld hl, HANDLER_BOSS_SMOKE_DELAY_COUNTER_OFFSET
     add hl, bc
     ld a, [hl]
     inc [hl]
@@ -6511,7 +6511,7 @@ UpdateFinalBossStatus:
 
 HandleFinalBossDefeat:
     ld a, $01
-    ld [$cac1], a
+    ld [wBossEncounterEnding], a
     ld [wPlayerInvincible], a
     ld de, DelayThenHideBackground
     call StoreAddressInFreeWramSlot
@@ -6566,7 +6566,7 @@ FinalBossCenterInitTemplate:
     db $23, $10, $0c, $00, $00, $20, $18, $e0
 
 UpdateUltraCrusherShotTimer:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 
@@ -6628,7 +6628,7 @@ TryFireUltraCrusherLaser:
 
 
 TryFireDestructorOrb:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 
@@ -6820,7 +6820,7 @@ TryFireBossShot:
     jp SetCurrentHandlerAddress
 
 CheckBossFiringActive:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 
@@ -6919,7 +6919,7 @@ TryFireBossAlternateShot:
     jp SetCurrentHandlerAddress
 
 CheckBossAlternateFiringActive:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 
@@ -6977,7 +6977,7 @@ TryFireFinalBossAimedShot:
     jp SetCurrentHandlerAddress
 
 CheckFinalBossFiringActive:
-    ld a, [$cac1]
+    ld a, [wBossEncounterEnding]
     or a
     jp nz, RemoveCurrentHandler
 

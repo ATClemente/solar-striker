@@ -1594,7 +1594,7 @@ GetDirectionToPlayer:
     ret
 
 InitializeMovementScriptFromTable:
-    ld hl, $0011
+    ld hl, HANDLER_MOVEMENT_SCRIPT_INDEX_OFFSET
     add hl, bc
     ld a, [hl]     ; index from handler data offset $11
     add a          ; Two bytes per pointer
@@ -1607,7 +1607,7 @@ InitializeMovementScriptFromTable:
 
 ; Save DE at handler offsets $0A-$0B and its first two bytes at $0C-$0D.
 InitializeMovementScript:
-    ld hl, $000a
+    ld hl, HANDLER_MOVEMENT_SCRIPT_TABLE_CURSOR_OFFSET
     add hl, bc
     ld a, e
     ld [hl+], a
@@ -1700,7 +1700,7 @@ TryScheduleEnemyShot:
 ; BC = handler data. Advance counter $07; $08 is the trigger, $09 the reset value.
 ; Returns A = 0 at the trigger, $FF on reset, otherwise the current counter.
 CheckEnemyShotTimer:
-    ld hl, $0007
+    ld hl, HANDLER_ENEMY_SHOT_COUNTER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl+]
@@ -1775,7 +1775,7 @@ CheckForNewEnemyDamage:
     ld de, OBJECT_DAMAGE_ACCUMULATED_OFFSET
     add hl, de
     ld d, [hl] ; put accum damage in D
-    ld hl, $0016
+    ld hl, HANDLER_ENEMY_PREVIOUS_TOTAL_DAMAGE_OFFSET
     add hl, bc
     ld a, [hl]
     ld [hl], d
@@ -2098,7 +2098,7 @@ CalculateYMovement:
     bit 7, a
     jr z, .positiveSign ; jump if bit 7 (top bit) in a is zero
 
-    ld hl, $0003 ; Handler data: negative Y fractional remainder
+    ld hl, HANDLER_NEGATIVE_Y_FRACTIONAL_REMAINDER_OFFSET ; Handler data: negative Y fractional remainder
     add hl, bc
     cpl
     inc a ; turn the number positive
@@ -2109,7 +2109,7 @@ CalculateYMovement:
 
 ; A is nonnegative.
 .positiveSign
-    ld hl, $0004 ; Handler data: positive Y fractional remainder
+    ld hl, HANDLER_POSITIVE_Y_FRACTIONAL_REMAINDER_OFFSET ; Handler data: positive Y fractional remainder
     add hl, bc
     call AccumulateFractionalMovement
 
@@ -2122,7 +2122,7 @@ CalculateXMovement:
     bit 7, a
     jr z, .positiveSign ; jump if bit 7 is 0
 
-    ld hl, $0005
+    ld hl, HANDLER_NEGATIVE_X_FRACTIONAL_REMAINDER_OFFSET
     add hl, bc
     cpl
     inc a
@@ -2132,7 +2132,7 @@ CalculateXMovement:
     jr .return
 
 .positiveSign
-    ld hl, $0006
+    ld hl, HANDLER_POSITIVE_X_FRACTIONAL_REMAINDER_OFFSET
     add hl, bc
     call AccumulateFractionalMovement
 
@@ -2199,7 +2199,7 @@ HandleEnemyDefeat:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $0012
+    ld de, HANDLER_ENEMY_DEFEAT_SOUND_INDEX_OFFSET
     add hl, de
     ld a, [hl]
     and $03
@@ -2412,7 +2412,7 @@ DecrementPlayerLives:
 ; BC = handler data. Read the script cursor at $0C-$0D and advance or redirect it.
 ; Returns signed pixel offsets in D (Y) and E (X).
 ReadMovementScriptCommand:
-    ld hl, $000c
+    ld hl, HANDLER_MOVEMENT_COMMAND_POINTER_OFFSET
     add hl, bc
     ld a, [hl+]
     ld b, [hl] ; HL points at handler offset $0D
@@ -2902,7 +2902,7 @@ FinalBossShotCoordinates:
     db $88, $8c
 
 InitializeHandlerDataPair:
-    ld de, $0008
+    ld de, HANDLER_ENEMY_SHOT_TRIGGER_OFFSET
     add hl, de
     push hl
     ld a, [wStageEventParams + 1]
@@ -3089,7 +3089,7 @@ SetEnemyProjectileDirection:
     ld de, wEnemyShotSpawnY
     call GetDirectionToPlayer
     pop bc
-    ld hl, $000e
+    ld hl, HANDLER_PROJECTILE_DIRECTION_INDEX_OFFSET
     add hl, bc
     ld [hl], a
     xor a
@@ -3123,7 +3123,7 @@ ConfigureEnemyProjectileMovement:
     ld e, a
 
 SetProjectileVelocityAndStartUpdateCycle:
-    ld hl, $000e
+    ld hl, HANDLER_PROJECTILE_DIRECTION_INDEX_OFFSET
     add hl, bc
     ld a, [hl]
     add a
@@ -3132,7 +3132,7 @@ SetProjectileVelocityAndStartUpdateCycle:
     add hl, de
     ld a, [hl+]
     ld e, [hl]
-    ld hl, $0008
+    ld hl, HANDLER_ENEMY_SHOT_Y_VELOCITY_OFFSET
     add hl, bc
     ld [hl+], a
     ld [hl], e
@@ -3152,7 +3152,7 @@ SetUpdateProjectileStatusHandler:
 UpdateProjectilePosition:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $0008
+    ld hl, HANDLER_ENEMY_SHOT_Y_VELOCITY_OFFSET
     add hl, bc
     ld a, [hl+]
     ld e, [hl]
@@ -3287,7 +3287,7 @@ TrySpawnFiringSequenceProjectile:
 GetFiringSequenceDirection:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $000e
+    ld hl, HANDLER_PROJECTILE_DIRECTION_INDEX_OFFSET
     add hl, bc
     push hl
     ld bc, wFiringPatternIndex
@@ -3333,13 +3333,13 @@ GetFiringSequenceMovement:
     ld e, a
     jp SetProjectileVelocityAndStartUpdateCycle
 
-    ; $1234
-    ld de, $1364
+CheckAltProjectileMovementAndSetHandler: ; unused?
+    ld de, EnemyShotAdditionalAlternateMovementTable
     ld a, [wEnableAltProjectileMovement]
     or a
     jp nz, SetProjectileVelocityAndStartUpdateCycle
 
-    ld de, $134e
+    ld de, EnemyShotAdditionalMovementTable
     jp SetProjectileVelocityAndStartUpdateCycle
 
 
@@ -3470,47 +3470,35 @@ EnemyShotAlternateMovementTable: ; $133E
     db $00, $a0 ; Left: Y=0, X=-96
     db $bc, $bc ; Up-left: Y=-68, X=-68
 
-    nop
-    ld b, b
-    dec l
-    dec l
-    dec sp
-    jr @+$40
+; Additional projectile velocity tables: 11 (Y, X) pairs each.
+; Signed 1/16-pixel units, selected by CheckAltProjectileMovementAndSetHandler.
+; That routine appears unused; normal gameplay use of these tables is unconfirmed.
 
-    inc c
-    ccf
-    ld b, $40
-    nop
-    ccf
-    ld a, [$f43e]
-    dec sp
-    add sp, $2d
-    db $d3
-    nop
-    ret nz
+EnemyShotAdditionalMovementTable: ; $134E
+    db $00, $40
+    db $2d, $2d
+    db $3b, $18
+    db $3e, $0c
+    db $3f, $06
+    db $40, $00
+    db $3f, $fa
+    db $3e, $f4
+    db $3b, $e8
+    db $2d, $d3
+    db $00, $c0
 
-    nop
-    ld h, b
-    ld b, h
-    ld b, h
-    ld e, c
-    dec h
-    ld e, l
-    inc de
-    ld e, a
-    add hl, bc
-    ld h, b
-    nop
-    ld e, a
-    rst $30
-    ld e, l
-    db $ed
-    ld e, c
-    db $db
-    ld b, h
-    cp h
-    nop
-    and b
+EnemyShotAdditionalAlternateMovementTable: ; $1364
+    db $00, $60
+    db $44, $44
+    db $59, $25
+    db $5d, $13
+    db $5f, $09
+    db $60, $00
+    db $5f, $f7
+    db $5d, $ed
+    db $59, $db
+    db $44, $bc
+    db $00, $a0
 
 ScrollBackground:
     ld hl, wBackgroundScrollTimer
@@ -4866,7 +4854,7 @@ UpdateRotomechState:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $0014
+    ld bc, HANDLER_ROTOMECH_ANIM_FRAME_COUNTER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -5067,7 +5055,7 @@ InitializeArrowhead:
 ConfigureArrowhead:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $0010
+    ld hl, HANDLER_ARROWHEAD_Y_VELOCITY_OFFSET
     add hl, bc
     ld a, $20
     ld [hl], a
@@ -5091,7 +5079,7 @@ UpdateArrowheadMovement:
     call SetObjectPointer
     inc hl
     ld a, [hl]
-    ld hl, $0010
+    ld hl, HANDLER_ARROWHEAD_Y_VELOCITY_OFFSET
     add hl, bc
     cp $90
     jp nc, FreeObjectAndRemoveHandler
@@ -5284,10 +5272,10 @@ UpdateHarrierVerticalMovement:
     xor a
 
 ActivateHarrierHorizontalMovement:
-    ld hl, $000f
+    ld hl, HANDLER_HARRIER_HORIZONTAL_MOVEMENT_ACTIVE_OFFSET
     add hl, bc
     inc [hl]
-    ld hl, $0011
+    ld hl, HANDLER_HARRIER_HORIZONTAL_DIRECTION_OFFSET
     add hl, bc
     ld [hl], a ; zero to move right, non zero for left
 
@@ -5307,7 +5295,7 @@ UpdateHarrierHorizontalMovement:
     jp c, HandleEnemyDefeat
 
     ld d, $60
-    ld hl, $0011
+    ld hl, HANDLER_HARRIER_HORIZONTAL_DIRECTION_OFFSET
     add hl, bc
     ld a, [hl]
     or a
@@ -5351,7 +5339,7 @@ CheckHarrierCollision:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $000f
+    ld de, HANDLER_HARRIER_HORIZONTAL_MOVEMENT_ACTIVE_OFFSET
     add hl, de
     ld a, [hl]
     or a
@@ -5453,7 +5441,7 @@ HandlePowerUpContainerHit:
 InitializePowerUpReveal:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $000e
+    ld hl, HANDLER_POWER_UP_REVEALED_OFFSET
     add hl, bc
     xor a
     ld [hl+], a
@@ -5501,7 +5489,7 @@ UpdatePowerUpStatus:
     cp $a0
     jp nc, FreeObjectAndRemoveHandler
 
-    ld hl, $000e
+    ld hl, HANDLER_POWER_UP_REVEALED_OFFSET
     add hl, bc
     ld a, [hl+]
     or a
@@ -5531,7 +5519,7 @@ UpdatePowerUpMovementAndAnimation:
     ld d, a
     ld e, $00
     call MoveObject
-    ld hl, $001e
+    ld hl, HANDLER_POWER_UP_ANIM_FRAME_COUNTER_OFFSET
     add hl, bc
     ld a, [hl]
     inc a

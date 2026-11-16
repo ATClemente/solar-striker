@@ -73,6 +73,8 @@ DEF wStageReady EQU $CAC9
 DEF wBossActive EQU $CACA
 DEF wPlayerExitAllowed EQU $CACB
 
+DEF wNextDestructorOrbDirection EQU $CACE
+
 DEF wTextCopyPending EQU $CAD0
 DEF wTextCopySourcePointer EQU $CAD2
 DEF wTextCopyDestinationPointer EQU $CAD4

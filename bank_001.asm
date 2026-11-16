@@ -115,7 +115,7 @@ HandleDestructorExit:
 UpdateBossDestructionSequence:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $001c
+    ld hl, HANDLER_SHARED_BOSS_DESTRUCTION_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -951,7 +951,7 @@ UpdateScriptedEnemyMovementNoDrift:
 UpdateQuasiObliteratorPartDestructionSequence:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $001c
+    ld hl, HANDLER_SHARED_BOSS_DESTRUCTION_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]

@@ -6542,7 +6542,7 @@ UpdateUltraCrusherShotTimer:
     jp nz, RemoveCurrentHandler
 
     ld a, [bc]
-    ld hl, $0004
+    ld hl, HANDLER_UC_LASER_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -6601,7 +6601,7 @@ TryFireDestructorOrb:
     or a
     jp nz, RemoveCurrentHandler
 
-    ld hl, $0002
+    ld hl, HANDLER_DESTRUCTOR_ORB_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -6634,13 +6634,13 @@ InitializeDestructorOrb:
 ConfigureDestructorOrb:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $0004
+    ld hl, HANDLER_DESTRUCTOR_ORB_DIRECTION_OFFSET
     add hl, bc
-    ld a, [$cace]
+    ld a, [wNextDestructorOrbDirection]
     ld [hl], a
     inc a
     and $03
-    ld [$cace], a
+    ld [wNextDestructorOrbDirection], a
     ld a, [hl+]
     ld b, h
     ld c, l
@@ -6677,7 +6677,7 @@ ConfigureDestructorOrb:
 UpdateDestructorOrbMovement:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $0005
+    ld hl, HANDLER_DESTRUCTOR_ORB_Y_MOVEMENT_OFFSET
     add hl, bc
     ld a, [hl+]
     ld e, [hl]
@@ -6730,7 +6730,7 @@ WaitForBossFiringStart:
     or a
     jp z, AdvanceToNextHandler
 
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     xor a
     ld [hl], a
@@ -6739,7 +6739,7 @@ WaitForBossFiringStart:
 
 
 UpdateBossFiringTimer:
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -6832,7 +6832,7 @@ WaitForBossAlternateFiringStart:
     or a
     jp z, AdvanceToNextHandler
 
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     xor a
     ld [hl], a
@@ -6841,7 +6841,7 @@ WaitForBossAlternateFiringStart:
     jp SetCurrentHandlerAddress
 
 UpdateBossAlternateFiringTimer:
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]
@@ -6904,7 +6904,7 @@ WaitForFinalBossFiringStart:
     or a
     jp z, AdvanceToNextHandler
 
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     xor a
     ld [hl], a
@@ -6913,7 +6913,7 @@ WaitForFinalBossFiringStart:
     jp SetCurrentHandlerAddress
 
 UpdateFinalBossFiringTimer:
-    ld hl, $0016
+    ld hl, HANDLER_SHARED_BOSS_FIRING_TIMER_OFFSET
     add hl, bc
     ld a, [hl]
     inc a
@@ -7666,7 +7666,7 @@ WaitForFinalBossCutsceneDelay:
 UpdateFinalBossCutsceneDestruction:
     ld a, [bc]
     call SetObjectPointer
-    ld hl, $001c
+    ld hl, HANDLER_SHARED_BOSS_DESTRUCTION_TIMER_OFFSET
     add hl, bc
     inc [hl]
     ld a, [hl]

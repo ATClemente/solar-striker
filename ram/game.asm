@@ -105,3 +105,41 @@ DEF wGameOverExitTimer EQU $CF98
 
 
 DEF hOAMDMARoutine EQU $FF80
+
+
+
+; Audio:
+
+DEF wRequestedAudioPlaybackPointer EQU $CD81 ; 2 bytes, ROM header address
+
+DEF wCurrentAudioChannelRecordPointer EQU $CC0D ; 2 bytes
+
+DEF wChannelPlaybackSlotOwnerTable EQU $CC0F ; 6 bytes
+
+DEF wCurrentAudioSlotRecordPointer EQU $CC02 ; 2 bytes
+
+DEF wPlaybackSlotActiveTable EQU $CC04 ; 4 bytes
+
+DEF wPlaybackSlotPriorityTable EQU $CC08 ; 4 bytes
+
+DEF wSoftwareChannelActivity EQU $CC15 ; 6 bytes
+
+DEF wCurrentPlaybackRecord EQU $CC38 ; 3 bytes
+
+DEF wCurrentAudioStreamStartPointer EQU $CC47 ; 2 bytes within working channel record
+DEF wCurrentAudioChannelRecord EQU $CC47 ; $2B bytes
+
+DEF wRequestedAudioPriority EQU $CD80
+
+DEF wAllocatedPlaybackSlot EQU $CD83 ; Selected slot, not necessarily still free
+
+DEF wCurrentPlaybackSoftwareChannel EQU $CD84 ; Software record ID, 1–6
+DEF wRequestedPlaybackHardwareChannel EQU $CD7E ; Hardware channel, 1–4
+DEF wCurrentPlaybackHardwareChannel EQU $CC4B ; Hardware channel in working record
+
+DEF wRequestedPlaybackRepeatCount EQU $CD7F ; $FF means indefinite repetition
+
+DEF wHardwareChannel1List EQU $CC27
+DEF wHardwareChannel2List EQU $CC2B
+DEF wHardwareChannel3List EQU $CC2F
+DEF wHardwareChannel4List EQU $CC33

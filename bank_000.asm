@@ -403,7 +403,7 @@ FinishTitleScreenSetup:
     ldh [rIF], a
     ld de, HandleTitleScreenInput
     call StoreAddressInFreeWramSlot
-    ld hl, $5ddb
+    ld hl, TitleScreenMusic
     xor a
     call SetupAudioPlayback
     ld [$cf9a], a
@@ -2235,7 +2235,7 @@ GetCurrentPlaybackStatus:
     dec a
     ld l, a
     ld h, $00
-    ld de, $cc04
+    ld de, wPlaybackSlotActiveTable
     add hl, de
     ld a, [hl]
     ret

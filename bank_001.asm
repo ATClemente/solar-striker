@@ -1075,218 +1075,27 @@ FinishBossExitAndStartStageTransition:
     jp FreeObjectAndRemoveHandler
 
 
+    ; 4703
+AudioWaveformTable:
+    ; $4703-$4802: 16 waveforms, 16 bytes each (32 packed 4-bit samples).
+    ; Waveforms $0A-$0F contain identical data.
     db $01, $23, $45, $67, $89, $ab, $cd, $ef, $ed, $cb, $a9, $87, $65, $43, $21, $00
     db $9b, $e0, $ba, $98, $76, $54, $32, $10, $9b, $e0, $ba, $98, $76, $54, $32, $10
+    db $fe, $dc, $ba, $98, $76, $54, $32, $10, $fe, $dc, $ba, $98, $76, $54, $32, $10
+    db $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $f0
+    db $9b, $e0, $ba, $98, $76, $54, $32, $10, $9b, $e0, $ba, $98, $76, $54, $32, $10
+    db $fd, $b9, $75, $31, $ec, $a8, $64, $20, $fd, $b9, $75, $31, $ec, $a8, $64, $20
+    db $fe, $dc, $cd, $ed, $ca, $86, $42, $10, $fe, $dc, $cd, $ed, $ca, $86, $42, $10
+    db $fd, $b9, $ab, $97, $65, $43, $21, $10, $fd, $b9, $ab, $97, $65, $43, $21, $10
+    db $44, $44, $44, $46, $67, $8a, $cf, $b8, $44, $44, $44, $46, $67, $8a, $cf, $b8
+    db $ff, $a8, $ff, $a8, $77, $66, $55, $42, $ff, $a8, $ff, $a8, $77, $66, $55, $42
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
+    db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
 
-    cp $dc
-    cp d
-    sbc b
-    halt
-    ld d, h
-    ld [hl-], a
-    db $10
-    cp $dc
-    cp d
-    sbc b
-    halt
-    ld d, h
-    ld [hl-], a
-    db $10
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    rst $38
-    ldh a, [$ff9b]
-    ldh [$ffba], a
-    sbc b
-    halt
-    ld d, h
-    ld [hl-], a
-    db $10
-    sbc e
-    ldh [$ffba], a
-    sbc b
-    halt
-    ld d, h
-    ld [hl-], a
-    db $10
-    db $fd
-    cp c
-    ld [hl], l
-    ld sp, $a8ec
-
-jr_001_4759:
-    ld h, h
-    jr nz, jr_001_4759
-
-    cp c
-    ld [hl], l
-    ld sp, $a8ec
-    ld h, h
-
-jr_001_4762:
-    jr nz, jr_001_4762
-
-    call c, $edcd
-    jp z, $4286
-
-    db $10
-    cp $dc
-    call $caed
-    add [hl]
-    ld b, d
-    db $10
-    db $fd
-    cp c
-    xor e
-    sub a
-    ld h, l
-    ld b, e
-    ld hl, $fd10
-    cp c
-    xor e
-    sub a
-    ld h, l
-    ld b, e
-    ld hl, $4410
-    ld b, h
-    ld b, h
-    ld b, [hl]
-    ld h, a
-    adc d
-    rst $08
-    cp b
-    ld b, h
-    ld b, h
-    ld b, h
-    ld b, [hl]
-    ld h, a
-    adc d
-    rst $08
-    cp b
-    rst $38
-    xor b
-    rst $38
-    xor b
-    ld [hl], a
-    ld h, [hl]
-    ld d, l
-    ld b, d
-    rst $38
-    xor b
-    rst $38
-    xor b
-    ld [hl], a
-    ld h, [hl]
-    ld d, l
-    ld b, d
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    rst $38
-    xor d
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
-    adc b
 
     db $ff, $cc
 
@@ -1616,12 +1425,12 @@ SetupAudioPlayback:
     dec a ; a is zero, set to $FF
 
 SaveAndCheckAudioInputs:
-    ld [$cd7f], a ; original value or $FF
+    ld [wRequestedPlaybackRepeatCount], a ; original value or $FF
     ; Store data pointer held in hl
     ld a, l
-    ld [$cd81], a
+    ld [wRequestedAudioPlaybackPointer], a
     ld a, h
-    ld [$cd82], a
+    ld [wRequestedAudioPlaybackPointer + 1], a ; store the requested audio pointer in CD81 and CD82
     di
     call CheckAndReleaseAudioChannels
     jr c, FinishAudioPlaybackSetup
@@ -1630,7 +1439,7 @@ SaveAndCheckAudioInputs:
     jr c, FinishAudioPlaybackSetup
 
     call InitAudioSlot
-    ld a, [$cd83]
+    ld a, [wAllocatedPlaybackSlot]
     or a
 
 FinishAudioPlaybackSetup:
@@ -1646,9 +1455,9 @@ CheckAndReleaseAudioChannels:
 
     ld e, $00
     ld d, $04
-    ld a, [$cd81]
+    ld a, [wRequestedAudioPlaybackPointer]
     ld l, a
-    ld a, [$cd82]
+    ld a, [wRequestedAudioPlaybackPointer + 1]
     ld h, a
     inc hl
     inc hl
@@ -1665,7 +1474,7 @@ CheckAndReleaseAudioChannelsLoop:
 
     inc e
     push hl
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
     ld b, $00
     add hl, bc
     ld a, [hl]
@@ -1690,9 +1499,9 @@ CheckAndReleaseAudioChannelsNext:
 
 CheckAudioChannelAvailability:
     ; Read back data pointer
-    ld a, [$cd81]
+    ld a, [wRequestedAudioPlaybackPointer]
     ld l, a
-    ld a, [$cd82]
+    ld a, [wRequestedAudioPlaybackPointer + 1]
     ld h, a
     ; advance HL to next data byte
     inc hl
@@ -1700,7 +1509,7 @@ CheckAudioChannelAvailability:
     ; Save next data byte in cd80
     ld e, [hl]
     ld a, e
-    ld [$cd80], a
+    ld [wRequestedAudioPriority], a
     inc e
     inc hl ; move to next data byte
     ld d, $04 ; Check 4 entries
@@ -1720,15 +1529,15 @@ CheckAudioChannelAvailabilityLoop:
     ; $CC0F + channel index → owning playback slot
     ; $CC07 + owning slot   → comparison value
     push hl
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
     ld b, $00
     add hl, bc
     ld c, [hl]
-    ld hl, $cc07
+    ld hl, wPlaybackSlotPriorityTable - 1
     add hl, bc
     ld a, [hl]
     pop hl
-    ;Return if A >= E
+    ; Reject if existing priority is higher than incoming priority.
     cp e
     ccf
     ret c
@@ -1741,38 +1550,38 @@ CheckAudioChannelAvailabilityNext:
     ret
 
 InitAudioSlot:
-    ld a, [$cd83]
+    ld a, [wAllocatedPlaybackSlot]
     ld e, a
     ld d, $00
-    ld hl, $cc03
+    ld hl, wPlaybackSlotActiveTable - 1
     add hl, de
     ld [hl], $ff
-    ld hl, $cc07
+    ld hl, wPlaybackSlotPriorityTable - 1
     add hl, de
-    ld a, [$cd80]
+    ld a, [wRequestedAudioPriority]
     ld [hl], a
     ld a, e
     call GetAudioSlotRecord
     ld a, l
-    ld [$cc02], a
+    ld [wCurrentAudioSlotRecordPointer], a
     ld a, h
-    ld [$cc03], a
-    ld hl, $cc38
-    ld de, $cc39
+    ld [wCurrentAudioSlotRecordPointer + 1], a
+    ld hl, wCurrentPlaybackRecord
+    ld de, wCurrentPlaybackRecord + 1
     ld bc, $0002
     ld [hl], $00
     call AudioCopyMemorySetup
-    ld a, [$cd7f]
-    ld [$cc38], a
-    ld a, [$cd81]
+    ld a, [wRequestedPlaybackRepeatCount]
+    ld [wCurrentPlaybackRecord], a
+    ld a, [wRequestedAudioPlaybackPointer]
     ld l, a
-    ld a, [$cd82]
+    ld a, [wRequestedAudioPlaybackPointer + 1]
     ld h, a
     ld a, [hl+]
     inc a
-    ld [$cc39], a
+    ld [wCurrentPlaybackRecord + 1], a
     ld a, $01
-    ld [$cc3a], a
+    ld [wCurrentPlaybackRecord + 2], a
     inc hl
     call InitializeAudioEntries
     call CopyPlaybackRecord
@@ -1781,7 +1590,7 @@ InitAudioSlot:
 InitializeAudioEntries:
     ld b, $04
     push hl
-    pop de
+    pop de ; DE = address of first header entry
 
 InitializeAudioEntriesLoop:
     ld a, [de]
@@ -1815,43 +1624,45 @@ InitializeAudioEntriesMoveNext:
 InitializeAudioEntriesEnd:
     ret
 
-
+; A = hardware channel 1–4
+; C = zero-based software selector 0–5
+; HL = ROM stream address
 InitializeAudioChannel:
-    ld [$cd7e], a
+    ld [wRequestedPlaybackHardwareChannel], a
     ld a, c
     inc a
-    ld [$cd84], a
+    ld [wCurrentPlaybackSoftwareChannel], a
     push hl
     call GetAudioChannelRecord
     ld a, l
-    ld [$cc0d], a
+    ld [wCurrentAudioChannelRecordPointer], a
     ld a, h
-    ld [$cc0e], a
-    ld hl, $cc47
-    ld de, $cc48
+    ld [wCurrentAudioChannelRecordPointer + 1], a
+    ld hl, wCurrentAudioStreamStartPointer
+    ld de, wCurrentAudioStreamStartPointer + 1
     ld bc, $002a
     ld [hl], $00
     call AudioCopyMemorySetup
     pop hl
     ld a, l
-    ld [$cc47], a
+    ld [wCurrentAudioStreamStartPointer], a
     ld a, h
-    ld [$cc48], a
-    ld a, [$cd7e]
-    ld [$cc4b], a
-    ld a, [$cd84]
+    ld [wCurrentAudioStreamStartPointer + 1], a
+    ld a, [wRequestedPlaybackHardwareChannel]
+    ld [wCurrentPlaybackHardwareChannel], a
+    ld a, [wCurrentPlaybackSoftwareChannel]
     ld e, a
     ld d, $00
-    ld hl, $cc0e
+    ld hl, wChannelPlaybackSlotOwnerTable - 1
     add hl, de
-    ld a, [$cd83]
+    ld a, [wAllocatedPlaybackSlot]
     ld [hl], a
-    ld hl, $cc14
+    ld hl, wSoftwareChannelActivity - 1
     add hl, de
     ld [hl], $00
     call PrependChannelToList
     call CopyToAudioChannelWram
-    ld a, [$cd84]
+    ld a, [wCurrentPlaybackSoftwareChannel]
     or a
     ret
 
@@ -1863,14 +1674,14 @@ PrependChannelToList:
     pop de
     dec hl
     call CopyMemoryBackward
-    ld a, [$cd84]
+    ld a, [wCurrentPlaybackSoftwareChannel]
     ld [de], a
     ret
 
 GetChannelListAddress:
-    ld a, [$cc4b]
+    ld a, [wCurrentPlaybackHardwareChannel]
     add a
-    ld hl, $4b17
+    ld hl, HardwareChannelListAddressTable - 2
     add l
     ld l, a
     ld a, $00
@@ -1881,12 +1692,12 @@ GetChannelListAddress:
     ld l, a
     ret
 
-
-    db $27, $cc, $2b, $cc, $2f, $cc, $33, $cc
+HardwareChannelListAddressTable:
+    dw wHardwareChannel1List, wHardwareChannel2List, wHardwareChannel3List, wHardwareChannel4List
 
 GetAudioSlotRecord:
     add a
-    ld hl, $4b2d
+    ld hl, AudioSlotRecordAddressTable - 2
     add l
     ld l, a
     ld a, $00
@@ -1898,18 +1709,14 @@ GetAudioSlotRecord:
     ret
 
 
-    db $3b, $cc, $3e, $cc, $41, $cc
-
-    ld b, h
-    call z, $cc47
-    ld c, d
-    call z, $cc4d
-    ld d, b
-    db $cc
+    ; Actual table starts at $4B2F
+AudioSlotRecordAddressTable:
+    dw $CC3B, $CC3E, $CC41, $CC44
+    dw $CC47, $CC4A, $CC4D, $CC50
 
 GetAudioChannelRecord:
     add a
-    ld hl, $4b4b
+    ld hl, AudioChannelRecordAddressTable - 2
     add l
     ld l, a
     ld a, $00
@@ -1921,19 +1728,14 @@ GetAudioChannelRecord:
     ret
 
 
-    db $72, $cc, $9d, $cc, $c8, $cc
-
-    di
-    db $cc
-
-    db $1e, $cd, $49, $cd
-
-    ld [hl], h
-    call $cd9f
+    ; Actual table starts at $4B4D
+AudioChannelRecordAddressTable:
+    dw $CC72, $CC9D, $CCC8, $CCF3
+    dw $CD1E, $CD49, $CD74, $CD9F
 
 FindFreePlaybackSlot:
     ld b, $04
-    ld hl, $cc04
+    ld hl, wPlaybackSlotActiveTable
 
 FindFreePlaybackSlotLoop:
     ld a, [hl+]
@@ -1949,12 +1751,12 @@ FindFreePlaybackSlotLoop:
 StoreFreePlaybackSlotIndex:
     ld a, $05
     sub b
-    ld [$cd83], a
+    ld [wAllocatedPlaybackSlot], a
     ret
 
 
     ld b, $06
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
 
 FindFreeAudioChannelLoop:
     ld a, [hl+]
@@ -1970,24 +1772,24 @@ FindFreeAudioChannelLoop:
 StoreFreeAudioChannelIndex:
     ld a, $07
     sub b
-    ld [$cd84], a
+    ld [wCurrentPlaybackSoftwareChannel], a
     ret
 
 LoadPlaybackRecord:
     call GetAudioSlotRecord
     ld a, l
-    ld [$cc02], a
+    ld [wCurrentAudioSlotRecordPointer], a
     ld a, h
-    ld [$cc03], a
-    ld de, $cc38
+    ld [wCurrentAudioSlotRecordPointer + 1], a
+    ld de, wCurrentPlaybackRecord
     ld bc, $0003
     jp AudioCopyMemorySetup
 
 CopyPlaybackRecord:
-    ld hl, $cc38
-    ld a, [$cc02]
+    ld hl, wCurrentPlaybackRecord
+    ld a, [wCurrentAudioSlotRecordPointer]
     ld e, a
-    ld a, [$cc03]
+    ld a, [wCurrentAudioSlotRecordPointer + 1]
     ld d, a
     ld bc, $0003
     jp AudioCopyMemorySetup
@@ -1995,18 +1797,18 @@ CopyPlaybackRecord:
 LoadAudioChannelRecord:
     call GetAudioChannelRecord
     ld a, l
-    ld [$cc0d], a
+    ld [wCurrentAudioChannelRecordPointer], a
     ld a, h
-    ld [$cc0e], a
-    ld de, $cc47
+    ld [wCurrentAudioChannelRecordPointer + 1], a
+    ld de, wCurrentAudioStreamStartPointer
     ld bc, $002b
     jp AudioCopyMemorySetup
 
 CopyToAudioChannelWram:
-    ld hl, $cc47
-    ld a, [$cc0d]
+    ld hl, wCurrentAudioChannelRecord
+    ld a, [wCurrentAudioChannelRecordPointer]
     ld e, a
-    ld a, [$cc0e]
+    ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld d, a
     ld bc, $002b
     jp AudioCopyMemorySetup
@@ -2036,19 +1838,19 @@ ReleasePlaybackSlot:
     ret z
 
     cp $05
-    ret nc
+    ret nc ; A >=5
 
     ld c, a
     ld b, $00
-    ld hl, $cc03
+    ld hl, wPlaybackSlotActiveTable - 1
     add hl, bc
     ld [hl], $00
-    ld hl, $cc07
+    ld hl, wPlaybackSlotPriorityTable - 1
     add hl, bc
     ld [hl], $00
     ld b, $06
-    ld hl, $cc0f
-    ld de, $cc15
+    ld hl, wChannelPlaybackSlotOwnerTable
+    ld de, wSoftwareChannelActivity
 
 ReleasePlaybackSlotChannelsLoop:
     ld a, [hl]
@@ -2063,7 +1865,7 @@ ReleasePlaybackSlotChannelsLoop:
     push hl
     push de
     push bc
-    call Call_001_4c1a
+    call RemoveSoftwareChannelFromHardwareLists
     pop bc
     pop de
     pop hl
@@ -2076,30 +1878,32 @@ ReleasePlaybackSlotChannelsNext:
 
     ret
 
-
-Call_001_4c1a:
+; A = software channel ID (1–6).
+; Remove it from whichever hardware-channel list contains it.
+; Perform hardware cleanup and restore the remaining wave stream's waveform.
+RemoveSoftwareChannelFromHardwareLists:
     ld hl, $cd75
     ld [hl], $01
-    ld hl, $cc27
-    call Call_001_4c63
-    jr nc, jr_001_4c5f
+    ld hl, wHardwareChannel1List
+    call RemoveSoftwareChannelFromList
+    jr nc, .checkAndReturn
 
     ld hl, $cd75
     ld [hl], $02
-    ld hl, $cc2b
-    call Call_001_4c63
-    jr nc, jr_001_4c5f
+    ld hl, wHardwareChannel2List
+    call RemoveSoftwareChannelFromList
+    jr nc, .checkAndReturn
 
     ld hl, $cd75
     ld [hl], $04
-    ld hl, $cc33
-    call Call_001_4c63
-    jr nc, jr_001_4c5f
+    ld hl, wHardwareChannel4List
+    call RemoveSoftwareChannelFromList
+    jr nc, .checkAndReturn
 
     ld hl, $cd75
     ld [hl], $03
-    ld hl, $cc2f
-    call Call_001_4c63
+    ld hl, wHardwareChannel3List
+    call RemoveSoftwareChannelFromList
     ret c
 
     ld a, [hl]
@@ -2111,20 +1915,19 @@ Call_001_4c1a:
     ld de, $0006
     add hl, de
     ld a, [hl]
-    call Call_001_510f
+    call LoadWaveformToWaveRam
     pop af
-    jr jr_001_4c62
+    jr .return
 
-jr_001_4c5f:
+.checkAndReturn
     ld a, [hl]
     or a
     ret z
 
-jr_001_4c62:
+.return
     ret
 
-
-Call_001_4c63:
+RemoveSoftwareChannelFromList:
     push hl
     ld bc, $0003
     ld d, $04
@@ -2211,7 +2014,7 @@ Call_001_4cb1:
 
 Call_001_4cbb:
     ld b, $04
-    ld hl, $cc04
+    ld hl, wPlaybackSlotActiveTable
 
 jr_001_4cc0:
     ld a, [hl+]
@@ -2249,7 +2052,7 @@ Call_001_4cdb:
     ld a, [$cc01]
     ld c, a
     ld b, $06
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
     ld de, $cc15
 
 jr_001_4cf4:
@@ -2271,9 +2074,9 @@ jr_001_4cf4:
     ld c, l
     ld b, h
     ld a, l
-    ld [$cc0d], a
+    ld [wCurrentAudioChannelRecordPointer], a
     ld a, h
-    ld [$cc0e], a
+    ld [wCurrentAudioChannelRecordPointer + 1], a
     call Call_001_4d1e
     pop bc
     pop de
@@ -2323,9 +2126,9 @@ jr_001_4d3d:
     ld [hl], $ff
 
 Jump_001_4d49:
-    ld a, [$cc0d]
+    ld a, [wCurrentAudioChannelRecordPointer]
     ld c, a
-    ld a, [$cc0e]
+    ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld b, a
     ld hl, $0002
     add hl, bc
@@ -2682,9 +2485,9 @@ jr_001_4f17:
     cp $03
     jr c, jr_001_4f0f
 
-    ld a, [$cc0d]
+    ld a, [wCurrentAudioChannelRecordPointer]
     ld e, a
-    ld a, [$cc0e]
+    ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld d, a
     ld hl, $001d
     add hl, de
@@ -2724,9 +2527,9 @@ jr_001_4f3a:
 
 jr_001_4f52:
     ld b, $00
-    ld a, [$cc0d]
+    ld a, [wCurrentAudioChannelRecordPointer]
     ld e, a
-    ld a, [$cc0e]
+    ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld d, a
     ld hl, $0023
     add hl, de
@@ -2745,9 +2548,9 @@ jr_001_4f64:
     dec h
 
 jr_001_4f6f:
-    ld a, [$cc0d]
+    ld a, [wCurrentAudioChannelRecordPointer]
     ld c, a
-    ld a, [$cc0e]
+    ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld b, a
     add hl, hl
     ld e, l
@@ -2939,7 +2742,7 @@ Jump_001_4f9f:
     ld a, [$cc0c]
     ld e, a
     ld d, $00
-    ld hl, $cc14
+    ld hl, wSoftwareChannelActivity - 1
     add hl, de
     ld [hl], $00
     ld hl, $cc20
@@ -3073,15 +2876,15 @@ Call_001_5108:
     add hl, bc
     ld [hl], a
 
-Call_001_510f:
+LoadWaveformToWaveRam:
     swap a
-    ld hl, $4703
+    ld hl, AudioWaveformTable
     add l
     ld l, a
     ld a, $00
     adc h
     ld h, a
-    ld de, $ff30
+    ld de, _AUD3WAVERAM
     ld bc, $0010
     jp AudioCopyMemorySetup
 
@@ -3525,7 +3328,7 @@ Call_001_532c:
     ld a, [$cc01]
     ld c, a
     ld b, $06
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
     ld de, $cc15
 
 jr_001_5338:
@@ -3542,7 +3345,7 @@ jr_001_533f:
     dec b
     jr nz, jr_001_5338
 
-    ld a, [$cc38]
+    ld a, [wCurrentPlaybackRecord]
     or a
     jr z, jr_001_5356
 
@@ -3550,7 +3353,7 @@ jr_001_533f:
     jr z, jr_001_5351
 
     dec a
-    ld [$cc38], a
+    ld [wCurrentPlaybackRecord], a
 
 jr_001_5351:
     call Call_001_535e
@@ -3571,7 +3374,7 @@ Call_001_535e:
     ld a, [$cc01]
     ld c, a
     ld b, $06
-    ld hl, $cc0f
+    ld hl, wChannelPlaybackSlotOwnerTable
 
 jr_001_5367:
     ld a, [hl]
@@ -3597,9 +3400,9 @@ jr_001_5375:
 Call_001_537a:
     ld [$cc0c], a
     call LoadAudioChannelRecord
-    ld a, [$cc47]
+    ld a, [wCurrentAudioStreamStartPointer]
     ld [$cc49], a
-    ld a, [$cc48]
+    ld a, [wCurrentAudioStreamStartPointer + 1]
     ld [$cc4a], a
     ld hl, $cc4c
     ld de, $cc4d
@@ -3619,7 +3422,7 @@ Call_001_537a:
     ld a, $01
     ld [$cc52], a
     ld [$cc55], a
-    ld a, [$cc4b]
+    ld a, [wCurrentPlaybackHardwareChannel]
     ld e, a
     ld a, $03
     call Call_001_5411
@@ -3627,7 +3430,7 @@ Call_001_537a:
     call Call_001_5098
     ld a, $08
     ld [$cc6d], a
-    ld a, [$cc4b]
+    ld a, [wCurrentPlaybackHardwareChannel]
     cp $03
     jr nz, jr_001_53dd
 
@@ -3637,7 +3440,7 @@ Call_001_537a:
     call Call_001_5108
 
 jr_001_53dd:
-    ld a, [$cc4b]
+    ld a, [wCurrentPlaybackHardwareChannel]
     add a
     ld hl, $5407
     add l
@@ -3654,7 +3457,7 @@ jr_001_53dd:
     ld a, $77
     ldh [rNR50], a
     ld a, [$cc0c]
-    ld hl, $cc14
+    ld hl, wSoftwareChannelActivity - 1
     add l
     ld l, a
     ld a, $00
@@ -5730,23 +5533,37 @@ jr_001_5cf1:
     db $02, $37, $02, $37, $02, $40, $08, $00, $08, $fd, $01, $00, $08, $f0, $00, $ff
     db $fe, $0f, $f4, $80, $fc, $0c, $fa, $06, $f8, $01, $fd, $03, $f0, $02, $37, $02
     db $40, $02, $44, $02, $44, $02, $47, $06, $00, $08, $fd, $01, $00, $08, $f0, $00
-    db $ff, $03, $00, $e8, $5d, $00, $23, $5e, $01, $3c, $5e, $02, $00, $00, $fe, $06
-    db $f4, $00, $fc, $0f, $fa, $02, $f7, $01, $ef, $03, $f6, $08, $f8, $01, $fd, $02
-    db $f0, $01, $fe, $0a, $50, $01, $fe, $06, $50, $01, $f0, $02, $fe, $03, $50, $01
-    db $fe, $01, $50, $01, $fe, $0a, $50, $01, $fe, $06, $50, $01, $f0, $01, $fe, $03
-    db $50, $01, $fe, $01, $50, $01, $a0, $ed
+    db $ff
 
-    rst $38
+TitleScreenMusic:
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+    
+    dw TitleScreenMusicStream1 ; Hardware channel 1: pulse
+    db $00 ; Software channel selector
+    
+    dw TitleScreenMusicStream2 ; Hardware channel 2: pulse
+    db $01
+    
+    dw TitleScreenMusicStream3 ; Hardware channel 3: wave
+    db $02
+    
+    dw $0000 ; Hardware channel 4 unused
 
+TitleScreenMusicStream1:
+    db $fe, $06, $f4, $00, $fc, $0f, $fa, $02, $f7, $01, $ef, $03, $f6, $08, $f8, $01
+    db $fd, $02, $f0, $01, $fe, $0a, $50, $01, $fe, $06, $50, $01, $f0, $02, $fe, $03
+    db $50, $01, $fe, $01, $50, $01, $fe, $0a, $50, $01, $fe, $06, $50, $01, $f0, $01
+    db $fe, $03, $50, $01, $fe, $01, $50, $01, $a0, $ed, $ff
+
+TitleScreenMusicStream2:
     db $fe, $08, $f4, $00, $fc, $0f, $fa, $02, $f8, $01, $fd, $02, $f0, $03, $32, $20
-    db $33, $20, $34, $20, $35, $20, $a0, $fc
+    db $33, $20, $34, $20, $35, $20, $a0, $fc, $ff
 
-    rst $38
-
+TitleScreenMusicStream3:
     db $fe, $0f, $f2, $01, $fc, $0c, $fa, $04, $f8, $01, $fd, $01, $f0, $03, $20, $08
-    db $20, $08, $20, $08, $20, $02, $20, $02, $20, $02, $00, $02, $a0, $f9
+    db $20, $08, $20, $08, $20, $02, $20, $02, $20, $02, $00, $02, $a0, $f9, $ff
 
-    rst $38
 
     db $02, $02, $68, $5e, $05, $95, $5e, $04, $00, $00, $00, $00, $00, $fe, $0a, $f5
     db $08, $f4, $00, $fc, $0b, $fa, $06, $f8, $01, $fd, $00, $f0, $03, $44, $02, $f0

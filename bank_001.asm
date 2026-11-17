@@ -1097,16 +1097,14 @@ AudioWaveformTable:
     db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
 
 
-    db $ff, $cc
-
-    xor d
-    xor d
-    xor d
+    ; $4803–$480A
+    ; last three bytes are below
+    db $ff, $cc, $aa, $aa, $aa,
 
 Jump_001_4808:
-    adc b
-    adc b
-    ld [hl], a
+    db $88
+    db $88
+    db $77
     rst $38
     ld d, l
     ld [hl], a
@@ -1710,6 +1708,7 @@ GetAudioSlotRecord:
 
 
     ; Actual table starts at $4B2F
+    ; only first 4 slots appear used
 AudioSlotRecordAddressTable:
     dw $CC3B, $CC3E, $CC41, $CC44
     dw $CC47, $CC4A, $CC4D, $CC50
@@ -1729,6 +1728,7 @@ GetAudioChannelRecord:
 
 
     ; Actual table starts at $4B4D
+    ; only first 6 appear used
 AudioChannelRecordAddressTable:
     dw $CC72, $CC9D, $CCC8, $CCF3
     dw $CD1E, $CD49, $CD74, $CD9F
@@ -1775,6 +1775,10 @@ StoreFreeAudioChannelIndex:
     ld [wCurrentPlaybackSoftwareChannel], a
     ret
 
+; A = playback slot ID (1–4).
+; Look up its WRAM record through AudioSlotRecordAddressTable.
+; Save its address in wCurrentAudioSlotRecordPointer, then copy
+; its 3 bytes into the working buffer wCurrentPlaybackRecord.
 LoadPlaybackRecord:
     call GetAudioSlotRecord
     ld a, l
@@ -1984,12 +1988,12 @@ jr_001_4c93:
 
 UpdateAudio:
     push af
-    ld a, [$cc00]
+    ld a, [wAudioUpdateRunning]
     or a
-    jr nz, jr_001_4caf
+    jr nz, .return
 
     dec a
-    ld [$cc00], a
+    ld [wAudioUpdateRunning], a
     push hl
     push de
     push bc
@@ -1998,9 +2002,9 @@ UpdateAudio:
     pop de
     pop hl
     xor a
-    ld [$cc00], a
+    ld [wAudioUpdateRunning], a
 
-jr_001_4caf:
+.return
     pop af
     reti
 
@@ -2016,14 +2020,14 @@ Call_001_4cbb:
     ld b, $04
     ld hl, wPlaybackSlotActiveTable
 
-jr_001_4cc0:
+.checkSlot
     ld a, [hl+]
     or a
-    jr z, jr_001_4cd7
+    jr z, .nextSlot
 
     ld a, $05
     sub b
-    ld [$cc01], a
+    ld [$cc01], a ; store the playback slot currently being processed
     push bc
     push hl
     call LoadPlaybackRecord
@@ -2032,44 +2036,45 @@ jr_001_4cc0:
     pop hl
     pop bc
 
-jr_001_4cd7:
+.nextSlot
     dec b
-    jr nz, jr_001_4cc0
+    jr nz, .checkSlot
 
     ret
 
 
 Call_001_4cdb:
-    ld hl, $cc3a
+    ld hl, wCurrentPlaybackRecord + 2
     dec [hl]
     ret nz
 
-    ld a, [$cc39]
-    ld [hl], a
-    call Call_001_532c
+    ld a, [wCurrentPlaybackRecord + 1]
+    ld [hl], a ; reset tick
+    call CheckPlaybackCompletion
     ret c
 
     ld a, [$cc01]
     ld c, a
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
-    ld de, $cc15
+    ld de, wSoftwareChannelActivity
 
-jr_001_4cf4:
+.checkSlot
     ld a, [hl]
     cp c
-    jr nz, jr_001_4d18
+    jr nz, .nextSlot ; check if the current channel is owned by the playback slot we are processing
 
+    ; if it is then check the corresponding software channel activity entry
     ld a, [de]
     or a
-    jr z, jr_001_4d18
+    jr z, .nextSlot ; if no activity then move to next entry
 
     push hl
     push de
     push bc
     ld a, $07
     sub b
-    ld [$cc0c], a
+    ld [$cc0c], a ; Store current software channel ID (1–6)
     call GetAudioChannelRecord
     ld c, l
     ld b, h
@@ -2082,15 +2087,15 @@ jr_001_4cf4:
     pop de
     pop hl
 
-jr_001_4d18:
+.nextSlot:
     inc hl
     inc de
     dec b
-    jr nz, jr_001_4cf4
+    jr nz, .checkSlot
 
     ret
 
-
+; BC = current audio channel record
 Call_001_4d1e:
     ld a, [$cc0c]
     dec a
@@ -2769,7 +2774,11 @@ Jump_001_4f9f:
     ld [hl], a
     ret
 
-
+; Handles audio command $FC.
+; Stores the low nibble at channel-record offset $0C.
+; If nonzero, selects an 8-byte entry and stores its pointer at $10–$11.
+; Reset also calls this with A = 0 and BC = 0, causing an
+; ineffective audio-state write to mapper address $000C.
 Call_001_5098:
     and $0f
     ld hl, $000c
@@ -2780,7 +2789,7 @@ Call_001_5098:
     add a
     add a
     add a
-    ld de, $47fb
+    ld de, $47fb ; table with 8 byte entries. 1 indexed.
     add e
     ld e, a
     ld a, $00
@@ -2790,7 +2799,7 @@ Call_001_5098:
     add hl, bc
     ld [hl], e
     inc hl
-    ld [hl], d
+    ld [hl], d ; store pointer to the table starting at offset $10 in software channel record
     ret
 
 
@@ -2869,8 +2878,9 @@ jr_001_50d7:
     ld [hl], a
     ret
 
-
-Call_001_5108:
+; stores waveform index at offset $06
+; then falls through
+StoreWaveformIndexThenLoad:
     and $0f
     ld hl, $0006
     add hl, bc
@@ -2896,7 +2906,7 @@ LoadWaveformToWaveRam:
     ld hl, $0004
     add hl, bc
     ld e, [hl]
-    jp Jump_001_5411
+    jp StoreAudioPanningMask
 
 
     ld hl, $001b
@@ -3324,91 +3334,91 @@ jr_001_531e:
 
     db $10, $ff, $05, $16, $ff, $04, $1a, $ff, $05, $20, $ff, $04
 
-Call_001_532c:
+; Sets playback to repeat or end
+CheckPlaybackCompletion:
     ld a, [$cc01]
-    ld c, a
+    ld c, a ; current playback slot being processed
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
-    ld de, $cc15
+    ld de, wSoftwareChannelActivity
 
-jr_001_5338:
+.checkSlot
     ld a, [hl+]
     cp c
-    jr nz, jr_001_533f
+    jr nz, .nextSlot ; check if the current channel is owned by the playback slot we are processing
 
+    ; if it is then check the corresponding software channel activity entry
     ld a, [de]
     or a
-    ret nz
+    ret nz ; return if its NOT zero
 
-jr_001_533f:
+.nextSlot:
     inc de
     dec b
-    jr nz, jr_001_5338
+    jr nz, .checkSlot
 
     ld a, [wCurrentPlaybackRecord]
     or a
-    jr z, jr_001_5356
+    jr z, .endPlayback
 
     cp $ff
-    jr z, jr_001_5351
+    jr z, .repeatPlayback
 
     dec a
     ld [wCurrentPlaybackRecord], a
 
-jr_001_5351:
-    call Call_001_535e
-
-Call_001_5354:
+.repeatPlayback
+    call RestartPlaybackSlotChannels
     or a
     ret
 
 
-jr_001_5356:
+.endPlayback
     ld a, [$cc01]
     call ReleasePlaybackSlot
     scf
     ret
 
 
-Call_001_535e:
+RestartPlaybackSlotChannels:
     ld a, [$cc01]
     ld c, a
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
 
-jr_001_5367:
+.checkChannel:
     ld a, [hl]
     cp c
-    jr nz, jr_001_5375
+    jr nz, .nextChannel
 
     ld a, $07
     sub b
     push hl
     push bc
-    call Call_001_537a
+    call RestartSoftwareChannelPlayback
     pop bc
     pop hl
 
-jr_001_5375:
+.nextChannel
     inc hl
     dec b
-    jr nz, jr_001_5367
+    jr nz, .checkChannel
 
     ret
 
-
-Call_001_537a:
+; A = software channel
+RestartSoftwareChannelPlayback:
     ld [$cc0c], a
-    call LoadAudioChannelRecord
+    call LoadAudioChannelRecord ; load the channel into the working record
     ld a, [wCurrentAudioStreamStartPointer]
     ld [$cc49], a
     ld a, [wCurrentAudioStreamStartPointer + 1]
-    ld [$cc4a], a
+    ld [$cc4a], a ; save a copy of the pointer in cc49-cc4a
     ld hl, $cc4c
     ld de, $cc4d
     ld bc, $0025
     ld [hl], $00
-    call AudioCopyMemorySetup
+    call AudioCopyMemorySetup ; clear 38 bytes of memory starting at cc4c
     ld a, $00
     ld [$cc50], a
     ld a, $02
@@ -3421,28 +3431,32 @@ Call_001_537a:
     ld [$cc4e], a
     ld a, $01
     ld [$cc52], a
-    ld [$cc55], a
+    ld [$cc55], a ; set some flags?
     ld a, [wCurrentPlaybackHardwareChannel]
     ld e, a
     ld a, $03
-    call Call_001_5411
+    call StoreAudioPanningMask ; store a mask at an address based on hardware and software channel
+    ; BC is zero after the preceding memory clear.
+    ; This call writes 0 to $000C, not channel-record offset $0C.
+    ; The working record's corresponding field is already cleared.
     xor a
     call Call_001_5098
     ld a, $08
     ld [$cc6d], a
     ld a, [wCurrentPlaybackHardwareChannel]
     cp $03
-    jr nz, jr_001_53dd
+    jr nz, jr_001_53dd ; skip if not channel 3
 
+    ; runs for channel 3
     ld a, $80
     ld [$cc6d], a
     xor a
-    call Call_001_5108
+    call StoreWaveformIndexThenLoad
 
 jr_001_53dd:
     ld a, [wCurrentPlaybackHardwareChannel]
     add a
-    ld hl, $5407
+    ld hl, AudioChannelVolumeRegisterTable - 2
     add l
     ld l, a
     ld a, $00
@@ -3450,12 +3464,12 @@ jr_001_53dd:
     ld h, a
     ld a, [hl+]
     ld h, [hl]
-    ld l, a
+    ld l, a ; Store register address in HL
     ld a, $00
-    ldh [rNR50], a
-    ld [hl], $08
+    ldh [rNR50], a ; set minimum master volume
+    ld [hl], $08 ; Initial volume 0; increase direction; envelope pace 0 (disabled), mutes for channel 3
     ld a, $77
-    ldh [rNR50], a
+    ldh [rNR50], a ; turn all volume on but VIN
     ld a, [$cc0c]
     ld hl, wSoftwareChannelActivity - 1
     add l
@@ -3463,31 +3477,54 @@ jr_001_53dd:
     ld a, $00
     adc h
     ld h, a
-    ld [hl], $ff
+    ld [hl], $ff ; set activity for selected channel
     call CopyToAudioChannelWram
     ret
 
+AudioChannelVolumeRegisterTable:
+    dw $FF12, $FF17, $FF1C, $FF21
 
-    db $12, $ff, $17, $ff, $1c, $ff, $21, $ff
-
-Call_001_5411:
-Jump_001_5411:
+; E = wCurrentPlaybackHardwareChannel
+; A = $03 when coming from UpdateAudio path
+; A restricts the output routing:
+; 0 -> $00 -> Neither side
+; 1 -> $01 -> Right
+; 2 -> $10 -> Left
+; 3 -> $11 -> Both
+StoreAudioPanningMask:
     and $03
-    ld d, a
-    rrca
-    swap a
-    or d
-    and $11
-    ld d, a
-    ld a, e
+    ld d, a ; d becomes 3
+    rrca ; a becomes $81 and we set carry
+    swap a ; a becomes $18, clear carry
+    or d ; set bottom two bits, a is $1B
+    and $11 ; a becomes $11
+    ld d, a ; d = $11
+    ld a, e ; a = wCurrentPlaybackHardwareChannel
 
 jr_001_541c:
     dec a
-    jr z, jr_001_5423
+    jr z, jr_001_5423 ; if a is 0 (was 1) move on
 
-    rlc d
+    rlc d ; rotate d left (usually results in doubling)
     jr jr_001_541c
 
+; Hardware Channel -> Final D
+; this applies when input A = $03
+; 1 -> $11
+; 2 -> $22
+; 3 -> $44
+; 4 -> $88
+
+; This code then stores that mask at an address based on
+; the software channel id:
+
+; Software Channel Id -> Final HL
+; 1 - > $CC1B
+; 2 - > $CC1C
+; 3 - > $CC1D
+; 4 - > $CC1E
+; 5 - > $CC1F
+; 6 - > $CC20
 jr_001_5423:
     ld a, [$cc0c]
     ld hl, $cc1a
@@ -9348,9 +9385,7 @@ jr_001_7168:
     scf
     ld [hl], h
     push af
-    ld d, a
-    call Call_001_5354
-    ld d, l
+    db $57, $cd, $54, $53, $55
     db $fd
     ld e, a
     cpl

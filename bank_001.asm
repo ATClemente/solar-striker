@@ -1306,7 +1306,7 @@ AudioLookupTable_490B:
 
 ; $492B-$495B: raw lookup data preceding InitAudio.
 ; Lookup uses a 1-based index with base $492A; valid index range is unconfirmed.
-AudioLookupData_492B:
+AudioNoiseSettingsTable:
     db $6d, $15, $04, $19, $00, $12, $37, $70
     db $65, $8a, $8f, $d0, $d4, $60, $64, $70
     db $73, $19, $5a, $45, $65, $67, $69, $6b
@@ -1947,7 +1947,7 @@ UpdateAudio:
     push hl
     push de
     push bc
-    call Call_001_4cb1
+    call UpdateAudioPlayback
     pop bc
     pop de
     pop hl
@@ -1958,15 +1958,13 @@ UpdateAudio:
     pop af
     reti
 
-
-Call_001_4cb1:
-    call Call_001_4cbb
+UpdateAudioPlayback:
+    call ProcessPlaybackSlots
     call Call_001_513a
     call Call_001_5276
     ret
 
-
-Call_001_4cbb:
+ProcessPlaybackSlots:
     ld b, $04
     ld hl, wPlaybackSlotActiveTable
 
@@ -1981,7 +1979,7 @@ Call_001_4cbb:
     push bc
     push hl
     call LoadPlaybackRecord
-    call Call_001_4cdb
+    call UpdatePlaybackSlot
     call CopyPlaybackRecord
     pop hl
     pop bc
@@ -1992,8 +1990,7 @@ Call_001_4cbb:
 
     ret
 
-
-Call_001_4cdb:
+UpdatePlaybackSlot:
     ld hl, wCurrentPlaybackRecord + 2
     dec [hl]
     ret nz
@@ -2024,7 +2021,7 @@ Call_001_4cdb:
     push bc
     ld a, $07
     sub b
-    ld [$cc0c], a ; Store current software channel ID (1–6)
+    ld [wCurrentSoftwareChannelId], a ; Store current software channel ID (1–6)
     call GetAudioChannelRecord
     ld c, l
     ld b, h
@@ -2032,7 +2029,7 @@ Call_001_4cdb:
     ld [wCurrentAudioChannelRecordPointer], a
     ld a, h
     ld [wCurrentAudioChannelRecordPointer + 1], a
-    call Call_001_4d1e
+    call TickAudioChannelStream
     pop bc
     pop de
     pop hl
@@ -2046,8 +2043,8 @@ Call_001_4cdb:
     ret
 
 ; BC = current audio channel record
-Call_001_4d1e:
-    ld a, [$cc0c]
+TickAudioChannelStream:
+    ld a, [wCurrentSoftwareChannelId]
     dec a
     ld e, a
     ld d, $00 ; DE = zero-based software channel index
@@ -2081,12 +2078,12 @@ jr_001_4d3d:
     add hl, de
     ld [hl], $ff ; set a table entry starting at cc21 to FF, index is software channel - 1
 
-Jump_001_4d49:
+ReadNextAudioStreamEntry:
     ld a, [wCurrentAudioChannelRecordPointer]
     ld c, a
     ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld b, a
-    ld hl, $0002
+    ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, bc
     ld a, [hl] ; store the byte from record offset $02 in a
     inc hl ; move hl to offset $03
@@ -2096,7 +2093,7 @@ Jump_001_4d49:
     ld a, [hl+] ; get the byte that the pointer points to into a
     ld d, a ; put in d
     ld a, [hl+] ; get the next byte into a
-    ld [$cd85], a ; store that at cd85
+    ld [wAudioStreamArgument], a
     ld a, h ; put high byte of address in a
     ld e, l ; put low byte into e
     pop hl ; HL now equals address of offset $03 again
@@ -2106,13 +2103,13 @@ Jump_001_4d49:
     ; preceeding code reads two bytes at pointer in $02-$03, advances two bytes
     ; and stores that new address back at $02-$03
     cp $b0
-    jp nc, Jump_001_4f9f
+    jp nc, DispatchAudioCommand
 
     cp $a0
-    jp nc, Jump_001_4ec4
+    jp nc, HandleCountedAudioJump
 
     cp $90
-    jp nc, Jump_001_4efa
+    jp nc, HandleAudioLoop
 
     ; byte was $00-$8F
     ld e, $80
@@ -2136,13 +2133,13 @@ jr_001_4d81:
     add hl, bc
     ld a, [hl]
     cp $04 ; compare the byte at record offset $04 with $04
-    jr z, jr_001_4e05
+    jr z, jr_001_4e05 ; channel 4 takes the noise lookup path
 
     ld a, d
     and $f0
     jr z, jr_001_4dee
 
-    call Call_001_4dce ; returns with a pointer to a table entry in hl
+    call GetAudioFrequencyEntry ; returns with a pointer to a table entry in hl
     ld a, [hl+]
     push hl
     ld hl, $0029
@@ -2155,14 +2152,14 @@ jr_001_4d81:
     ld hl, $002a
     add hl, bc
     ld [hl], a ; store combined control and pitch bits at offset $2A
-    ld hl, $0007
+    ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a ; store byte at offset $07 in cd77
-    call Call_001_4db9
+    ld [wAudioVolumeTemp], a ; store byte at offset $07 in wAudioVolumeTemp
+    call WriteWaveChannelPitch
     jr jr_001_4e2c
 
-Call_001_4db9:
+WriteWaveChannelPitch:
     ld hl, $0004
     add hl, bc
     ld a, [hl]
@@ -2178,8 +2175,7 @@ Call_001_4db9:
     ldh [rNR34], a ; write pitch high/control bits with trigger bit 7 cleared
     ret
 
-
-Call_001_4dce:
+GetAudioFrequencyEntry:
     ld a, d
     swap a
     and $0f
@@ -2194,7 +2190,7 @@ Call_001_4dce:
     and $0f
     add e
     ld e, a
-    ld hl, $0005
+    ld hl, CHANNEL_AUDIO_FREQ_INDEX_ADJUSTMENT_OFFSET
     add hl, bc
     ld a, [hl]
     add e
@@ -2207,10 +2203,10 @@ Call_001_4dce:
 
 
 jr_001_4dee:
-    ld hl, $0008
+    ld hl, CHANNEL_ALTERNATE_VOLUME_OFFSET
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a ; store the byte from record offset $08 in cd77
+    ld [wAudioVolumeTemp], a ; store the byte from record offset $08 in wAudioVolumeTemp
     ld hl, $000a
     add hl, bc
     ld [hl], $00 ; zero out offset $0a
@@ -2225,7 +2221,7 @@ jr_001_4e05:
     and $ff
     jr z, jr_001_4dee ; D was $00
 
-    ld hl, AudioLookupData_492B - 1 ; base $492A for the 1-based index
+    ld hl, AudioNoiseSettingsTable - 1 ; base $492A for the 1-based index
     add l
     ld l, a
     ld a, $00
@@ -2244,16 +2240,16 @@ jr_001_4e19:
     ld hl, $0014
     add hl, bc
     ld [hl], $00 ; zero out offset $14
-    ld hl, $0007
+    ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a ; store the value from offset $07 in cd77
+    ld [wAudioVolumeTemp], a ; store the value from offset $07 in wAudioVolumeTemp
 
 jr_001_4e2c:
     ld hl, $0009
     add hl, bc
     ld h, [hl]
-    ld a, [$cd85]
+    ld a, [wAudioStreamArgument]
     sub h
     jr z, jr_001_4e39 ; byte at $09 was equal to second stream byte
 
@@ -2304,7 +2300,7 @@ jr_001_4e3b:
     ld [hl], e ; store the pointer from the lookup table to address offset $19-$1A
 
 jr_001_4e78:
-    ld a, [$cd85]
+    ld a, [wAudioStreamArgument]
     ld hl, $000b
     add hl, bc
     ld [hl], a ; store second byte into offset $0b
@@ -2312,8 +2308,8 @@ jr_001_4e78:
     ld hl, $0004
     add hl, bc
     ld c, [hl]
-    ld a, [$cd77]
-    call Call_001_4ea3
+    ld a, [wAudioVolumeTemp]
+    call EncodeAudioVolume
     ld e, b ; store return value in e
     pop bc
     ld hl, $000c
@@ -2334,23 +2330,23 @@ jr_001_4e9d:
     ld [hl], a ; store return value, possibly ORed with record[$13], at offset $28
     ret
 
-; C = offset $04 byte
-; A = value in cd77
+; C = hardware channel
+; A = volume to encode
 ; in one code path at least
-Call_001_4ea3:
+EncodeAudioVolume:
     swap a
     and $f0
     ld b, a ; move original low nibble into high nibble; clear low nibble
     ld a, c
     cp $03
-    jr nz, jr_001_4ebe ; if C != $03, return that value directly
+    jr nz, .return ; if C != $03, return that value directly
 
     ld a, b
     rlca
     rlca
     and $03
     push hl
-    ld hl, $4ec0
+    ld hl, WaveChannelVolumeTable
     add l
     ld l, a
     ld a, $00
@@ -2359,20 +2355,20 @@ Call_001_4ea3:
     ld b, [hl] ; load selected table entry (index 0-3 computed above) into B
     pop hl
 
-jr_001_4ebe:
+.return
     ld a, b
     ret
 
-    ; 4ec0
+WaveChannelVolumeTable:
     db $00, $60, $40, $20
 
 ; byte was $A0-$AF
-Jump_001_4ec4:
+HandleCountedAudioJump:
     and $0f
     jp z, Jump_001_4ed9 ; jump if the command's low nibble is 0
 
     ld e, a
-    ld hl, $001c
+    ld hl, CHANNEL_JUMP_REPEAT_COUNTER_OFFSET
     add hl, bc
     ld a, [hl]
     or a
@@ -2381,15 +2377,15 @@ Jump_001_4ec4:
     dec [hl]
     jr nz, jr_001_4ed9 ; decrement and jump if still not zero
 
-    jp Jump_001_4d49
+    jp ReadNextAudioStreamEntry
 
 
 jr_001_4ed8:
-    ld [hl], e ; put the byte into the $1c offset
+    ld [hl], e ; put the byte into the CHANNEL_JUMP_REPEAT_COUNTER_OFFSET
 
 Jump_001_4ed9:
 jr_001_4ed9:
-    ld a, [$cd85]
+    ld a, [wAudioStreamArgument]
     ld l, a
     ld h, $00 ; HL = zero-extended second stream byte
     cp $80
@@ -2402,12 +2398,12 @@ jr_001_4ee4:
     add hl, hl ; double
     ld e, l
     ld d, h ; store in DE
-    ld hl, $0002
+    ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, bc
-    ld a, [hl+] ; put the byte from offset $0002 in a
-    push hl ; save offset $0003 address on stack
+    ld a, [hl+] ; put the byte from offset CHANNEL_AUDIO_STREAM_POINTER_OFFSET in a
+    push hl ; save CHANNEL_AUDIO_STREAM_POINTER_OFFSET + 1 address on stack
     ld h, [hl]
-    ld l, a ; set hl ultimately to values from $02-$03 offset
+    ld l, a ; set hl ultimately to values from CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     dec hl
     dec hl ; move back two bytes
     add hl, de ; add offset calculated before
@@ -2415,16 +2411,16 @@ jr_001_4ee4:
     ld e, l ; new pointer: high byte in A, low byte in E
     pop hl ; address of offset $0003
     ld [hl-], a
-    ld [hl], e ; store that pointer back in offset $02-$03
-    jp Jump_001_4d49
+    ld [hl], e ; store that pointer back in CHANNEL_AUDIO_STREAM_POINTER_OFFSET
+    jp ReadNextAudioStreamEntry
 
 ; byte was $90-$9F
-Jump_001_4efa:
+HandleAudioLoop:
     and $0f
     jp z, Jump_001_4f64 ; low nibble was 0
 
     ld [$cd76], a ; store the byte in cd76
-    ld hl, $0002
+    ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, bc
     ld e, [hl]
     inc hl
@@ -2468,12 +2464,12 @@ jr_001_4f2c:
     cp $03
     jr c, jr_001_4f2c
 
-    jp Jump_001_4d49
+    jp ReadNextAudioStreamEntry
 
 
 jr_001_4f3a:
     push hl ; save address of the empty entry's high byte
-    ld hl, $0002
+    ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, de
     ld a, [hl+]
     ld b, [hl] ; store a pointer between a and b registers
@@ -2503,7 +2499,7 @@ jr_001_4f52:
 
 Jump_001_4f64:
 jr_001_4f64:
-    ld a, [$cd85]
+    ld a, [wAudioStreamArgument]
     ld l, a
     ld h, $00
     cp $80
@@ -2519,8 +2515,8 @@ jr_001_4f6f:
     add hl, hl
     ld e, l
     ld d, h ; offset in de
-    ld hl, $0002
-    add hl, bc ; record offset $02
+    ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
+    add hl, bc
     ld a, [hl+]
     push hl
     ld h, [hl]
@@ -2533,7 +2529,7 @@ jr_001_4f6f:
     pop hl
     ld [hl-], a
     ld [hl], e ; new pointer = old pointer − 2 + (incoming HL × 2)
-    jp Jump_001_4d49
+    jp ReadNextAudioStreamEntry
 
 
 jr_001_4f8d:
@@ -2547,10 +2543,10 @@ jr_001_4f8d:
     ld [hl], $00
     inc hl
     ld [hl], $00 ; clear selected pointer; C already holds slot index * 2
-    jp Jump_001_4d49
+    jp ReadNextAudioStreamEntry
 
 ; byte was $B0-$FF
-Jump_001_4f9f:
+DispatchAudioCommand:
     ld hl, $4d49
     push hl
     cp $ed
@@ -2581,12 +2577,12 @@ Jump_001_4f9f:
     ld h, a
     ld a, [hl+]
     ld h, [hl]
-    ld l, a ; hl is now the address of the command. Ex: $FE -> $5088
+    ld l, a ; hl is now the address of the command. Ex: $FE -> AudioCmd_SetBaseVolume
     or h
     ret z ; if handler address is zero, return to the pushed $4D49 address
 
-    ld a, [$cd85]
-    ld d, a ; this was the second byte we grabbed before, now in d
+    ld a, [wAudioStreamArgument]
+    ld d, a
     jp hl
 
 
@@ -2598,7 +2594,7 @@ AudioCommandTables: ; $4FCB
 AudioCommandHandlers_1: ; $4FD3
     ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
     dw $506b ; $FF
-    dw $5088 ; $FE
+    dw AudioCmd_SetBaseVolume ; $FE
     dw $5090 ; $FD
     dw $5098 ; $FC
     dw $50b4 ; $FB
@@ -2615,12 +2611,12 @@ AudioCommandHandlers_1: ; $4FD3
     dw $5126 ; $F0
     dw $50e7 ; $EF
     dw $512e ; $EE
-    dw $5134 ; $ED
+    dw AudioCmd_SetNoteIndexOffset ; $ED
 
 AudioCommandHandlers_2: ; $4FF9
     ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
     dw $506b ; $FF
-    dw $5088 ; $FE
+    dw AudioCmd_SetBaseVolume ; $FE
     dw $5090 ; $FD
     dw $5098 ; $FC
     dw $50b4 ; $FB
@@ -2637,12 +2633,12 @@ AudioCommandHandlers_2: ; $4FF9
     dw $5126 ; $F0
     dw $50e7 ; $EF
     dw $512e ; $EE
-    dw $5134 ; $ED
+    dw AudioCmd_SetNoteIndexOffset ; $ED
 
 AudioCommandHandlers_3: ; $501F
     ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
     dw $506b ; $FF
-    dw $5088 ; $FE
+    dw AudioCmd_SetBaseVolume ; $FE
     dw $5090 ; $FD
     dw $5098 ; $FC
     dw $0000 ; $FB
@@ -2659,12 +2655,12 @@ AudioCommandHandlers_3: ; $501F
     dw $5126 ; $F0
     dw $50e7 ; $EF
     dw $512e ; $EE
-    dw $5134 ; $ED
+    dw AudioCmd_SetNoteIndexOffset ; $ED
 
 AudioCommandHandlers_4: ; $5045
     ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
     dw $506b ; $FF
-    dw $5088 ; $FE
+    dw AudioCmd_SetBaseVolume ; $FE
     dw $5090 ; $FD
     dw $5098 ; $FC
     dw $50b4 ; $FB
@@ -2685,7 +2681,7 @@ AudioCommandHandlers_4: ; $5045
 
 ; $506B: first command handler
     pop hl
-    ld a, [$cc0c]
+    ld a, [wCurrentSoftwareChannelId]
     ld e, a
     ld d, $00
     ld hl, wSoftwareChannelActivity - 1
@@ -2696,22 +2692,22 @@ AudioCommandHandlers_4: ; $5045
     ld [hl], $00
     call Call_001_5431
     xor a
-    ld hl, $0007
+    ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
     ld [hl], a
     ret
 
 
-    ; 5088
+AudioCmd_SetBaseVolume:
     and $0f
-    ld hl, $0007
+    ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
-    ld [hl], a ; store low nibble of the second byte in offset $0007
+    ld [hl], a ; store low nibble of the second byte in offset CHANNEL_BASE_VOLUME_OFFSET
     ret ; goes back to 4d49
 
 
     and $0f
-    ld hl, $0008
+    ld hl, CHANNEL_ALTERNATE_VOLUME_OFFSET
     add hl, bc
     ld [hl], a
     ret
@@ -2856,8 +2852,8 @@ LoadWaveformToWaveRam:
     ld [hl], a
     ret
 
-
-    ld hl, $0005
+AudioCmd_SetNoteIndexOffset:
+    ld hl, CHANNEL_AUDIO_FREQ_INDEX_ADJUSTMENT_OFFSET
     add hl, bc
     ld [hl], a
     ret
@@ -2967,7 +2963,7 @@ jr_001_519d:
     ld hl, $fff6 ; subtract 10
     add hl, de
     ld c, [hl]
-    call Call_001_4ea3
+    call EncodeAudioVolume
 
 jr_001_51b4:
     ld hl, $001a
@@ -3156,7 +3152,7 @@ jr_001_5281:
 
     ld b, a ; B = selected software channel ID (1-based)
     push hl ; store beginning of current hardware record
-    ld hl, $cc1a
+    ld hl, wAudioPanningTable - 1
     add l
     ld l, a
     ld a, $00
@@ -3184,7 +3180,7 @@ jr_001_5281:
     ld de, $0026
     add hl, de ; get offset $26 of the audio channel
     ld a, c ; current hardware index (0 based) into a
-    call Call_001_52ce
+    call UpdateHardwareChannelRegisters
     pop hl
     ld de, $002a ; offset $2a in audio channel record
     add hl, de
@@ -3208,7 +3204,7 @@ jr_001_52be:
 
 ; A = Hardware channel index 0-3
 ; HL is offset $26 of the audio channel
-Call_001_52ce:
+UpdateHardwareChannelRegisters:
     push bc
     push af
     ld e, l
@@ -3235,7 +3231,7 @@ jr_001_52e4:
     ld c, a ; store hardware channel in c
     add a ; double a
     add c ; then add hardware channel back (multiply by three)
-    ld hl, $5320
+    ld hl, HardwareChannelRegisterCopyTable
     add l
     ld l, a
     ld a, $00
@@ -3280,17 +3276,17 @@ jr_001_531e:
     ret
 
 
-    ; 5320
-    dw $FF10
-    db $05
+HardwareChannelRegisterCopyTable:
+    dw rNR10
+    db $05 ; bytes to copy
 
-    dw $FF16
+    dw rNR21
     db $04
 
-    dw $FF1A
+    dw rNR30
     db $05
 
-    dw $FF20
+    dw rNR41
     db $04
 
 ; Sets playback to repeat or end
@@ -3367,7 +3363,7 @@ RestartPlaybackSlotChannels:
 
 ; A = software channel
 RestartSoftwareChannelPlayback:
-    ld [$cc0c], a
+    ld [wCurrentSoftwareChannelId], a
     call LoadAudioChannelRecord ; load the channel into the working record
     ld a, [wCurrentAudioStreamStartPointer]
     ld [$cc49], a
@@ -3429,7 +3425,7 @@ jr_001_53dd:
     ld [hl], $08 ; Initial volume 0; increase direction; envelope pace 0 (disabled), mutes for channel 3
     ld a, $77
     ldh [rNR50], a ; maximum L/R master volume; VIN disconnected
-    ld a, [$cc0c]
+    ld a, [wCurrentSoftwareChannelId]
     ld hl, wSoftwareChannelActivity - 1
     add l
     ld l, a
@@ -3485,8 +3481,8 @@ jr_001_541c:
 ; 5 - > $CC1F
 ; 6 - > $CC20
 jr_001_5423:
-    ld a, [$cc0c]
-    ld hl, $cc1a
+    ld a, [wCurrentSoftwareChannelId]
+    ld hl, wAudioPanningTable - 1
     add l
     ld l, a
     ld a, $00
@@ -3531,6 +3527,7 @@ Call_001_5436:
     db $12, $ff, $17, $ff, $1c, $ff, $21, $ff, $14, $ff, $19, $ff, $1e, $ff, $23, $ff
 
 ; $5469-$551A: 89 two-byte frequency values (178 bytes).
+; Eventually written to channel offsets $29-$2A
 AudioFrequencyTable:
     dw $002c, $009d, $0107, $016b, $01c9, $0223 ; indices $00-$05
     dw $0277, $02c7, $0312, $0358, $039b, $03da ; indices $06-$0B

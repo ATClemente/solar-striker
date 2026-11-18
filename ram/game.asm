@@ -146,3 +146,10 @@ DEF wHardwareChannel4List EQU $CC33
 
 
 DEF wAudioUpdateRunning EQU $CC00
+
+DEF wCurrentSoftwareChannelId EQU $CC0C
+
+DEF wAudioPanningTable EQU $CC1B
+
+DEF wAudioVolumeTemp EQU $CD77
+DEF wAudioStreamArgument EQU $CD85

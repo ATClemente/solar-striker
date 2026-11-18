@@ -13,6 +13,7 @@ INCLUDE "constants/game.asm"
 INCLUDE "ram/objects.asm"
 INCLUDE "ram/sprites.asm"
 INCLUDE "constants/handlers.asm"
+INCLUDE "constants/audio.asm"
 
 INCLUDE "bank_000.asm"
 INCLUDE "bank_001.asm"

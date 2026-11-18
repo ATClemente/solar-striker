@@ -1285,85 +1285,35 @@ jr_001_482a:
     ld bc, $0000
     rst $38
 
-    db $00, $80, $7b, $48
+; $490B-$492A: 16 little-endian lookup entries.
+AudioLookupTable_490B:
+    dw $8000 ; index $00
+    dw $487b ; index $01
+    dw $4887 ; index $02
+    dw $4892 ; index $03
+    dw $489c ; index $04
+    dw $48a2 ; index $05
+    dw $48a9 ; index $06
+    dw $48b3 ; index $07
+    dw $48bd ; index $08
+    dw $48c7 ; index $09
+    dw $48d1 ; index $0a
+    dw $48db ; index $0b
+    dw $48e5 ; index $0c
+    dw $48ef ; index $0d
+    dw $48f9 ; index $0e
+    dw $4903 ; index $0f
 
-    add a
-    ld c, b
-    sub d
-    ld c, b
-    sbc h
-    ld c, b
-    and d
-    ld c, b
-    xor c
-    ld c, b
-    or e
-    ld c, b
-    cp l
-    ld c, b
-    rst $00
-    ld c, b
-    pop de
-    ld c, b
-    db $db
-    ld c, b
-    push hl
-    ld c, b
-    rst $28
-    ld c, b
-    ld sp, hl
-    ld c, b
-    inc bc
-    ld c, c
-    ld l, l
-
-    db $15, $04
-
-    add hl, de
-    nop
-    ld [de], a
-    scf
-    ld [hl], b
-    ld h, l
-    adc d
-    adc a
-    ret nc
-
-    db $d4
-    ld h, b
-
-    db $64, $70
-
-    ld [hl], e
-    add hl, de
-    ld e, d
-    ld b, l
-    ld h, l
-    ld h, a
-    ld l, c
-    ld l, e
-    ld l, l
-    ld l, [hl]
-    ld h, b
-    ld h, e
-    call nc, $dfd8
-    ld h, l
-    ld l, d
-    ld [bc], a
-    inc b
-    rlca
-    ld d, l
-    ld a, [bc]
-    ld c, a
-    add b
-    add a
-    adc d
-    adc a
-    ret nc
-
-    call nc, $dfd8
-    ld a, [hl-]
-    ld l, l
+; $492B-$495B: raw lookup data preceding InitAudio.
+; Lookup uses a 1-based index with base $492A; valid index range is unconfirmed.
+AudioLookupData_492B:
+    db $6d, $15, $04, $19, $00, $12, $37, $70
+    db $65, $8a, $8f, $d0, $d4, $60, $64, $70
+    db $73, $19, $5a, $45, $65, $67, $69, $6b
+    db $6d, $6e, $60, $63, $d4, $d8, $df, $65
+    db $6a, $02, $04, $07, $55, $0a, $4f, $80
+    db $87, $8a, $8f, $d0, $d4, $d8, $df, $3a
+    db $6d
 
 InitAudio:
     call ResetAudioChannels
@@ -2100,35 +2050,36 @@ Call_001_4d1e:
     ld a, [$cc0c]
     dec a
     ld e, a
-    ld d, $00
+    ld d, $00 ; DE = zero-based software channel index
     ld hl, $001b
     add hl, bc
     ld a, [hl]
     or a
-    jr nz, jr_001_4d3d
+    jr nz, jr_001_4d3d ; jump if offset $1b in channel record is NOT zero
 
     ld hl, $000a
     add hl, bc
     ld a, [hl]
     or a
-    jr z, jr_001_4d3d
+    jr z, jr_001_4d3d ; jump if byte at offset $0a is 0
 
-    dec [hl]
-    jr nz, jr_001_4d3d
+    dec [hl] ; if its not zero decrement it
+    jr nz, jr_001_4d3d ; if its STILL not 0 then jump
 
     ld hl, $000e
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; A still holds 1 from before the decrement; set offset $0E to 1
+
 
 jr_001_4d3d:
     ld hl, $000b
     add hl, bc
-    dec [hl]
-    ret nz
+    dec [hl] ; decrement value at offset $0B
+    ret nz ; return if its not zero
 
     ld hl, $cc21
     add hl, de
-    ld [hl], $ff
+    ld [hl], $ff ; set a table entry starting at cc21 to FF, index is software channel - 1
 
 Jump_001_4d49:
     ld a, [wCurrentAudioChannelRecordPointer]
@@ -2137,21 +2088,23 @@ Jump_001_4d49:
     ld b, a
     ld hl, $0002
     add hl, bc
-    ld a, [hl]
-    inc hl
-    push hl
+    ld a, [hl] ; store the byte from record offset $02 in a
+    inc hl ; move hl to offset $03
+    push hl ; store address of offset $03
     ld h, [hl]
-    ld l, a
-    ld a, [hl+]
-    ld d, a
-    ld a, [hl+]
-    ld [$cd85], a
-    ld a, h
-    ld e, l
-    pop hl
+    ld l, a ; store pointer from $02-$03 into HL
+    ld a, [hl+] ; get the byte that the pointer points to into a
+    ld d, a ; put in d
+    ld a, [hl+] ; get the next byte into a
+    ld [$cd85], a ; store that at cd85
+    ld a, h ; put high byte of address in a
+    ld e, l ; put low byte into e
+    pop hl ; HL now equals address of offset $03 again
     ld [hl-], a
-    ld [hl], e
-    ld a, d
+    ld [hl], e ; change pointer stored at $02-$03
+    ld a, d ; get the byte that the pointer pointed to this round
+    ; preceeding code reads two bytes at pointer in $02-$03, advances two bytes
+    ; and stores that new address back at $02-$03
     cp $b0
     jp nc, Jump_001_4f9f
 
@@ -2161,49 +2114,51 @@ Jump_001_4d49:
     cp $90
     jp nc, Jump_001_4efa
 
+    ; byte was $00-$8F
     ld e, $80
     ld hl, $001b
-    add hl, bc
+    add hl, bc ; record offset $001b
     ld a, [hl]
     or a
-    jr z, jr_001_4d81
+    jr z, jr_001_4d81 ; jump if byte there is zero
 
     ld e, $c0
 
+; e is $c0 or $80 depending on offset $1b
 jr_001_4d81:
     ld hl, $002a
-    add hl, bc
+    add hl, bc ; record offset $002a
     ld a, [hl]
     and $07
-    or e
-    ld [hl], a
+    or e ; keep low 3 bits; set bit 7, and bit 6 when E = $C0
+    ld [hl], a ; store back at the offset
     ld hl, $0004
     add hl, bc
     ld a, [hl]
-    cp $04
+    cp $04 ; compare the byte at record offset $04 with $04
     jr z, jr_001_4e05
 
     ld a, d
     and $f0
     jr z, jr_001_4dee
 
-    call Call_001_4dce
+    call Call_001_4dce ; returns with a pointer to a table entry in hl
     ld a, [hl+]
     push hl
     ld hl, $0029
     add hl, bc
-    ld [hl+], a
+    ld [hl+], a ; store first byte in offset $29
     ld a, [hl]
-    and $f8
+    and $f8 ; and the byte at $2a with $f8
     pop hl
-    or [hl]
+    or [hl] ; then or it with the second byte hl was pointing to from before
     ld hl, $002a
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; store combined control and pitch bits at offset $2A
     ld hl, $0007
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a
+    ld [$cd77], a ; store byte at offset $07 in cd77
     call Call_001_4db9
     jr jr_001_4e2c
 
@@ -2212,7 +2167,7 @@ Call_001_4db9:
     add hl, bc
     ld a, [hl]
     cp $03
-    ret nz
+    ret nz ; return if the byte at record offset $04 is not 3
 
     ld hl, $0029
     add hl, bc
@@ -2220,7 +2175,7 @@ Call_001_4db9:
     ldh [rNR33], a
     ld a, [hl]
     and $7f
-    ldh [rNR34], a
+    ldh [rNR34], a ; write pitch high/control bits with trigger bit 7 cleared
     ret
 
 
@@ -2246,7 +2201,7 @@ Call_001_4dce:
     ld l, a
     ld h, $00
     add hl, hl
-    ld de, $5469
+    ld de, AudioFrequencyTable
     add hl, de
     ret
 
@@ -2255,44 +2210,44 @@ jr_001_4dee:
     ld hl, $0008
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a
+    ld [$cd77], a ; store the byte from record offset $08 in cd77
     ld hl, $000a
     add hl, bc
-    ld [hl], $00
+    ld [hl], $00 ; zero out offset $0a
     ld a, $01
     ld hl, $000e
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; set offset $0e to 1
     jr jr_001_4e78
 
 jr_001_4e05:
-    ld a, d
+    ld a, d ; d is still the "original" byte
     and $ff
-    jr z, jr_001_4dee
+    jr z, jr_001_4dee ; D was $00
 
-    ld hl, $492a
+    ld hl, AudioLookupData_492B - 1 ; base $492A for the 1-based index
     add l
     ld l, a
     ld a, $00
     adc h
     ld h, a
-    ld a, [hl]
+    ld a, [hl] ; HL = $492A + incoming A
     cp $e0
-    jr c, jr_001_4e19
+    jr c, jr_001_4e19 ; table byte < $e0
 
     xor a
 
 jr_001_4e19:
     ld hl, $0029
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; put the byte (or 0) at record offset $29
     ld hl, $0014
     add hl, bc
-    ld [hl], $00
+    ld [hl], $00 ; zero out offset $14
     ld hl, $0007
     add hl, bc
     ld a, [hl]
-    ld [$cd77], a
+    ld [$cd77], a ; store the value from offset $07 in cd77
 
 jr_001_4e2c:
     ld hl, $0009
@@ -2300,9 +2255,9 @@ jr_001_4e2c:
     ld h, [hl]
     ld a, [$cd85]
     sub h
-    jr z, jr_001_4e39
+    jr z, jr_001_4e39 ; byte at $09 was equal to second stream byte
 
-    jr nc, jr_001_4e3b
+    jr nc, jr_001_4e3b ; byte at $09 was < second byte
 
 jr_001_4e39:
     ld a, $01
@@ -2310,7 +2265,7 @@ jr_001_4e39:
 jr_001_4e3b:
     ld hl, $000a
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; store max(1, second stream byte - record[$09]) at offset $0A
     ld a, $01
     ld hl, $000e
     add hl, bc
@@ -2323,19 +2278,19 @@ jr_001_4e3b:
     ld a, [hl]
     ld hl, $0016
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; copy record[$15] to record[$16]; $0E and $18 were set to 1 above
     xor a
     ld hl, $000f
     add hl, bc
     ld [hl], a
     ld hl, $0012
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; set offset $0f and $12 to 0
     ld hl, $0014
     add hl, bc
     ld a, [hl]
     add a
-    ld hl, $490b
+    ld hl, AudioLookupTable_490B
     add l
     ld l, a
     ld a, $00
@@ -2346,47 +2301,49 @@ jr_001_4e3b:
     ld hl, $0019
     add hl, bc
     ld [hl+], a
-    ld [hl], e
+    ld [hl], e ; store the pointer from the lookup table to address offset $19-$1A
 
 jr_001_4e78:
     ld a, [$cd85]
     ld hl, $000b
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; store second byte into offset $0b
     push bc
     ld hl, $0004
     add hl, bc
     ld c, [hl]
     ld a, [$cd77]
     call Call_001_4ea3
-    ld e, b
+    ld e, b ; store return value in e
     pop bc
     ld hl, $000c
     add hl, bc
-    ld a, [hl]
+    ld a, [hl] ; get the byte from offset $0c into a
     or a
-    ld a, e
-    jr nz, jr_001_4e9d
+    ld a, e ; store return into a
+    jr nz, jr_001_4e9d ; jump if record[$0C] was nonzero; ld a, e preserves flags
 
     ld hl, $0013
     add hl, bc
     ld a, [hl]
-    or e
+    or e ; get byte from $0013 and or it with e
 
 jr_001_4e9d:
     ld hl, $0028
     add hl, bc
-    ld [hl], a
+    ld [hl], a ; store return value, possibly ORed with record[$13], at offset $28
     ret
 
-
+; C = offset $04 byte
+; A = value in cd77
+; in one code path at least
 Call_001_4ea3:
     swap a
     and $f0
-    ld b, a
+    ld b, a ; move original low nibble into high nibble; clear low nibble
     ld a, c
     cp $03
-    jr nz, jr_001_4ebe
+    jr nz, jr_001_4ebe ; if C != $03, return that value directly
 
     ld a, b
     rlca
@@ -2399,109 +2356,111 @@ Call_001_4ea3:
     ld a, $00
     adc h
     ld h, a
-    ld b, [hl]
+    ld b, [hl] ; load selected table entry (index 0-3 computed above) into B
     pop hl
 
 jr_001_4ebe:
     ld a, b
     ret
 
-
+    ; 4ec0
     db $00, $60, $40, $20
 
+; byte was $A0-$AF
 Jump_001_4ec4:
     and $0f
-    jp z, Jump_001_4ed9
+    jp z, Jump_001_4ed9 ; jump if the command's low nibble is 0
 
     ld e, a
     ld hl, $001c
     add hl, bc
     ld a, [hl]
     or a
-    jr z, jr_001_4ed8
+    jr z, jr_001_4ed8 ; byte at offset $001c was zero
 
     dec [hl]
-    jr nz, jr_001_4ed9
+    jr nz, jr_001_4ed9 ; decrement and jump if still not zero
 
     jp Jump_001_4d49
 
 
 jr_001_4ed8:
-    ld [hl], e
+    ld [hl], e ; put the byte into the $1c offset
 
 Jump_001_4ed9:
 jr_001_4ed9:
     ld a, [$cd85]
     ld l, a
-    ld h, $00
+    ld h, $00 ; HL = zero-extended second stream byte
     cp $80
-    jr c, jr_001_4ee4
+    jr c, jr_001_4ee4 ; if the second byte is < $80 than jump
 
-    dec h
+    dec h ; set h to $FF
 
+; this repositions the stream pointer based on the offset calculated
 jr_001_4ee4:
-    add hl, hl
+    add hl, hl ; double
     ld e, l
-    ld d, h
+    ld d, h ; store in DE
     ld hl, $0002
     add hl, bc
-    ld a, [hl+]
-    push hl
+    ld a, [hl+] ; put the byte from offset $0002 in a
+    push hl ; save offset $0003 address on stack
     ld h, [hl]
-    ld l, a
+    ld l, a ; set hl ultimately to values from $02-$03 offset
     dec hl
-    dec hl
-    add hl, de
+    dec hl ; move back two bytes
+    add hl, de ; add offset calculated before
     ld a, h
-    ld e, l
-    pop hl
+    ld e, l ; new pointer: high byte in A, low byte in E
+    pop hl ; address of offset $0003
     ld [hl-], a
-    ld [hl], e
+    ld [hl], e ; store that pointer back in offset $02-$03
     jp Jump_001_4d49
 
-
+; byte was $90-$9F
 Jump_001_4efa:
     and $0f
-    jp z, Jump_001_4f64
+    jp z, Jump_001_4f64 ; low nibble was 0
 
-    ld [$cd76], a
+    ld [$cd76], a ; store the byte in cd76
     ld hl, $0002
     add hl, bc
     ld e, [hl]
     inc hl
-    ld d, [hl]
+    ld d, [hl] ; get the pointer from $02-$03 into DE
     ld hl, $001d
-    add hl, bc
+    add hl, bc ; point to record offset $1D
     ld c, $00
 
 jr_001_4f0f:
     ld a, [hl+]
     cp e
-    jr nz, jr_001_4f17
+    jr nz, jr_001_4f17 ; byte read from HL is different than e
 
     ld a, [hl]
     cp d
-    jr z, jr_001_4f52
+    jr z, jr_001_4f52 ; byte read is equal to d
 
 jr_001_4f17:
     inc hl
     inc c
     ld a, c
     cp $03
-    jr c, jr_001_4f0f
+    jr c, jr_001_4f0f ; repeat while fewer than three entries have been checked
 
     ld a, [wCurrentAudioChannelRecordPointer]
     ld e, a
     ld a, [wCurrentAudioChannelRecordPointer + 1]
     ld d, a
     ld hl, $001d
-    add hl, de
+    add hl, de ; check offset $1d
     ld c, $00
 
 jr_001_4f2c:
     ld a, [hl+]
     or [hl]
-    jr z, jr_001_4f3a
+    jr z, jr_001_4f3a ; jump if both bytes are zero
 
     inc hl
     inc c
@@ -2513,21 +2472,21 @@ jr_001_4f2c:
 
 
 jr_001_4f3a:
-    push hl
+    push hl ; save address of the empty entry's high byte
     ld hl, $0002
     add hl, de
     ld a, [hl+]
-    ld b, [hl]
-    pop hl
+    ld b, [hl] ; store a pointer between a and b registers
+    pop hl ; restore the address
     ld [hl], b
     dec hl
-    ld [hl], a
+    ld [hl], a ; overwrite the zeros with the pointer from $02-$03
     ld b, $00
     ld hl, $0023
-    add hl, de
-    add hl, bc
-    ld a, [$cd76]
-    ld [hl], a
+    add hl, de ; offset $23
+    add hl, bc ; adjust for how many iterations we went through before
+    ld a, [$cd76] ; saved low nibble of the loop command
+    ld [hl], a ; put the byte in the newly calculated address
     jr jr_001_4f64
 
 jr_001_4f52:
@@ -2539,7 +2498,7 @@ jr_001_4f52:
     ld hl, $0023
     add hl, de
     add hl, bc
-    dec [hl]
+    dec [hl] ; record + $23 + C
     jr z, jr_001_4f8d
 
 Jump_001_4f64:
@@ -2550,7 +2509,7 @@ jr_001_4f64:
     cp $80
     jr c, jr_001_4f6f
 
-    dec h
+    dec h ; H = $FF: sign-extend a second byte of $80-$FF
 
 jr_001_4f6f:
     ld a, [wCurrentAudioChannelRecordPointer]
@@ -2559,9 +2518,9 @@ jr_001_4f6f:
     ld b, a
     add hl, hl
     ld e, l
-    ld d, h
+    ld d, h ; offset in de
     ld hl, $0002
-    add hl, bc
+    add hl, bc ; record offset $02
     ld a, [hl+]
     push hl
     ld h, [hl]
@@ -2573,7 +2532,7 @@ jr_001_4f6f:
     ld e, l
     pop hl
     ld [hl-], a
-    ld [hl], e
+    ld [hl], e ; new pointer = old pointer − 2 + (incoming HL × 2)
     jp Jump_001_4d49
 
 
@@ -2587,21 +2546,23 @@ jr_001_4f8d:
     add hl, bc
     ld [hl], $00
     inc hl
-    ld [hl], $00
+    ld [hl], $00 ; clear selected pointer; C already holds slot index * 2
     jp Jump_001_4d49
 
-
+; byte was $B0-$FF
 Jump_001_4f9f:
     ld hl, $4d49
     push hl
     cp $ed
-    ret c
+    ret c ; $B0–$EC
 
+    ; $ED-$FF
+    ; byte is in a and d at this point
     ld hl, $0004
     add hl, bc
     ld a, [hl]
     add a
-    ld hl, $4fc9
+    ld hl, AudioCommandTables - 2 ; compensate for the 1-based channel index
     add l
     ld l, a
     ld a, $00
@@ -2609,7 +2570,7 @@ Jump_001_4f9f:
     ld h, a
     ld a, [hl+]
     ld h, [hl]
-    ld l, a
+    ld l, a ; hl is now one of the AudioCommandTable pointers
     ld a, d
     cpl
     add a
@@ -2620,129 +2581,109 @@ Jump_001_4f9f:
     ld h, a
     ld a, [hl+]
     ld h, [hl]
-    ld l, a
+    ld l, a ; hl is now the address of the command. Ex: $FE -> $5088
     or h
-    ret z
+    ret z ; if handler address is zero, return to the pushed $4D49 address
 
     ld a, [$cd85]
-    ld d, a
+    ld d, a ; this was the second byte we grabbed before, now in d
     jp hl
 
 
-    db $d3, $4f, $f9, $4f, $1f, $50, $45, $50, $6b, $50, $88, $50, $90, $50, $98, $50
-    db $b4, $50, $bc, $50
+; Channel index at record offset $04 is 1-based.
+AudioCommandTables: ; $4FCB
+    dw AudioCommandHandlers_1, AudioCommandHandlers_2
+    dw AudioCommandHandlers_3, AudioCommandHandlers_4
 
-    db $c2
-    ld d, b
+AudioCommandHandlers_1: ; $4FD3
+    ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
+    dw $506b ; $FF
+    dw $5088 ; $FE
+    dw $5090 ; $FD
+    dw $5098 ; $FC
+    dw $50b4 ; $FB
+    dw $50bc ; $FA
+    dw $50c2 ; $F9
+    dw $50d9 ; $F8
+    dw $50df ; $F7
+    dw $50ef ; $F6
+    dw $50f5 ; $F5
+    dw $50fb ; $F4
+    dw $0000 ; $F3
+    dw $0000 ; $F2
+    dw $5123 ; $F1
+    dw $5126 ; $F0
+    dw $50e7 ; $EF
+    dw $512e ; $EE
+    dw $5134 ; $ED
 
-    db $d9, $50, $df, $50, $ef, $50, $f5, $50, $fb, $50
+AudioCommandHandlers_2: ; $4FF9
+    ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
+    dw $506b ; $FF
+    dw $5088 ; $FE
+    dw $5090 ; $FD
+    dw $5098 ; $FC
+    dw $50b4 ; $FB
+    dw $50bc ; $FA
+    dw $50c2 ; $F9
+    dw $50d9 ; $F8
+    dw $50df ; $F7
+    dw $50ef ; $F6
+    dw $0000 ; $F5
+    dw $50fb ; $F4
+    dw $0000 ; $F3
+    dw $0000 ; $F2
+    dw $5123 ; $F1
+    dw $5126 ; $F0
+    dw $50e7 ; $EF
+    dw $512e ; $EE
+    dw $5134 ; $ED
 
-    nop
-    nop
-    nop
-    nop
-    inc hl
-    ld d, c
+AudioCommandHandlers_3: ; $501F
+    ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
+    dw $506b ; $FF
+    dw $5088 ; $FE
+    dw $5090 ; $FD
+    dw $5098 ; $FC
+    dw $0000 ; $FB
+    dw $50bc ; $FA
+    dw $50c2 ; $F9
+    dw $50d9 ; $F8
+    dw $50df ; $F7
+    dw $50ef ; $F6
+    dw $0000 ; $F5
+    dw $0000 ; $F4
+    dw $0000 ; $F3
+    dw $5108 ; $F2
+    dw $5123 ; $F1
+    dw $5126 ; $F0
+    dw $50e7 ; $EF
+    dw $512e ; $EE
+    dw $5134 ; $ED
 
-    db $26, $51, $e7, $50
+AudioCommandHandlers_4: ; $5045
+    ; One pointer per command, ordered $FF down to $ED; $0000 skips the command.
+    dw $506b ; $FF
+    dw $5088 ; $FE
+    dw $5090 ; $FD
+    dw $5098 ; $FC
+    dw $50b4 ; $FB
+    dw $50bc ; $FA
+    dw $50c2 ; $F9
+    dw $50d9 ; $F8
+    dw $0000 ; $F7
+    dw $0000 ; $F6
+    dw $0000 ; $F5
+    dw $0000 ; $F4
+    dw $0000 ; $F3
+    dw $0000 ; $F2
+    dw $5123 ; $F1
+    dw $5126 ; $F0
+    dw $0000 ; $EF
+    dw $512e ; $EE
+    dw $0000 ; $ED
 
-    ld l, $51
-
-    db $34, $51, $6b, $50, $88, $50, $90, $50, $98, $50, $b4, $50, $bc, $50
-
-    db $c2
-    ld d, b
-
-    db $d9, $50
-
-    rst $18
-    ld d, b
-    rst $28
-    ld d, b
-    nop
-    nop
-
-    db $fb, $50
-
-    nop
-    nop
-    nop
-    nop
-    inc hl
-    ld d, c
-
-    db $26, $51
-
-    rst $20
-    ld d, b
-    ld l, $51
-    inc [hl]
-    ld d, c
-
-    db $6b, $50, $88, $50, $90, $50, $98, $50
-
-    nop
-    nop
-
-    db $bc, $50
-
-    db $c2
-    ld d, b
-
-    db $d9, $50
-
-    rst $18
-    ld d, b
-    rst $28
-    ld d, b
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-
-    db $08, $51
-
-    inc hl
-    ld d, c
-
-    db $26, $51
-
-    rst $20
-    ld d, b
-    ld l, $51
-    inc [hl]
-    ld d, c
-
-    db $6b, $50, $88, $50, $90, $50, $98, $50, $b4, $50
-
-    cp h
-    ld d, b
-
-    db $c2, $50, $d9, $50
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-
-    db $23, $51, $26, $51
-
-    nop
-    nop
-    ld l, $51
-    nop
-    nop
-
+; $506B: first command handler
     pop hl
     ld a, [$cc0c]
     ld e, a
@@ -2761,11 +2702,12 @@ Jump_001_4f9f:
     ret
 
 
+    ; 5088
     and $0f
     ld hl, $0007
     add hl, bc
-    ld [hl], a
-    ret
+    ld [hl], a ; store low nibble of the second byte in offset $0007
+    ret ; goes back to 4d49
 
 
     and $0f
@@ -2923,32 +2865,35 @@ LoadWaveformToWaveRam:
 
 Call_001_513a:
     ld c, $00
-    ld hl, $cc7e
-    ld de, $cc15
+    ld hl, $cc72 + $000C
+    ld de, wSoftwareChannelActivity
 
 jr_001_5142:
     push de
     push hl
     ld a, [de]
     or a
-    jr z, jr_001_515b
+    jr z, jr_001_515b ; skip this software channel if inactive
 
     ld a, [hl+]
     or a
-    jr z, jr_001_515b
+    jr z, jr_001_515b ; skip if this record's offset $0C is zero
 
-    ld b, a
-    ld a, [hl+]
-    dec [hl]
-    jr nz, jr_001_515b
+    ld b, a ; if not store in b
+    ld a, [hl+] ; store byte from offset + 1 in a
+    dec [hl] ; decrement record offset $0E ($CC80 on the first iteration)
+    jr nz, jr_001_515b ; if its not zero jump
 
-    ld [hl], a
+    ; byte was 1 (and now is 0)
+    ld [hl], a ; store the byte from offset + 1 in offset + 2
     push bc
     ld a, c
-    ld [$cd74], a
+    ld [$cd74], a ; store the current software channel in cd74 (0-5)
     call Call_001_5169
     pop bc
 
+; move to processing next channel
+; check if we have processed all 6 channels
 jr_001_515b:
     pop hl
     ld de, $002b
@@ -2967,41 +2912,41 @@ Call_001_5169:
     ld e, l
     ld d, h
     ld hl, $fffa
-    add hl, de
-    ld c, [hl]
+    add hl, de ; subtract by 6
+    ld c, [hl] ; store byte there in c
     ld hl, $fffc
-    add hl, de
-    ld a, [hl]
+    add hl, de ; subtract by 4
+    ld a, [hl] ; store byte there in a
     or a
     ld a, c
-    jr z, jr_001_519d
+    jr z, jr_001_519d ; byte at DE - 4 (record[$0A]) was zero; ld a, c preserves flags
 
     ld hl, $0001
     add hl, de
-    ld a, [hl]
+    ld a, [hl] ; read the offset + 1
     cp $10
-    jr c, jr_001_5184
+    jr c, jr_001_5184 ; jump if < $10
 
     ld a, $0f
 
 jr_001_5184:
-    ld c, a
-    inc a
-    ld [hl], a
-    inc hl
+    ld c, a ; load the original value or $0f into c
+    inc a ; increment a
+    ld [hl], a ; load into the offset + 1
+    inc hl ; move to offset + 2
     ld a, [hl+]
     ld h, [hl]
-    ld l, a
+    ld l, a ; load pointer from DE + 2/+3, which are record offsets $10-$11
     ld a, c
-    srl a
+    srl a ; divide by two
     add l
-    ld l, a
+    ld l, a ; adjust hl by result
     ld a, $00
-    adc h
-    ld h, a
+    adc h ; h + carry, handles low byte overflow
+    ld h, a ; HL = original pointer + floor(C / 2)
     ld a, [hl]
-    bit 0, c
-    jr nz, jr_001_519b
+    bit 0, c ; test whether c is odd
+    jr nz, jr_001_519b ; if odd skip the swap a
 
     swap a
 
@@ -3011,15 +2956,15 @@ jr_001_519b:
 jr_001_519d:
     ld c, a
     ld hl, $fff9
-    add hl, de
-    ld a, [hl]
-    and $0f
-    add c
+    add hl, de  ; subtract 7
+    ld a, [hl] ; get the byte there
+    and $0f ; extract low nibble
+    add c ; add c to it
     sub $0f
     ld b, $00
-    jr c, jr_001_51b4
+    jr c, jr_001_51b4 ; jump if sum was below 15
 
-    ld hl, $fff6
+    ld hl, $fff6 ; subtract 10
     add hl, de
     ld c, [hl]
     call Call_001_4ea3
@@ -3028,26 +2973,26 @@ jr_001_51b4:
     ld hl, $001a
     add hl, de
     ld a, [hl]
-    and $0f
-    or b
+    and $0f      ; preserve the low nibble of record[$28]
+    or b         ; combine it with the newly calculated bits
     push hl
     ld hl, $001a
     add hl, de
-    cp [hl]
-    ld [hl], a
-    pop hl
-    ret z
+    cp [hl]      ; compare new value with old value
+    ld [hl], a   ; store new value; flags stay unchanged
+    pop hl       ; flags stay unchanged
+    ret z        ; return if the value didn’t change
 
     ld [hl], a
     inc hl
     inc hl
-    set 7, [hl]
+    set 7, [hl] ; offset $2a
     ld a, [$cd74]
     ld c, a
     ld b, $00
     ld hl, $cc21
     add hl, bc
-    ld [hl], $ff
+    ld [hl], $ff ; write FF to cc21 + channel index
     ret
 
 
@@ -3128,7 +3073,7 @@ jr_001_521a:
     add hl, de
     ld a, [hl]
     add a
-    ld hl, $490b
+    ld hl, AudioLookupTable_490B
     add l
     ld l, a
     ld a, $00
@@ -3198,52 +3143,52 @@ jr_001_5247:
     rst $38
 
 Call_001_5276:
-    ld a, $80
+    ld a, $80 ; useless, the next xor immediately clears
     xor a
-    ld [$cc37], a
-    ld c, $00
-    ld hl, $cc27
+    ld [$cc37], a ; zero out cc37
+    ld c, $00 ; set a counter
+    ld hl, wHardwareChannel1List
 
 jr_001_5281:
     ld a, [hl]
     or a
-    jr z, jr_001_52be
+    jr z, jr_001_52be ; if first byte is zero move to the next channel
 
-    ld b, a
-    push hl
+    ld b, a ; B = selected software channel ID (1-based)
+    push hl ; store beginning of current hardware record
     ld hl, $cc1a
     add l
     ld l, a
     ld a, $00
     adc h
-    ld h, a
+    ld h, a ; HL = $CC1A + software channel ID: address of its panning mask
     ld a, [$cc37]
-    or [hl]
-    ld [$cc37], a
-    ld a, b
+    or [hl] ; combine this channel's panning mask with masks already collected
+    ld [$cc37], a ; put back in cc37, saving combined mask
+    ld a, b ; put that first byte back in a
     ld hl, $cc20
     add l
     ld l, a
     ld a, $00
     adc h
     ld h, a
-    ld a, [hl]
+    ld a, [hl] ; read software channel's update flag at $CC20 + ID
     or a
-    jr z, jr_001_52bd
+    jr z, jr_001_52bd ; move to the next channel if its zero
 
-    ld [hl], $00
+    ld [hl], $00 ; zero out that entry
     push bc
-    ld a, b
+    ld a, b ; first byte into a again
     call GetAudioChannelRecord
     push hl
     ld de, $0026
-    add hl, de
-    ld a, c
+    add hl, de ; get offset $26 of the audio channel
+    ld a, c ; current hardware index (0 based) into a
     call Call_001_52ce
     pop hl
-    ld de, $002a
+    ld de, $002a ; offset $2a in audio channel record
     add hl, de
-    res 7, [hl]
+    res 7, [hl] ; clear the saved trigger bit after writing hardware registers
     pop bc
 
 jr_001_52bd:
@@ -3254,28 +3199,30 @@ jr_001_52be:
     add hl, de
     inc c
     ld a, c
-    cp $04
+    cp $04 ; 4 hardware channels to check
     jr c, jr_001_5281
 
     ld a, [$cc37]
-    ldh [rNR51], a
+    ldh [rNR51], a ; store accumulated panning mask in NR51
     ret
 
-
+; A = Hardware channel index 0-3
+; HL is offset $26 of the audio channel
 Call_001_52ce:
     push bc
     push af
     ld e, l
     ld d, h
     inc de
-    inc de
-    ld c, a
-    ld a, [de]
+    inc de ; move to offset $28
+    ld c, a ; store hardware channel in c
+    ld a, [de] ; store byte at offset $28 in A
     push af
     ld a, c
     cp $02
-    jr nz, jr_001_52e4
+    jr nz, jr_001_52e4 ; if hardware channel is not 3 (index 2) jump
 
+    ; Disable channel 3's DAC while updating its registers
     push af
     ldh a, [rNR30]
     and $7f
@@ -3283,56 +3230,68 @@ Call_001_52ce:
     pop af
 
 jr_001_52e4:
-    push hl
-    and $03
-    ld c, a
-    add a
-    add c
+    push hl ; offset $26 in the record still
+    and $03 ; keep index 0-3; redundant for this caller's valid index
+    ld c, a ; store hardware channel in c
+    add a ; double a
+    add c ; then add hardware channel back (multiply by three)
     ld hl, $5320
     add l
     ld l, a
     ld a, $00
     adc h
-    ld h, a
+    ld h, a ; HL points to selected 3-byte entry: destination address + byte count
     ld e, [hl]
     inc hl
-    ld d, [hl]
+    ld d, [hl] ; load address into de
     inc hl
-    ld c, [hl]
+    ld c, [hl] ; load byte count into c
     ld b, $00
-    pop hl
+    pop hl ; hl is offset $26 again
     ld a, c
     cp $04
     jr nz, jr_001_5301
 
+    ; bytes to copy is 4, move the pointer to offset $27
     inc hl
 
 jr_001_5301:
-    pop af
-    and $f0
-    jr nz, jr_001_5306
+    pop af ; A = saved record[$28]
+    and $f0 ; keep upper nibble; result is unused by the copy helper
+    jr nz, jr_001_5306 ; target is the next instruction either way
 
 jr_001_5306:
-    call AudioCopyMemorySetup
+    call AudioCopyMemorySetup ; copy BC bytes from [HL] to hardware registers at [DE]
     ld a, $77
-    ldh [rNR50], a
+    ldh [rNR50], a ; Maximum L/R master volume; VIN disconnected
     pop af
     cp $02
-    jr nz, jr_001_531e
+    jr nz, jr_001_531e ; if channel is not 3 (index 2) jump
 
     ldh a, [rNR52]
     or $04
-    ld a, $80
-    ldh [rNR30], a
+    ld a, $80 ; discard the NR52 value modified in A; it was never written back
+    ldh [rNR30], a ; re-enable channel 3's DAC
     ld a, $77
-    ldh [rNR50], a
+    ldh [rNR50], a ; Maximum L/R master volume; VIN disconnected
 
 jr_001_531e:
     pop bc
     ret
 
 
-    db $10, $ff, $05, $16, $ff, $04, $1a, $ff, $05, $20, $ff, $04
+    ; 5320
+    dw $FF10
+    db $05
+
+    dw $FF16
+    db $04
+
+    dw $FF1A
+    db $05
+
+    dw $FF20
+    db $04
 
 ; Sets playback to repeat or end
 CheckPlaybackCompletion:
@@ -3469,7 +3428,7 @@ jr_001_53dd:
     ldh [rNR50], a ; set minimum master volume
     ld [hl], $08 ; Initial volume 0; increase direction; envelope pace 0 (disabled), mutes for channel 3
     ld a, $77
-    ldh [rNR50], a ; turn all volume on but VIN
+    ldh [rNR50], a ; maximum L/R master volume; VIN disconnected
     ld a, [$cc0c]
     ld hl, wSoftwareChannelActivity - 1
     add l
@@ -3485,7 +3444,7 @@ AudioChannelVolumeRegisterTable:
     dw $FF12, $FF17, $FF1C, $FF21
 
 ; E = wCurrentPlaybackHardwareChannel
-; A = $03 when coming from UpdateAudio path
+; A = routing selection; restart passes $03, stream commands supply their argument
 ; A restricts the output routing:
 ; 0 -> $00 -> Neither side
 ; 1 -> $01 -> Right
@@ -3493,19 +3452,19 @@ AudioChannelVolumeRegisterTable:
 ; 3 -> $11 -> Both
 StoreAudioPanningMask:
     and $03
-    ld d, a ; d becomes 3
-    rrca ; a becomes $81 and we set carry
-    swap a ; a becomes $18, clear carry
-    or d ; set bottom two bits, a is $1B
-    and $11 ; a becomes $11
-    ld d, a ; d = $11
+    ld d, a ; save the 2-bit routing selection (example: $03)
+    rrca ; rotate right: original bit 0 moves to bit 7 and carry
+    swap a ; swap nibbles; for routing $03, A becomes $18
+    or d ; combine the routing bits (for routing $03, A becomes $1B)
+    and $11 ; keep right/left routing bits 0 and 4 (for routing $03, A = $11)
+    ld d, a ; D = unshifted routing mask ($00, $01, $10, or $11)
     ld a, e ; a = wCurrentPlaybackHardwareChannel
 
 jr_001_541c:
     dec a
     jr z, jr_001_5423 ; if a is 0 (was 1) move on
 
-    rlc d ; rotate d left (usually results in doubling)
+    rlc d ; rotate routing mask left once per hardware channel
     jr jr_001_541c
 
 ; Hardware Channel -> Final D
@@ -3571,141 +3530,25 @@ Call_001_5436:
 
     db $12, $ff, $17, $ff, $1c, $ff, $21, $ff, $14, $ff, $19, $ff, $1e, $ff, $23, $ff
 
-    inc l
-    nop
-    sbc l
-    nop
+; $5469-$551A: 89 two-byte frequency values (178 bytes).
+AudioFrequencyTable:
+    dw $002c, $009d, $0107, $016b, $01c9, $0223 ; indices $00-$05
+    dw $0277, $02c7, $0312, $0358, $039b, $03da ; indices $06-$0B
+    dw $0416, $044e, $0483, $04b5, $04e5, $0511 ; indices $0C-$11
+    dw $053b, $0563, $0589, $05ac, $05ce, $05ed ; indices $12-$17
+    dw $060b, $0627, $0642, $065b, $0672, $0689 ; indices $18-$1D
+    dw $069e, $06b2, $06c4, $06d6, $06e7, $06f7 ; indices $1E-$23
+    dw $0706, $0714, $0721, $072d, $0739, $0744 ; indices $24-$29
+    dw $074f, $0759, $0762, $076b, $0773, $077b ; indices $2A-$2F
+    dw $0783, $078a, $0790, $0797, $079d, $07a2 ; indices $30-$35
+    dw $07a7, $07ac, $07b1, $07b6, $07ba, $07be ; indices $36-$3B
+    dw $07c1, $07c5, $07c8, $07cb, $07ce, $07d1 ; indices $3C-$41
+    dw $07d4, $07d6, $07d9, $07db, $07dd, $07df ; indices $42-$47
+    dw $07e1, $07e2, $07e4, $07e6, $07e7, $07e9 ; indices $48-$4D
+    dw $07ea, $07eb, $07ec, $07ed, $07ee, $07ef ; indices $4E-$53
+    dw $07f0, $07f1, $07f2, $07f3, $07f4 ; indices $54-$58
+AudioFrequencyTableEnd:
 
-    db $07, $01
-
-    ld l, e
-    db $01
-
-    db $c9, $01, $23, $02
-
-    ld [hl], a
-    ld [bc], a
-
-    db $c7, $02, $12, $03, $58, $03
-
-    sbc e
-    inc bc
-
-    db $da, $03, $16, $04
-
-    ld c, [hl]
-    inc b
-
-    db $83, $04
-
-    or l
-    inc b
-
-    db $e5, $04, $11, $05, $3b, $05, $63, $05
-
-    adc c
-    dec b
-
-    db $ac, $05, $ce, $05
-
-    db $ed
-    dec b
-
-    db $0b, $06
-
-    daa
-    db $06
-
-    db $42, $06, $5b, $06, $72, $06, $89, $06, $9e, $06, $b2, $06, $c4, $06, $d6, $06
-    db $e7, $06, $f7, $06, $06, $07
-
-    inc d
-    rlca
-
-    db $21, $07
-
-    dec l
-    rlca
-
-    db $39, $07, $44, $07, $4f, $07, $59, $07
-
-    ld h, d
-    rlca
-
-    db $6b, $07, $73, $07, $7b, $07, $83, $07
-
-    adc d
-    rlca
-
-    db $90, $07
-
-    sub a
-    rlca
-
-    db $9d, $07, $a2, $07, $a7, $07, $ac, $07
-
-    or c
-    rlca
-
-    db $b6, $07
-
-    cp d
-    rlca
-
-    db $be, $07, $c1, $07
-
-    push bc
-    rlca
-    ret z
-
-    rlca
-    rlc a
-    adc $07
-    pop de
-    rlca
-    call nc, $d607
-    rlca
-    reti
-
-
-    rlca
-    db $db
-    rlca
-    db $dd
-    rlca
-    rst $18
-    rlca
-    pop hl
-    rlca
-    ldh [c], a
-    rlca
-    db $e4
-    rlca
-    and $07
-    rst $20
-    rlca
-    jp hl
-
-
-    rlca
-    ld [$eb07], a
-    rlca
-    db $ec
-    rlca
-    db $ed
-    rlca
-    xor $07
-    rst $28
-    rlca
-    ldh a, [rTAC]
-    pop af
-    rlca
-    ldh a, [c]
-    rlca
-    di
-    rlca
-    db $f4
-    rlca
     ld l, c
     ld d, h
     add c

@@ -124,10 +124,14 @@ DEF wPlaybackSlotPriorityTable EQU $CC08 ; 4 bytes
 
 DEF wSoftwareChannelActivity EQU $CC15 ; 6 bytes
 
+DEF wSoftwareChannelRegisterUpdatePending EQU $CC21 ; 6 bytes
+
 DEF wCurrentPlaybackRecord EQU $CC38 ; 3 bytes: repeat count, tick interval, current tick countdown
 
 DEF wCurrentAudioStreamStartPointer EQU $CC47 ; 2 bytes within working channel record
 DEF wCurrentAudioChannelRecord EQU $CC47 ; $2B bytes
+
+DEF wHardwareChannelBeingSearched EQU $CD75
 
 DEF wRequestedAudioPriority EQU $CD80
 

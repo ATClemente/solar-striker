@@ -131,15 +131,14 @@ Start:
 InitTitleScreen:
     ld a, $02
     ld [$2100], a ; Set ROM bank 2
-    ; Copy $1000 bytes of image_002_4000.2bpp into VRAM
-    ld hl, $4000
-    ld de, $8000
+    ; Shared sprite tiles: ROM $4000-$4FFF -> VRAM $8000-$8FFF.
+    ld hl, CommonSpriteTileGraphics
+    ld de, _VRAM
     ld bc, $1000
     call CopyMemory
-    ; Copy gfx/image_002_6730.2bpp and
-    ; gfx/image_002_6d30.2bpp into VRAM
-    ld hl, $6730
-    ld de, $9000
+    ; Title-screen background tiles: ROM $6730-$6D5F -> VRAM $9000-$962F.
+    ld hl, TitleScreenBackgroundTileGraphics
+    ld de, _VRAM + $1000
     ld bc, $0630
     call CopyMemory
     ld a, $03
@@ -875,7 +874,7 @@ RunStageTransition:
     ld a, $02
     ld [$2100], a
     ld hl, Stage8SpriteTileGraphics
-    ld de, $8000
+    ld de, _VRAM
     ld bc, $0800
     call CopyMemory
 
@@ -1067,7 +1066,7 @@ SetupGameOverScreen:
     ld a, $02
     ld [$2100], a
     ld hl, GameOverBackgroundTileGraphics
-    ld de, $9000
+    ld de, _VRAM + $1000
     ld bc, $0360
     call CopyMemory
     ld a, $03
@@ -2475,7 +2474,7 @@ CopyStageTileGraphicsToVram:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld de, $9000
+    ld de, _VRAM + $1000
     ; For stages 0/1/2, $5000 is offset $1000 in image_002_4000.2bpp.
     jp CopyMemory
 

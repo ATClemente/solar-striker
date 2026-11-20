@@ -7144,187 +7144,32 @@ NextStageObjGraphics:
     db $ce, $00, $bc, $00, $e2, $00, $da, $00, $00, $00 ; Row 1: NEXT, blank.
     db $d8, $00, $da, $00, $b4, $00, $c0, $00, $bc, $00 ; Row 2: STAGE.
 
-    adc $00
-    cp h
-    nop
-    ldh [c], a
-    nop
-    jp c, RST_00
+; Additional text sprite graphics; no references identified.
+; Each block has two rows of eight (tile, attributes) pairs.
 
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    ret c
+NextStageWideGraphics: ; $2B89-$2BA8
+    db $ce, $00, $bc, $00, $e2, $00, $da, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 1: "NEXT".
+    db $d8, $00, $da, $00, $b4, $00, $c0, $00, $bc, $00, $00, $00, $00, $00, $00, $00 ; Row 2: "STAGE".
 
-    nop
-    jp c, $b400
+MadSeaStageNameGraphics: ; $2BA9-$2BC8
+    db $cc, $00, $b4, $00, $ba, $00, $00, $00, $d8, $00, $bc, $00, $b4, $00, $00, $00 ; Row 1: "MAD SEA".
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 2: blank.
 
-    nop
-    ret nz
+GunCityStageNameGraphics: ; $2BC9-$2BE8
+    db $c0, $00, $dc, $00, $ce, $00, $b8, $00, $c4, $00, $da, $00, $e4, $00, $00, $00 ; Row 1: "GUNCITY".
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 2: blank.
 
-    nop
-    cp h
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    call z, $b400
-    nop
-    cp d
-    nop
-    nop
-    nop
-    ret c
+DarkCaveStageNameGraphics: ; $2BE9-$2C08
+    db $ba, $00, $b4, $00, $d6, $00, $c8, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 1: "DARK".
+    db $b8, $00, $b4, $00, $de, $00, $bc, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 2: "CAVE".
 
-    nop
-    cp h
-    nop
-    or h
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    ret nz
+FortressStageNameGraphics: ; $2C09-$2C28
+    db $be, $00, $d0, $00, $d6, $00, $da, $00, $d6, $00, $bc, $00, $d8, $00, $d8, $00 ; Row 1: "FORTRESS".
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; Row 2: blank.
 
-    nop
-    call c, $ce00
-    nop
-    cp b
-    nop
-    call nz, $da00
-    nop
-    db $e4
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    cp d
-    nop
-    or h
-    nop
-    sub $00
-    ret z
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    cp b
-    nop
-    or h
-    nop
-    sbc $00
-    cp h
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    cp [hl]
-    nop
-    ret nc
-
-    nop
-    sub $00
-    jp c, $d600
-
-    nop
-    cp h
-    nop
-    ret c
-
-    nop
-    ret c
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    cp [hl]
-    nop
-    call nz, $ce00
-    nop
-    or h
-    nop
-    jp z, RST_00
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    call z, $c400
-    nop
-    ret c
-
-    nop
-    ret c
-
-    nop
-    call nz, $d000
-    nop
-    adc $00
-    nop
-    nop
+FinalMissionStageNameGraphics: ; $2C29-$2C48
+    db $be, $00, $c4, $00, $ce, $00, $b4, $00, $ca, $00, $00, $00, $00, $00, $00, $00 ; Row 1: "FINAL".
+    db $cc, $00, $c4, $00, $d8, $00, $d8, $00, $c4, $00, $d0, $00, $ce, $00, $00, $00 ; Row 2: "MISSION".
 
 StartGameOverSequence:
     ld a, [wPlayerLives]

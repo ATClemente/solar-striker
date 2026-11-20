@@ -3456,25 +3456,17 @@ AudioFrequencyTable:
     dw $07f0, $07f1, $07f2, $07f3, $07f4 ; indices $54-$58
 AudioFrequencyTableEnd:
 
-    ld l, c
-    ld d, h
-    add c
-
-    ld d, h
-    sbc c
-    ld d, h
-    or c
-    ld d, h
-    ret
-
-
-    ld d, h
-    pop hl
-    ld d, h
-    ld sp, hl
-    ld d, h
-    db $11
-    ld d, l
+; $551B-$552A: pointers to every 12th entry in AudioFrequencyTable.
+; Apparent octave lookup table; no references identified.
+AudioOctaveFrequencyPointerTable:
+    dw AudioFrequencyTable + $00 ; frequency index $00
+    dw AudioFrequencyTable + $18 ; frequency index $0C
+    dw AudioFrequencyTable + $30 ; frequency index $18
+    dw AudioFrequencyTable + $48 ; frequency index $24
+    dw AudioFrequencyTable + $60 ; frequency index $30
+    dw AudioFrequencyTable + $78 ; frequency index $3C
+    dw AudioFrequencyTable + $90 ; frequency index $48
+    dw AudioFrequencyTable + $a8 ; frequency index $54
 
 AudioCopyMemorySetup:
     push af

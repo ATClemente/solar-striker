@@ -2783,11 +2783,11 @@ FiringTimingTable:
     db $04, $18 ; index $0e
     db $04, $10 ; index $0f
 
-; Allocate a separate smoke object at the coordinates in $CA34-$CA35.
+; Allocate a separate smoke object at wSmokeSpawnY/wSmokeSpawnX.
 InitializeSmokeObject:
     ld bc, SmokePuffInitTemplate
 
-    ld hl, $ca34
+    ld hl, wSmokeSpawnY
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -3837,7 +3837,7 @@ InitializePlayerDeathSmoke:
     ld a, $c0
     ld [hl+], a
     ld c, [hl]
-    ld hl, $ca34
+    ld hl, wSmokeSpawnY
     ld [hl], b
     inc hl
     ld [hl], c
@@ -3920,8 +3920,6 @@ PlayerDirectionLookupTable:
     db $ff ; $B: Down + Right + Left
     db $ff ; $C: Down + Up
     db $ff ; $D: Down + Up + Right
-
-Jump_000_168a:
     db $ff ; $E: Down + Up + Left
     db $ff ; $F: All four directions
 
@@ -5235,7 +5233,7 @@ HandlePowerUpContainerHit:
     ld a, [bc]
     call SetObjectPointer
     inc hl
-    ld de, $ca34
+    ld de, wSmokeSpawnY
     ld a, [hl+]
     ld [de], a
     inc de
@@ -5945,7 +5943,7 @@ AnthropMissileGraphics:
 
 InitializeStageFourBoss:
     xor a
-    ld hl, $cac0
+    ld hl, wNextBossPartIndex
     ld b, $10
 
 .clearStateBytes
@@ -6135,7 +6133,7 @@ SmokeSpawnOffsetTable:
 
 InitializeStageFiveBoss:
     xor a
-    ld hl, $cac0
+    ld hl, wNextBossPartIndex
     ld b, $10
 
 .clearStateBytes
@@ -6233,7 +6231,7 @@ StageFiveBossCenterInitTemplate:
 
 InitializeFinalBoss:
     xor a
-    ld hl, $cac0
+    ld hl, wNextBossPartIndex
     ld b, $10
 
 .clearStateBytes:
@@ -6241,7 +6239,7 @@ InitializeFinalBoss:
     dec b
     jr nz, .clearStateBytes
 
-    ld [$cf99], a
+    ld [wBossFiringSequenceIndex], a
     ld de, InitializeFinalBossCenter
     call StoreAddressInFreeWramSlot
     ld de, WaitForFinalBossFiringStart
@@ -6372,7 +6370,7 @@ UpdateUltraCrusherShotTimer:
     jp SetCurrentHandlerAddress
 
 TryFireUltraCrusherLaser:
-    ld a, [$cf99]
+    ld a, [wUltraCrusherObjectIndex]
     call SetObjectPointer
     inc hl
     inc hl
@@ -6615,7 +6613,7 @@ CheckBossFiringActive:
     jp SetCurrentHandlerAddress
 
 PrepareBossProjectileSpawn:
-    ld hl, $cf99
+    ld hl, wBossFiringSequenceIndex
     ld a, [hl]
     and $1f
     inc [hl]
@@ -6726,7 +6724,7 @@ WaitForFinalBossFiringStart:
     add hl, bc
     xor a
     ld [hl], a
-    ld [$cf99], a
+    ld [wBossFiringSequenceIndex], a
     ld de, UpdateFinalBossFiringTimer
     jp SetCurrentHandlerAddress
 

@@ -33,6 +33,9 @@ DEF wCollisionPointX EQU $CA31
 
 DEF wPlayerShotDamage EQU $CA33
 
+DEF wSmokeSpawnY EQU $CA34
+DEF wSmokeSpawnX EQU $CA35
+
 DEF wEnemyShotSpawnY EQU $CA60 ; Zero means no pending shot request
 DEF wEnemyShotSpawnX EQU $CA61
 
@@ -71,6 +74,7 @@ DEF wEnableQuickSoftReset EQU $CAB9
 
 DEF wNextBossPartIndex EQU $CAC0
 DEF wBossEncounterEnding EQU $CAC1
+DEF wBossBackgroundHideTimer EQU $CAC3
 
 DEF wStageTransitionActive EQU $CAC5
 DEF wPlayerTransitionComplete EQU $CAC6
@@ -108,6 +112,11 @@ DEF wHardModeUnlocked EQU $CFFC
 
 DEF wGameOverFadeTimer EQU $CF97
 DEF wGameOverExitTimer EQU $CF98
+
+; Shared storage: these uses belong to different boss encounters.
+DEF wUltraCrusherObjectIndex EQU $CF99
+DEF wEpikhanFiringTimer EQU $CF99
+DEF wBossFiringSequenceIndex EQU $CF99
 
 
 

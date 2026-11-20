@@ -715,7 +715,7 @@ DestroyXenocryptPart:
     ld [de], a
     ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
-    ld hl, $734c
+    ld hl, BossPartDestructionSound
     ld a, $01
     call SetupAudioPlayback
     ld d, $33
@@ -992,7 +992,7 @@ TriggerSmokeEffect:
     ld [de], a
     ld de, InitializeSmokeObject
     call StoreAddressInFreeWramSlot
-    ld hl, $734c
+    ld hl, BossPartDestructionSound
     ld a, $01
     call SetupAudioPlayback
     ret
@@ -1798,34 +1798,34 @@ RemoveSoftwareChannelFromList:
     ld bc, $0003
     ld d, $04
 
-jr_001_4c69:
+.findChannel
     cp [hl]
-    jr z, jr_001_4c74
+    jr z, .silence
 
     inc hl
     dec bc
     dec d
-    jr nz, jr_001_4c69
+    jr nz, .findChannel
 
     scf
-    jr jr_001_4c83
+    jr .return
 
-jr_001_4c74:
+.silence
     call SilenceHardwareChannelIfRemovingHead
     ld e, l
     ld d, h
     inc hl
     ld a, b
     or c
-    jr z, jr_001_4c81
+    jr z, .zero
 
     call AudioCopyMemorySetup
 
-jr_001_4c81:
+.zero
     xor a
     ld [de], a
 
-jr_001_4c83:
+.return
     pop hl
     ret
 
@@ -3511,1815 +3511,226 @@ CopyMemoryBackwardLoop:
     ret
 
 
-    db $06, $00, $4e, $55, $00, $85, $55, $01, $e2, $55, $02, $00, $00, $fe, $0a, $f5
-    db $08, $fc, $00, $fb, $05, $f4, $80, $fd, $03, $f0, $01, $50, $04, $44, $04, $50
-    db $04, $4b, $08, $42, $04
+GameOverMusic: ; $01:$5541
+    db $06 ; Playback tick interval minus one
+    db $00 ; Priority
 
-    ld b, a
-    inc b
-    ld c, e
-    inc b
-    ld c, c
-    jr nz, jr_001_55bd
+    dw GameOverMusicStream1 ; Hardware channel 1: pulse
+    db $00 ; Software channel selector
 
-    inc b
-    ld b, h
-    inc b
-    ld d, b
-    inc b
-    ld c, e
-    ld [$0442], sp
-    ld b, a
-    inc b
-    ld c, e
-    inc b
-    ld c, c
-    jr nz, jr_001_551e
+    dw GameOverMusicStream2 ; Hardware channel 2: pulse
+    db $01 ; Software channel selector
 
-    ldh a, [$fff0]
-    nop
-    ld d, b
-    ld b, b
-    and b
-    rst $38
-    rst $38
+    dw GameOverMusicStream3 ; Hardware channel 3: wave
+    db $02 ; Software channel selector
 
+    dw $0000 ; Hardware channel 4 unused
+
+GameOverMusicStream1: ; $01:$554E-$5584
+    db $fe, $0a, $f5, $08, $fc, $00, $fb, $05, $f4, $80, $fd, $03, $f0, $01, $50, $04
+    db $44, $04, $50, $04, $4b, $08, $42, $04, $47, $04, $4b, $04, $49, $20, $50, $04
+    db $44, $04, $50, $04, $4b, $08, $42, $04, $47, $04, $4b, $04, $49, $20, $a1, $f0
+    db $f0, $00, $50, $40, $a0, $ff, $ff
+
+GameOverMusicStream2: ; $01:$5585-$55E1
     db $fe, $0a, $f4, $80, $fc, $00, $fb, $05, $fd, $03, $f0, $02, $39, $04, $40, $04
-    db $44, $04, $37, $08, $3b, $04
+    db $44, $04, $37, $08, $3b, $04, $42, $04, $4b, $04, $49, $04, $fb, $06, $f0, $03
+    db $40, $04, $44, $04, $39, $04, $40, $04, $34, $04, $39, $04, $30, $04, $f0, $02
+    db $fb, $04, $39, $04, $40, $04, $44, $04, $37, $08, $3b, $04, $42, $04, $4b, $04
+    db $f0, $03, $39, $02, $40, $02, $45, $02, $49, $02, $40, $02, $45, $02, $49, $02
+    db $50, $02, $55, $10, $a1, $dc, $f0, $00, $50, $40, $a0, $ff, $ff
 
-    ld b, d
-    inc b
-    ld c, e
-    inc b
-    ld c, c
-
-jr_001_55a0:
-    inc b
-    ei
-    ld b, $f0
-    inc bc
-    ld b, b
-    inc b
-    ld b, h
-    inc b
-    add hl, sp
-    inc b
-    ld b, b
-    inc b
-    inc [hl]
-    inc b
-    add hl, sp
-    inc b
-    jr nc, jr_001_55b7
-
-    ldh a, [rSC]
-    ei
-    inc b
-
-jr_001_55b7:
-    add hl, sp
-    inc b
-    ld b, b
-    inc b
-    ld b, h
-    inc b
-
-jr_001_55bd:
-    scf
-    ld [$043b], sp
-    ld b, d
-    inc b
-    ld c, e
-    inc b
-    ldh a, [$ff03]
-    add hl, sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    ld b, l
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    ld b, l
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    ld d, b
-    ld [bc], a
-    ld d, l
-    db $10
-    and c
-    call c, Call_000_00f0
-    ld d, b
-    ld b, b
-    and b
-    rst $38
-    rst $38
-
+GameOverMusicStream3: ; $01:$55E2-$5602
     db $fe, $07, $f2, $01, $fc, $0f, $fa, $06, $f8, $01, $fd, $00, $f0, $03, $fd, $03
-    db $25, $0c, $24, $14
+    db $25, $0c, $24, $14, $22, $20, $25, $0c, $24, $14, $22, $20, $a1, $f9, $00, $08
+    db $ff
 
-    ld [hl+], a
-    jr nz, @+$27
+; Stages 7 and 8 share this definition; StartStageMusic skips stage 7.
+Stage8Music: ; $01:$5603
+    db $04 ; Playback tick interval minus one
+    db $00 ; Priority
 
-    inc c
-    inc h
-    inc d
-    ld [hl+], a
-    jr nz, jr_001_55a0
+    dw Stage8MusicStream1 ; Hardware channel 1: pulse 1
+    db $00 ; Software channel selector
 
-    ld sp, hl
-    nop
-    ld [$04ff], sp
-    nop
-    ld de, $0056
-    or d
-    ld d, a
-    ld bc, $5931
-    ld [bc], a
-    ld b, h
-    ld e, e
-    inc bc
-    pop af
-    ld [hl], a
-    cp $0e
-    push af
-    ld [$40f4], sp
-    ld hl, sp+$01
-    db $fc
-    inc c
-    ld a, [$f006]
-    inc bc
-    nop
-    db $10
-    db $fd
-    ld [bc], a
-    db $fc
-    ld [bc], a
-    jr nc, jr_001_5639
+    dw Stage8MusicStream2 ; Hardware channel 2: pulse 2
+    db $01 ; Software channel selector
 
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    ld b, $34
-    inc b
-    jr nc, @+$12
+    dw Stage8MusicStream3 ; Hardware channel 3: wave
+    db $02 ; Software channel selector
 
-    ld [hl-], a
-    db $10
-    ld [hl-], a
-    db $10
+    dw Stage8MusicStream4 ; Hardware channel 4: noise
+    db $03 ; Software channel selector
 
-jr_001_5639:
-    ld [hl-], a
-    ld [$0831], sp
-    jr nc, jr_001_564f
+Stage8MusicStream1: ; $01:$5611-$57B1
+    db $f1, $77, $fe, $0e, $f5, $08, $f4, $40, $f8, $01, $fc, $0c, $fa, $06, $f0, $03
+    db $00, $10, $fd, $02, $fc, $02, $30, $10, $32, $10, $34, $10, $34, $06, $34, $06
+    db $34, $04, $30, $10, $32, $10, $32, $10, $32, $08, $31, $08, $30, $10, $32, $10
+    db $34, $10, $34, $06, $34, $06, $34, $04, $30, $10, $32, $10, $32, $10, $32, $08
+    db $31, $08, $30, $10, $32, $10, $34, $10, $34, $06, $34, $06, $34, $04, $30, $10
+    db $32, $10, $fc, $0c, $34, $08, $32, $06, $32, $12, $31, $08, $2b, $06, $2b, $12
+    db $92, $f9, $fc, $0e, $fd, $06, $f4, $40, $3b, $06, $41, $06, $42, $04, $44, $06
+    db $42, $06, $41, $04, $42, $06, $41, $06, $3b, $04, $41, $04, $3b, $04, $39, $02
+    db $3b, $04, $39, $02, $3b, $06, $41, $06, $42, $04, $41, $06, $42, $06, $41, $04
+    db $42, $06, $41, $06, $39, $04, $44, $04, $42, $04, $41, $02, $3b, $04, $39, $02
+    db $38, $06, $39, $06, $3b, $04, $38, $06, $39, $06, $3b, $04, $41, $06, $3b, $06
+    db $39, $04, $41, $04, $3b, $04, $39, $02, $3b, $04, $39, $02, $39, $02, $38, $02
+    db $39, $02, $3b, $04, $39, $04, $38, $02, $39, $02, $38, $02, $39, $02, $3b, $04
+    db $39, $04, $38, $02, $39, $02, $38, $02, $39, $02, $3b, $04, $41, $04, $42, $02
+    db $44, $20, $fd, $02, $fc, $02, $a0, $02, $a0, $b5, $39, $10, $3b, $10, $41, $10
+    db $42, $06, $41, $06, $39, $04, $39, $10, $3b, $10, $44, $10, $38, $06, $39, $06
+    db $3b, $04, $39, $10, $3b, $10, $41, $10, $44, $06, $42, $06, $41, $04, $39, $10
+    db $3b, $10, $fa, $0c, $49, $20, $fe, $0e, $fa, $06, $f8, $01, $a1, $e6, $fe, $0c
+    db $f8, $00, $49, $06, $49, $06, $49, $04, $49, $06, $49, $06, $49, $04, $49, $06
+    db $49, $06, $49, $04, $f0, $03, $49, $02, $f0, $01, $49, $02, $f0, $03, $49, $02
+    db $f0, $02, $49, $02, $f0, $03, $00, $02, $f0, $01, $49, $02, $f0, $03, $49, $02
+    db $f0, $02, $49, $02, $f0, $03, $93, $e4, $fe, $0e, $fa, $06, $f8, $01, $f0, $03
+    db $fe, $0f, $fc, $0c, $fd, $05, $49, $02, $49, $02, $00, $02, $49, $02, $49, $02
+    db $00, $02, $49, $02, $49, $02, $00, $02, $49, $02, $49, $02, $00, $02, $47, $02
+    db $47, $02, $47, $02, $00, $02, $49, $04, $00, $02, $49, $04, $00, $02, $49, $04
+    db $fe, $06, $49, $04, $fe, $04, $49, $04, $fe, $02, $49, $04, $fe, $01, $49, $04
+    db $ff
 
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    ld b, $34
-    inc b
-    jr nc, @+$12
+Stage8MusicStream2: ; $01:$57B2-$5930
+    db $f4, $40, $f8, $01, $fc, $0c, $fa, $06, $f0, $03, $00, $10, $fd, $02, $fc, $02
+    db $fe, $0d, $39, $10, $3b, $10, $41, $10, $44, $06, $42, $06, $41, $04, $39, $10
+    db $3b, $10, $39, $10, $39, $10, $39, $10, $3b, $10, $41, $10, $3b, $06, $41, $06
+    db $42, $04, $39, $10, $3b, $10, $39, $10, $39, $10, $39, $10, $3b, $10, $41, $10
+    db $42, $06, $41, $06, $39, $04, $39, $10, $3b, $10, $fc, $0c, $3b, $08, $39, $06
+    db $39, $12, $39, $08, $38, $06, $38, $12, $92, $f9, $fe, $0b, $fc, $0d, $fa, $0f
+    db $fd, $02, $f4, $80, $34, $0c, $34, $04, $32, $0c, $32, $04, $31, $0c, $31, $04
+    db $29, $04, $2b, $04, $31, $04, $2b, $02, $29, $02, $34, $0c, $34, $04, $32, $0c
+    db $32, $04, $31, $0c, $31, $04, $2b, $04, $29, $04, $26, $04, $24, $04, $32, $06
+    db $32, $06, $32, $04, $31, $06, $31, $06, $31, $04, $2b, $06, $2b, $06, $2b, $04
+    db $28, $06, $29, $06, $2b, $04, $32, $02, $32, $02, $32, $02, $32, $04, $28, $02
+    db $29, $02, $2b, $02, $31, $02, $31, $02, $31, $02, $31, $04, $28, $02, $29, $02
+    db $2b, $02, $2b, $02, $2b, $02, $2b, $02, $2b, $04, $28, $02, $29, $02, $2b, $02
+    db $34, $02, $34, $02, $34, $02, $34, $04, $34, $02, $34, $02, $34, $02, $fe, $0b
+    db $34, $04, $32, $04, $31, $04, $29, $02, $2b, $02, $fe, $0d, $fc, $02, $fa, $06
+    db $f4, $40, $30, $10, $32, $10, $34, $10, $34, $06, $34, $04, $34, $06, $30, $10
+    db $32, $10, $34, $10, $34, $06, $34, $04, $34, $06, $30, $10, $32, $10, $34, $10
+    db $34, $06, $34, $04, $34, $06, $30, $10, $32, $10, $32, $10, $32, $08, $31, $08
+    db $f0, $03, $a1, $94, $30, $10, $32, $10, $34, $10, $34, $06, $34, $04, $34, $06
+    db $30, $10, $32, $10, $32, $10, $32, $08, $31, $08, $91, $f5, $f0, $03, $fe, $0c
+    db $fc, $0c, $fd, $05, $39, $02, $39, $02, $00, $02, $39, $02, $39, $02, $00, $02
+    db $39, $02, $39, $02, $00, $02, $39, $02, $39, $02, $00, $02, $37, $02, $37, $02
+    db $37, $02, $00, $02, $39, $02, $00, $04, $39, $02, $00, $04, $39, $04, $fe, $06
+    db $39, $04, $fe, $04, $39, $04, $fe, $02, $39, $04, $fe, $01, $39, $04, $ff
 
-    ld [hl-], a
-    db $10
-    ld [hl-], a
-    db $10
+Stage8MusicStream3: ; $01:$5931-$5B43
+    db $fe, $0f, $f2, $01, $fc, $0c, $fa, $05, $f8, $01, $fd, $01, $f0, $03, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $93, $f8
+    db $94, $f7, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $14, $06, $24, $0a, $00, $04, $24, $06, $24, $06, $14, $10, $00, $04
+    db $24, $08, $24, $04, $92, $f7, $24, $02, $14, $02, $14, $02, $22, $02, $14, $02
+    db $14, $02, $24, $02, $14, $02, $22, $02, $12, $02, $12, $02, $22, $02, $12, $02
+    db $12, $02, $22, $02, $12, $02, $21, $02, $11, $02, $11, $02, $21, $02, $11, $02
+    db $11, $02, $21, $02, $11, $02, $1b, $02, $1b, $02, $1b, $02, $1b, $02, $1b, $02
+    db $1b, $02, $1b, $02, $1b, $02, $24, $02, $14, $02, $14, $02, $22, $02, $14, $02
+    db $14, $02, $24, $02, $14, $02, $22, $02, $12, $02, $12, $02, $22, $02, $12, $02
+    db $12, $02, $22, $02, $12, $02, $21, $02, $11, $02, $11, $02, $21, $02, $11, $02
+    db $11, $02, $21, $02, $11, $02, $1b, $02, $1b, $02, $1b, $02, $1b, $02, $1b, $02
+    db $1b, $02, $1b, $02, $1b, $02, $a0, $02, $a0, $b5, $12, $06, $22, $06, $19, $04
+    db $11, $06, $21, $06, $19, $04, $1b, $06, $1b, $06, $16, $04, $14, $04, $1b, $04
+    db $11, $04, $12, $04, $22, $02, $12, $02, $19, $02, $22, $04, $12, $02, $19, $02
+    db $22, $02, $21, $02, $11, $02, $19, $02, $21, $04, $11, $02, $19, $02, $21, $02
+    db $1b, $02, $16, $02, $1b, $02, $1b, $04, $16, $02, $19, $02, $1b, $02, $24, $02
+    db $14, $02, $14, $02, $22, $02, $12, $02, $12, $02, $20, $02, $10, $02, $10, $02
+    db $1b, $02, $1b, $02, $1b, $02, $20, $02, $10, $02, $22, $02, $12, $02, $15, $02
+    db $15, $02, $15, $02, $15, $02, $15, $02, $15, $02, $15, $02, $15, $02, $17, $02
+    db $17, $02, $17, $02, $17, $02, $17, $02, $17, $02, $17, $02, $17, $02, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $93, $e0
+    db $a1, $ac, $15, $02, $15, $02, $15, $02, $15, $02, $15, $02, $15, $02, $15, $02
+    db $15, $02, $17, $02, $17, $02, $17, $02, $17, $02, $17, $02, $17, $02, $17, $02
+    db $17, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02
+    db $19, $02, $93, $e0, $19, $02, $19, $02, $00, $02, $19, $02, $19, $02, $00, $02
+    db $19, $02, $19, $02, $00, $02, $19, $02, $19, $02, $00, $02, $17, $02, $17, $02
+    db $17, $02, $00, $02, $19, $02, $00, $02, $00, $02, $19, $02, $00, $02, $00, $02
+    db $29, $04, $fe, $06, $29, $04, $fe, $04, $29, $04, $fe, $02, $29, $04, $fe, $01
+    db $29, $04, $ff
 
-jr_001_564f:
-    ld [hl-], a
-    ld [$0831], sp
-    jr nc, jr_001_5665
+Stage8MusicStream4: ; $01:$5B44-$5D40
+    db $fe, $08, $f8, $01, $f0, $03, $00, $10, $00, $40, $94, $ff, $00, $20, $f0, $02
+    db $fb, $04, $f9, $10, $06, $08, $f0, $01, $06, $06, $f0, $03, $06, $0e, $fe, $0a
+    db $f0, $03, $fb, $02, $f9, $50, $02, $04, $fe, $08, $95, $f2, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $fb, $01, $f9, $38, $03, $02
+    db $fb, $02, $f9, $50, $02, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fb, $02
+    db $f9, $50, $02, $02, $92, $ec, $fb, $01, $f9, $38, $03, $02, $03, $02, $fb, $02
+    db $f9, $50, $02, $02, $fb, $01, $f9, $38, $03, $02, $fb, $02, $f9, $50, $02, $02
+    db $02, $02, $02, $02, $02, $02, $91, $db, $fb, $01, $f9, $38, $03, $02, $03, $02
+    db $03, $02, $03, $02, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $fb, $01
+    db $f9, $38, $03, $02, $92, $f2, $a0, $02, $a0, $bb, $03, $02, $03, $02, $03, $02
+    db $03, $02, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $02, $02, $f0, $03
+    db $02, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02
+    db $fb, $01, $f9, $38, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $fb, $01
+    db $f9, $38, $03, $02, $93, $ee, $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $02
+    db $02, $02, $f0, $01, $02, $02, $f0, $02, $02, $02, $f0, $01, $02, $02, $f0, $02
+    db $02, $02, $f0, $01, $02, $02, $f0, $02, $02, $02, $f0, $03, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $fb, $01, $f9, $38, $03, $02
+    db $03, $02, $03, $02, $f0, $02, $fb, $02, $f9, $50, $02, $02, $f0, $01, $02, $02
+    db $f0, $03, $92, $ed, $a0, $02, $a0, $b9, $f0, $03, $fb, $01, $f9, $38, $03, $02
+    db $03, $02, $03, $02, $f0, $02, $fb, $02, $f9, $50, $02, $02, $f0, $01, $02, $02
+    db $f0, $02, $02, $02, $f0, $01, $02, $02, $f0, $02, $02, $02, $f0, $03, $93, $d7
+    db $a1, $eb, $fe, $0a, $fe, $0d, $f0, $02, $fb, $03, $f9, $30, $04, $02, $f0, $01
+    db $04, $02, $f0, $03, $fe, $09, $fb, $02, $f9, $50, $02, $02, $fe, $0d, $f0, $02
+    db $fb, $03, $f9, $30, $04, $02, $f0, $01, $04, $02, $f0, $03, $04, $02, $fe, $0a
+    db $fb, $02, $f9, $50, $02, $02, $02, $02, $92, $e5, $fe, $0d, $f0, $02, $fb, $03
+    db $f9, $30, $04, $02, $f0, $01, $04, $02, $fe, $09, $fb, $02, $f9, $50, $02, $02
+    db $fe, $0d, $f0, $01, $fb, $03, $f9, $30, $04, $02, $f0, $02, $04, $02, $fe, $0a
+    db $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $02, $02, $02, $f0, $01, $02, $02
+    db $f0, $03, $93, $c8, $f0, $03, $fe, $09, $02, $02, $02, $02, $fb, $01, $f9, $38
+    db $03, $02, $93, $fb, $fb, $02, $f9, $50, $02, $02, $02, $02, $02, $02, $02, $02
+    db $fb, $01, $f9, $38, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $fb, $02, $f9, $50, $02, $02, $ff
 
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    ld b, $34
-    inc b
-    jr nc, jr_001_5671
+ExtraLifeSound: ; $01:$5D41
+    db $03 ; Playback tick interval minus one
+    db $02 ; Priority
 
-    ld [hl-], a
-    db $10
-    db $fc
-    inc c
+    dw ExtraLifeSoundStream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
 
-jr_001_5665:
-    inc [hl]
-    ld [$0632], sp
-    ld [hl-], a
-    ld [de], a
-    ld sp, $2b08
-    ld b, $2b
-    ld [de], a
+    dw ExtraLifeSoundStream2 ; Hardware channel 2: pulse
+    db $05 ; Software channel selector
 
-jr_001_5671:
-    sub d
-    ld sp, hl
-    db $fc
-    ld c, $fd
-    ld b, $f4
-    ld b, b
-    dec sp
-    ld b, $41
-    ld b, $42
-    inc b
-    ld b, h
-    ld b, $42
-    ld b, $41
-    inc b
-    ld b, d
-    ld b, $41
-    ld b, $3b
-    inc b
-    ld b, c
-    inc b
-    dec sp
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld b, $41
-    ld b, $42
-    inc b
-    ld b, c
-    ld b, $42
-    ld b, $41
-    inc b
-    ld b, d
-    ld b, $41
-    ld b, $39
-    inc b
-    ld b, h
-    inc b
-    ld b, d
-    inc b
-    ld b, c
-    ld [bc], a
-    dec sp
-    inc b
-    add hl, sp
-    ld [bc], a
-    jr c, jr_001_56b9
+    dw $0000 ; Hardware channel 3 unused
+    db $00 ; Software channel selector
 
-    add hl, sp
-    ld b, $3b
-    inc b
-    jr c, @+$08
+    dw $0000 ; Hardware channel 4 unused
 
-jr_001_56b9:
-    add hl, sp
-    ld b, $3b
-    inc b
-    ld b, c
-    ld b, $3b
-    ld b, $39
-    inc b
-    ld b, c
-    inc b
-    dec sp
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    inc b
-    add hl, sp
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    jr c, jr_001_56d3
+ExtraLifeSoundStream1: ; $01:$5D4E-$5D6C
+    db $fe, $0f, $f5, $08, $f4, $40, $fc, $0e, $fa, $03, $f8, $01, $fd, $01, $f0, $01
+    db $44, $02, $40, $02, $47, $02, $4b, $02, $50, $02, $52, $02, $57, $0c, $ff
 
-    add hl, sp
-    ld [bc], a
+ExtraLifeSoundStream2: ; $01:$5D6D-$5D89
+    db $fe, $0f, $f4, $40, $fc, $0e, $fa, $03, $f8, $01, $fd, $01, $f0, $02, $40, $02
+    db $37, $02, $44, $02, $47, $02, $47, $02, $4b, $02, $50, $0c, $ff
 
-jr_001_56d3:
-    dec sp
-    inc b
-    add hl, sp
-    inc b
-    jr c, jr_001_56db
+PauseScreenSound: ; $01:$5D8A
+    db $02 ; Playback tick interval minus one
+    db $02 ; Priority
 
-    add hl, sp
-    ld [bc], a
+    dw PauseScreenSoundStream1 ; Hardware channel 1: pulse
+    db $00 ; Software channel selector
 
-jr_001_56db:
-    jr c, jr_001_56df
+    dw PauseScreenSoundStream2 ; Hardware channel 2: pulse
+    db $01 ; Software channel selector
 
-    add hl, sp
-    ld [bc], a
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
 
-jr_001_56df:
-    dec sp
-    inc b
-    add hl, sp
-    inc b
-    jr c, jr_001_56e7
+    dw $0000 ; Hardware channel 4 unused
 
-    add hl, sp
-    ld [bc], a
+PauseScreenSoundStream1: ; $01:$5D97-$5DB9
+    db $fe, $0f, $f5, $08, $f4, $80, $fc, $0c, $fa, $06, $f8, $01, $fd, $03, $f0, $01
+    db $30, $02, $34, $02, $37, $02, $37, $02, $40, $08, $00, $08, $fd, $01, $00, $08
+    db $f0, $00, $ff
 
-jr_001_56e7:
-    jr c, jr_001_56eb
-
-    add hl, sp
-    ld [bc], a
-
-jr_001_56eb:
-    dec sp
-    inc b
-    ld b, c
-    inc b
-    ld b, d
-    ld [bc], a
-
-jr_001_56f1:
-    ld b, h
-    jr nz, jr_001_56f1
-
-    ld [bc], a
-    db $fc
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    or l
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld b, c
-    db $10
-    ld b, d
-    ld b, $41
-    ld b, $39
-    inc b
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld b, h
-    db $10
-    jr c, jr_001_5715
-
-    add hl, sp
-    ld b, $3b
-    inc b
-    add hl, sp
-    db $10
-
-jr_001_5715:
-    dec sp
-    db $10
-    ld b, c
-    db $10
-    ld b, h
-    ld b, $42
-    ld b, $41
-    inc b
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld a, [$490c]
-
-jr_001_5726:
-    jr nz, jr_001_5726
-
-    ld c, $fa
-    ld b, $f8
-    ld bc, $e6a1
-    cp $0c
-    ld hl, sp+$00
-    ld c, c
-    ld b, $49
-    ld b, $49
-    inc b
-    ld c, c
-    ld b, $49
-    ld b, $49
-    inc b
-    ld c, c
-    ld b, $49
-    ld b, $49
-    inc b
-    ldh a, [$ff03]
-    ld c, c
-    ld [bc], a
-    ldh a, [rSB]
-    ld c, c
-    ld [bc], a
-    ldh a, [$ff03]
-    ld c, c
-    ld [bc], a
-    ldh a, [rSC]
-    ld c, c
-    ld [bc], a
-    ldh a, [$ff03]
-    nop
-    ld [bc], a
-    ldh a, [rSB]
-    ld c, c
-    ld [bc], a
-    ldh a, [$ff03]
-    ld c, c
-    ld [bc], a
-    ldh a, [rSC]
-    ld c, c
-    ld [bc], a
-    ldh a, [$ff03]
-    sub e
-    db $e4
-    cp $0e
-    ld a, [$f806]
-    ld bc, $03f0
-    cp $0f
-    db $fc
-    inc c
-    db $fd
-    dec b
-    ld c, c
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    ld c, c
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    inc b
-    nop
-    ld [bc], a
-    ld c, c
-    inc b
-    nop
-    ld [bc], a
-    ld c, c
-    inc b
-    cp $06
-    ld c, c
-    inc b
-    cp $04
-    ld c, c
-    inc b
-    cp $02
-    ld c, c
-    inc b
-    cp $01
-    ld c, c
-    inc b
-    rst $38
-    db $f4
-    ld b, b
-    ld hl, sp+$01
-    db $fc
-    inc c
-    ld a, [$f006]
-    inc bc
-    nop
-    db $10
-    db $fd
-    ld [bc], a
-    db $fc
-    ld [bc], a
-    cp $0d
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld b, c
-    db $10
-    ld b, h
-    ld b, $42
-    ld b, $41
-    inc b
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    add hl, sp
-    db $10
-    add hl, sp
-    db $10
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld b, c
-    db $10
-    dec sp
-
-Jump_001_57df:
-    ld b, $41
-    ld b, $42
-    inc b
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    add hl, sp
-    db $10
-    add hl, sp
-    db $10
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    ld b, c
-    db $10
-    ld b, d
-    ld b, $41
-    ld b, $39
-    inc b
-    add hl, sp
-    db $10
-    dec sp
-    db $10
-    db $fc
-    inc c
-    dec sp
-    ld [$0639], sp
-    add hl, sp
-    ld [de], a
-    add hl, sp
-    ld [$0638], sp
-    jr c, jr_001_581c
-
-    sub d
-    ld sp, hl
-    cp $0b
-    db $fc
-    dec c
-    ld a, [$fd0f]
-    ld [bc], a
-    db $f4
-    add b
-    inc [hl]
-    inc c
-    inc [hl]
-    inc b
-    ld [hl-], a
-    inc c
-
-jr_001_581c:
-    ld [hl-], a
-    inc b
-    ld sp, $310c
-    inc b
-    add hl, hl
-    inc b
-    dec hl
-    inc b
-    ld sp, $2b04
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    inc [hl]
-    inc c
-    inc [hl]
-    inc b
-    ld [hl-], a
-    inc c
-    ld [hl-], a
-    inc b
-    ld sp, $310c
-    inc b
-    dec hl
-    inc b
-    add hl, hl
-    inc b
-    ld h, $04
-    inc h
-    inc b
-    ld [hl-], a
-    ld b, $32
-    ld b, $32
-    inc b
-    ld sp, $3106
-    ld b, $31
-    inc b
-    dec hl
-    ld b, $2b
-    ld b, $2b
-    inc b
-    jr z, jr_001_585a
-
-    add hl, hl
-    ld b, $2b
-    inc b
-    ld [hl-], a
-    ld [bc], a
-
-jr_001_585a:
-    ld [hl-], a
-    ld [bc], a
-    ld [hl-], a
-    ld [bc], a
-    ld [hl-], a
-    inc b
-    jr z, jr_001_5864
-
-    add hl, hl
-    ld [bc], a
-
-jr_001_5864:
-    dec hl
-    ld [bc], a
-    ld sp, $3102
-    ld [bc], a
-    ld sp, $3102
-    inc b
-    jr z, jr_001_5872
-
-    add hl, hl
-    ld [bc], a
-
-jr_001_5872:
-    dec hl
-    ld [bc], a
-    dec hl
-    ld [bc], a
-    dec hl
-    ld [bc], a
-    dec hl
-    ld [bc], a
-    dec hl
-    inc b
-    jr z, jr_001_5880
-
-    add hl, hl
-    ld [bc], a
-
-jr_001_5880:
-    dec hl
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    inc [hl]
-    inc b
-    inc [hl]
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    cp $0b
-    inc [hl]
-    inc b
-    ld [hl-], a
-    inc b
-    ld sp, $2904
-    ld [bc], a
-    dec hl
-    ld [bc], a
-    cp $0d
-    db $fc
-    ld [bc], a
-    ld a, [$f406]
-    ld b, b
-    jr nc, jr_001_58b6
-
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    inc b
-    inc [hl]
-    ld b, $30
-    db $10
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-
-jr_001_58b6:
-    inc [hl]
-    ld b, $34
-    inc b
-    inc [hl]
-    ld b, $30
-    db $10
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    inc b
-    inc [hl]
-    ld b, $30
-    db $10
-    ld [hl-], a
-    db $10
-    ld [hl-], a
-    db $10
-    ld [hl-], a
-    ld [$0831], sp
-    ldh a, [$ff03]
-    and c
-    sub h
-    jr nc, jr_001_58e8
-
-    ld [hl-], a
-    db $10
-    inc [hl]
-    db $10
-    inc [hl]
-    ld b, $34
-    inc b
-    inc [hl]
-    ld b, $30
-    db $10
-    ld [hl-], a
-    db $10
-    ld [hl-], a
-    db $10
-
-jr_001_58e8:
-    ld [hl-], a
-    ld [$0831], sp
-    sub c
-    push af
-    ldh a, [$ff03]
-    cp $0c
-    db $fc
-    inc c
-    db $fd
-    dec b
-    add hl, sp
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    scf
-    ld [bc], a
-    scf
-    ld [bc], a
-    scf
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    inc b
-    add hl, sp
-    ld [bc], a
-    nop
-    inc b
-    add hl, sp
-    inc b
-    cp $06
-    add hl, sp
-    inc b
-    cp $04
-    add hl, sp
-    inc b
-    cp $02
-    add hl, sp
-    inc b
-    cp $01
-    add hl, sp
-    inc b
-    rst $38
-    cp $0f
-    ldh a, [c]
-    ld bc, $0cfc
-    ld a, [$f805]
-    ld bc, $01fd
-    ldh a, [$ff03]
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    sub e
-    ld hl, sp-$6c
-    rst $30
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    inc d
-    ld b, $24
-    ld a, [bc]
-    nop
-    inc b
-    inc h
-    ld b, $24
-    ld b, $14
-    stop
-    inc b
-    inc h
-    ld [$0424], sp
-    sub d
-    rst $30
-    inc h
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc d
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc h
-    ld [bc], a
-    inc d
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld hl, $1102
-    ld [bc], a
-    ld de, $2102
-    ld [bc], a
-    ld de, $1102
-    ld [bc], a
-    ld hl, $1102
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    inc h
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc d
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc h
-    ld [bc], a
-    inc d
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld hl, $1102
-    ld [bc], a
-    ld de, $2102
-    ld [bc], a
-    ld de, $1102
-    ld [bc], a
-    ld hl, $1102
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    or l
-    ld [de], a
-    ld b, $22
-    ld b, $19
-    inc b
-    ld de, $2106
-    ld b, $19
-    inc b
-    dec de
-    ld b, $1b
-    ld b, $16
-    inc b
-    inc d
-    inc b
-    dec de
-    inc b
-    ld de, $1204
-    inc b
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    ld [hl+], a
-    inc b
-    ld [de], a
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld hl, $1102
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    ld hl, $1104
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    ld hl, $1b02
-    ld [bc], a
-    ld d, $02
-    dec de
-    ld [bc], a
-    dec de
-    inc b
-    ld d, $02
-    add hl, de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    inc h
-    ld [bc], a
-    inc d
-    ld [bc], a
-    inc d
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    jr nz, jr_001_5a6f
-
-    db $10
-    ld [bc], a
-
-jr_001_5a6f:
-    db $10
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    jr nz, jr_001_5a7b
-
-    db $10
-    ld [bc], a
-
-jr_001_5a7b:
-    ld [hl+], a
-    ld [bc], a
-    ld [de], a
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    sub e
-    ldh [$ffa1], a
-    xor h
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    sub e
-    ldh [rNR24], a
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, hl
-    inc b
-    cp $06
-    add hl, hl
-    inc b
-    cp $04
-    add hl, hl
-    inc b
-    cp $02
-    add hl, hl
-    inc b
-    cp $01
-    add hl, hl
-    inc b
-
-jr_001_5b43:
-    rst $38
-    cp $08
-    ld hl, sp+$01
-    ldh a, [$ff03]
-    nop
-    stop
-    ld b, b
-    sub h
-    rst $38
-    nop
-    jr nz, jr_001_5b43
-
-    ld [bc], a
-    ei
-    inc b
-    ld sp, hl
-    db $10
-    ld b, $08
-    ldh a, [rSB]
-    ld b, $06
-    ldh a, [$ff03]
-    ld b, $0e
-    cp $0a
-    ldh a, [$ff03]
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    inc b
-    cp $08
-    sub l
-    ldh a, [c]
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    sub d
-    db $ec
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    sub c
-    db $db
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    sub d
-    ldh a, [c]
-    and b
-    ld [bc], a
-    and b
-    cp e
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ldh a, [$ff03]
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    sub e
-    xor $f0
-    ld bc, $02fb
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [$ff03]
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ldh a, [rSC]
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [$ff03]
-    sub d
-    db $ed
-    and b
-    ld [bc], a
-    and b
-    cp c
-    ldh a, [$ff03]
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ldh a, [rSC]
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [$ff03]
-    sub e
-    rst $10
-    and c
-    db $eb
-    cp $0a
-    cp $0d
-    ldh a, [rSC]
-    ei
-    inc bc
-    ld sp, hl
-    jr nc, jr_001_5ca5
-
-    ld [bc], a
-    ldh a, [rSB]
-    inc b
-
-jr_001_5ca5:
-    ld [bc], a
-    ldh a, [$ff03]
-    cp $09
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    cp $0d
-    ldh a, [rSC]
-    ei
-    inc bc
-    ld sp, hl
-    jr nc, jr_001_5cbd
-
-    ld [bc], a
-    ldh a, [rSB]
-    inc b
-
-jr_001_5cbd:
-    ld [bc], a
-    ldh a, [$ff03]
-    inc b
-    ld [bc], a
-    cp $0a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    sub d
-    push hl
-    cp $0d
-    ldh a, [rSC]
-    ei
-    inc bc
-    ld sp, hl
-    jr nc, jr_001_5cdb
-
-    ld [bc], a
-    ldh a, [rSB]
-    inc b
-
-jr_001_5cdb:
-    ld [bc], a
-    cp $09
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    cp $0d
-    ldh a, [rSB]
-    ei
-    inc bc
-    ld sp, hl
-    jr nc, jr_001_5cf1
-
-    ld [bc], a
-    ldh a, [rSC]
-    inc b
-
-jr_001_5cf1:
-    ld [bc], a
-    cp $0a
-    ldh a, [rSB]
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSC]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [rSB]
-    ld [bc], a
-    ld [bc], a
-    ldh a, [$ff03]
-    sub e
-    ret z
-
-    ldh a, [$ff03]
-    cp $09
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    sub e
-    ei
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    ld [bc], a
-    rst $38
-    inc bc
-    ld [bc], a
-    ld c, [hl]
-    ld e, l
-    inc b
-    ld l, l
-    ld e, l
-    dec b
-    nop
-    nop
-    nop
-    nop
-    nop
-    cp $0f
-    push af
-    ld [$40f4], sp
-    db $fc
-    ld c, $fa
-    inc bc
-    ld hl, sp+$01
-    db $fd
-    ld bc, $01f0
-    ld b, h
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    ld c, e
-    ld [bc], a
-    ld d, b
-    ld [bc], a
-    ld d, d
-    ld [bc], a
-    ld d, a
-    inc c
-    rst $38
-    cp $0f
-    db $f4
-    ld b, b
-    db $fc
-    ld c, $fa
-    inc bc
-    ld hl, sp+$01
-    db $fd
-    ld bc, $02f0
-    ld b, b
-    ld [bc], a
-    scf
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    ld c, e
-    ld [bc], a
-    ld d, b
-    inc c
-    rst $38
-
-    db $02, $02, $97, $5d, $00, $ba, $5d, $01, $00, $00, $02, $00, $00, $fe, $0f, $f5
-    db $08, $f4, $80, $fc, $0c, $fa, $06, $f8, $01, $fd, $03, $f0, $01, $30, $02, $34
-    db $02, $37, $02, $37, $02, $40, $08, $00, $08, $fd, $01, $00, $08, $f0, $00, $ff
+PauseScreenSoundStream2: ; $01:$5DBA-$5DDA
     db $fe, $0f, $f4, $80, $fc, $0c, $fa, $06, $f8, $01, $fd, $03, $f0, $02, $37, $02
     db $40, $02, $44, $02, $44, $02, $47, $06, $00, $08, $fd, $01, $00, $08, $f0, $00
     db $ff
@@ -5327,16 +3738,16 @@ jr_001_5cf1:
 TitleScreenMusic:
     db $03 ; Playback tick interval minus one
     db $00 ; Priority
-    
+
     dw TitleScreenMusicStream1 ; Hardware channel 1: pulse
     db $00 ; Software channel selector
-    
+
     dw TitleScreenMusicStream2 ; Hardware channel 2: pulse
     db $01
-    
+
     dw TitleScreenMusicStream3 ; Hardware channel 3: wave
     db $02
-    
+
     dw $0000 ; Hardware channel 4 unused
 
 TitleScreenMusicStream1:
@@ -5354,260 +3765,170 @@ TitleScreenMusicStream3:
     db $20, $08, $20, $08, $20, $02, $20, $02, $20, $02, $00, $02, $a0, $f9, $ff
 
 
-    db $02, $02, $68, $5e, $05, $95, $5e, $04, $00, $00, $00, $00, $00, $fe, $0a, $f5
-    db $08, $f4, $00, $fc, $0b, $fa, $06, $f8, $01, $fd, $00, $f0, $03, $44, $02, $f0
-    db $02, $42, $02, $f0, $01, $40, $02, $f0, $03, $42, $02, $f0, $01, $44, $02, $f0
-    db $02, $49, $02, $f0, $03, $f8, $00, $47, $0c, $ff, $fe, $0a, $f4, $00, $fc, $0b
-    db $fa, $06, $f8, $01, $f0, $03, $47, $02, $45, $02, $44, $02, $45, $02, $47, $02
-    db $42, $02, $40, $0c, $ff, $03, $00, $00, $00, $02, $bd, $5e, $00, $02, $5f, $01
-    db $00, $00, $fe, $0c, $f8, $01, $fc, $01, $fa, $03, $f4, $40, $fd, $02, $f0, $03
-    db $26, $04, $26, $04, $27, $04, $27, $02, $27, $02, $29, $04, $29, $02, $29, $02
-    db $2a, $02, $30, $02, $34, $02, $36, $02, $93, $f4, $24, $04, $24, $04, $26, $04
-    db $26, $02, $26, $02, $27, $04, $27, $02, $27, $02, $29, $02, $2a, $02, $32, $02
-    db $34, $02, $93, $f4, $a0, $e6
+PowerUpAwardSound: ; $01:$5E5B
+    db $02 ; Playback tick interval minus one
+    db $02 ; Priority
 
-    rst $38
+    dw PowerUpAwardSoundStream1 ; Hardware channel 1: pulse
+    db $05 ; Software channel selector
 
+    dw PowerUpAwardSoundStream2 ; Hardware channel 2: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+PowerUpAwardSoundStream1: ; $01:$5E68-$5E94
+    db $fe, $0a, $f5, $08, $f4, $00, $fc, $0b, $fa, $06, $f8, $01, $fd, $00, $f0, $03
+    db $44, $02, $f0, $02, $42, $02, $f0, $01, $40, $02, $f0, $03, $42, $02, $f0, $01
+    db $44, $02, $f0, $02, $49, $02, $f0, $03, $f8, $00, $47, $0c, $ff
+
+PowerUpAwardSoundStream2: ; $01:$5E95-$5EAF
+    db $fe, $0a, $f4, $00, $fc, $0b, $fa, $06, $f8, $01, $f0, $03, $47, $02, $45, $02
+    db $44, $02, $45, $02, $47, $02, $42, $02, $40, $0c, $ff
+
+BossMusic: ; $01:$5EB0
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1 unused
+    db $02 ; Software channel selector
+
+    dw BossMusicStream2 ; Hardware channel 2: pulse
+    db $00 ; Software channel selector
+
+    dw BossMusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+BossMusicStream2: ; $01:$5EBD-$5F01
+    db $fe, $0c, $f8, $01, $fc, $01, $fa, $03, $f4, $40, $fd, $02, $f0, $03, $26, $04
+    db $26, $04, $27, $04, $27, $02, $27, $02, $29, $04, $29, $02, $29, $02, $2a, $02
+    db $30, $02, $34, $02, $36, $02, $93, $f4, $24, $04, $24, $04, $26, $04, $26, $02
+    db $26, $02, $27, $04, $27, $02, $27, $02, $29, $02, $2a, $02, $32, $02, $34, $02
+    db $93, $f4, $a0, $e6, $ff
+
+BossMusicStream3: ; $01:$5F02-$5F22
     db $fe, $0f, $f8, $01, $fc, $0c, $fa, $04, $f2, $01, $fd, $02, $f0, $03, $19, $08
     db $19, $08, $00, $10, $93, $fd, $17, $08, $17, $08, $00, $10, $93, $fd, $a0, $f8
+    db $ff
 
-    rst $38
-    inc bc
-    nop
-    nop
-    nop
-    nop
-    ld sp, $015f
-    adc [hl]
-    ld e, a
-    ld [bc], a
-    rst $20
-    ld e, a
-    inc bc
-    cp $0a
-    push af
-    ld [$00f4], sp
-    db $fc
-    ld bc, $03fa
-    pop af
-    ld [hl], a
-    ld hl, sp+$01
-    db $fd
-    ld bc, $03f0
-    db $ed
-    nop
-    inc h
-    inc b
-    inc h
-    inc b
-    daa
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    add hl, hl
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    ld a, [hl+]
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    add hl, hl
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    daa
-    inc b
-    inc h
-    inc b
-    sub c
-    rst $28
-    db $ed
-    dec b
-    inc h
-    inc b
-    inc h
-    inc b
-    daa
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    add hl, hl
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    ld a, [hl+]
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    add hl, hl
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    daa
-    inc b
-    inc h
-    inc b
-    sub c
-    ldh a, [$ffa0]
-    call c, $feff
-    dec bc
-    db $fc
-    rrca
-    ld a, [$f203]
-    ld bc, $01f8
-    db $fd
-    ld bc, $03f0
-    db $ed
-    nop
-    inc d
-    inc b
-    inc d
-    inc b
-    rla
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    add hl, de
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    ld a, [de]
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    add hl, de
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    rla
-    inc b
-    inc d
-    inc b
-    sub c
-    rst $28
-    db $ed
-    dec b
-    inc d
-    inc b
-    inc d
-    inc b
-    rla
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    add hl, de
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    ld a, [de]
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    add hl, de
-    inc b
-    inc d
-    inc b
-    inc d
-    inc b
-    rla
-    inc b
-    inc d
-    inc b
-    sub c
-    ldh a, [$ffa0]
-    call c, $feff
-    ld [$01f8], sp
-    ldh a, [$ff03]
-    cp $07
-    ei
-    ld bc, $38f9
-    inc bc
-    inc b
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    sub [hl]
-    ld a, [$0afe]
-    ldh a, [rSC]
-    ei
-    ld [bc], a
-    ld sp, hl
-    ld d, b
-    ld [bc], a
-    inc b
-    ldh a, [rSB]
-    ld [bc], a
-    inc b
-    ldh a, [$ff03]
-    and b
-    pop af
-    rst $38
+AlternateBossMusic: ; $01:$5F23
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
 
-    db $03, $03, $1c, $60, $00, $47, $60, $01, $70, $60, $02, $d3, $60, $05, $fe, $08
-    db $f5, $00, $f4, $40, $fc, $0e, $fa, $06, $fd, $00, $f8, $01, $f0, $03, $47, $10
-    db $45, $10, $44, $10, $42, $08, $44, $04, $45, $04, $47, $04, $00, $02, $47, $04
-    db $00, $02, $47, $10, $fd, $03, $00, $08, $ff, $fe, $08, $f0, $03, $f4, $40, $fc
-    db $0e, $fa, $06, $fd, $00, $f8, $01, $42, $10, $40, $10, $3b, $10, $39, $08, $3b
-    db $04, $40, $04, $42, $04, $00, $02, $42, $04, $00, $02, $42, $10, $fd, $03, $00
-    db $08, $ff, $fe, $0f, $f0, $03, $fc, $0d, $f2, $01, $fa, $04, $f8, $01, $f0, $01
-    db $17, $02, $f0, $02, $17, $02, $93, $fc, $f0, $01, $15, $02, $f0, $02, $15, $02
-    db $93, $fc, $f0, $01, $14, $02, $f0, $02, $14, $02, $93, $fc, $f0, $01, $12, $02
-    db $f0, $02, $12, $02, $91, $fc, $f0, $01, $14, $02, $f0, $02, $14, $02, $f0, $01
-    db $15, $02, $f0, $02, $15, $02, $f0, $01, $17, $02, $f0, $02, $00, $02, $f0, $01
-    db $00, $02, $f0, $02, $17, $02, $f0, $01, $00, $02, $f0, $02, $00, $02, $17, $10
-    db $fd, $03, $00, $08, $ff, $f8, $01, $fe, $08, $fd, $00, $f0, $03, $fc, $00, $fe
-    db $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $f0, $01, $fe, $09, $fb, $02, $f9
-    db $50, $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03, $02, $f0, $02, $fe
-    db $09, $fb, $02, $f9, $50, $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03
-    db $02, $03, $02, $fe, $09, $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe
-    db $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $09, $f0, $02, $fb, $02, $f9
-    db $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0
-    db $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03
-    db $02, $03, $02, $f0, $02, $fe, $09, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe
-    db $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $f0, $01, $fe, $09, $fb, $02, $f9
-    db $50, $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0
-    db $02, $fb, $02, $f9, $50, $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03
-    db $02, $03, $02, $fe, $09, $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe
-    db $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $f0, $02, $fe, $09, $fb, $02, $f9
-    db $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0
-    db $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03
-    db $02, $03, $02, $fe, $09, $f0, $02, $fb, $02, $f9, $50, $02, $02, $f0, $03, $02
-    db $02, $fe, $0c, $f0, $01, $fb, $01, $f9, $38, $03, $02, $f0, $02, $03, $02, $fe
-    db $09, $f0, $03, $fb, $02, $f9, $50, $02, $02, $fe, $0c, $f0, $01, $fb, $01, $f9
-    db $38, $03, $02, $f0, $02, $03, $02, $fe, $0c, $f0, $03, $fb, $02, $f9, $50, $02
-    db $04, $ff, $02, $00, $00, $00, $03, $1e, $62, $00, $95, $62, $01, $6c, $63, $02
+    dw $0000 ; Hardware channel 1 unused
+    db $00 ; Software channel selector
+
+    dw AlternateBossMusicStream2 ; Hardware channel 2: pulse
+    db $01 ; Software channel selector
+
+    dw AlternateBossMusicStream3 ; Hardware channel 3: wave
+    db $02 ; Software channel selector
+
+    dw AlternateBossMusicStream4 ; Hardware channel 4: noise
+    db $03 ; Software channel selector
+
+AlternateBossMusicStream2: ; $01:$5F31-$5F8D
+    db $fe, $0a, $f5, $08, $f4, $00, $fc, $01, $fa, $03, $f1, $77, $f8, $01, $fd, $01
+    db $f0, $03, $ed, $00, $24, $04, $24, $04, $27, $04, $24, $04, $24, $04, $29, $04
+    db $24, $04, $24, $04, $2a, $04, $24, $04, $24, $04, $29, $04, $24, $04, $24, $04
+    db $27, $04, $24, $04, $91, $ef, $ed, $05, $24, $04, $24, $04, $27, $04, $24, $04
+    db $24, $04, $29, $04, $24, $04, $24, $04, $2a, $04, $24, $04, $24, $04, $29, $04
+    db $24, $04, $24, $04, $27, $04, $24, $04, $91, $f0, $a0, $dc, $ff
+
+AlternateBossMusicStream3: ; $01:$5F8E-$5FE6
+    db $fe, $0b, $fc, $0f, $fa, $03, $f2, $01, $f8, $01, $fd, $01, $f0, $03, $ed, $00
+    db $14, $04, $14, $04, $17, $04, $14, $04, $14, $04, $19, $04, $14, $04, $14, $04
+    db $1a, $04, $14, $04, $14, $04, $19, $04, $14, $04, $14, $04, $17, $04, $14, $04
+    db $91, $ef, $ed, $05, $14, $04, $14, $04, $17, $04, $14, $04, $14, $04, $19, $04
+    db $14, $04, $14, $04, $1a, $04, $14, $04, $14, $04, $19, $04, $14, $04, $14, $04
+    db $17, $04, $14, $04, $91, $f0, $a0, $dc, $ff
+
+AlternateBossMusicStream4: ; $01:$5FE7-$600D
+    db $fe, $08, $f8, $01, $f0, $03, $fe, $07, $fb, $01, $f9, $38, $03, $04, $03, $02
+    db $03, $02, $96, $fa, $fe, $0a, $f0, $02, $fb, $02, $f9, $50, $02, $04, $f0, $01
+    db $02, $04, $f0, $03, $a0, $f1, $ff
+
+
+StageTransitionMusic: ; $01:$600E
+    db $03 ; Playback tick interval minus one
+    db $03 ; Priority
+
+    dw StageTransitionMusicStream1 ; Hardware channel 1: pulse
+    db $00 ; Software channel selector
+
+    dw StageTransitionMusicStream2 ; Hardware channel 2: pulse
+    db $01 ; Software channel selector
+
+    dw StageTransitionMusicStream3 ; Hardware channel 3: wave
+    db $02 ; Software channel selector
+
+    dw StageTransitionMusicStream4 ; Hardware channel 4: noise
+    db $05 ; Software channel selector
+
+StageTransitionMusicStream1: ; $01:$601C-$6046
+    db $fe, $08, $f5, $00, $f4, $40, $fc, $0e, $fa, $06, $fd, $00, $f8, $01, $f0, $03
+    db $47, $10, $45, $10, $44, $10, $42, $08, $44, $04, $45, $04, $47, $04, $00, $02
+    db $47, $04, $00, $02, $47, $10, $fd, $03, $00, $08, $ff
+
+StageTransitionMusicStream2: ; $01:$6047-$606F
+    db $fe, $08, $f0, $03, $f4, $40, $fc, $0e, $fa, $06, $fd, $00, $f8, $01, $42, $10
+    db $40, $10, $3b, $10, $39, $08, $3b, $04, $40, $04, $42, $04, $00, $02, $42, $04
+    db $00, $02, $42, $10, $fd, $03, $00, $08, $ff
+
+StageTransitionMusicStream3: ; $01:$6070-$60D2
+    db $fe, $0f, $f0, $03, $fc, $0d, $f2, $01, $fa, $04, $f8, $01, $f0, $01, $17, $02
+    db $f0, $02, $17, $02, $93, $fc, $f0, $01, $15, $02, $f0, $02, $15, $02, $93, $fc
+    db $f0, $01, $14, $02, $f0, $02, $14, $02, $93, $fc, $f0, $01, $12, $02, $f0, $02
+    db $12, $02, $91, $fc, $f0, $01, $14, $02, $f0, $02, $14, $02, $f0, $01, $15, $02
+    db $f0, $02, $15, $02, $f0, $01, $17, $02, $f0, $02, $00, $02, $f0, $01, $00, $02
+    db $f0, $02, $17, $02, $f0, $01, $00, $02, $f0, $02, $00, $02, $17, $10, $fd, $03
+    db $00, $08, $ff
+
+StageTransitionMusicStream4: ; $01:$60D3-$620F
+    db $f8, $01, $fe, $08, $fd, $00, $f0, $03, $fc, $00, $fe, $06, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $f0, $01, $fe, $09, $fb, $02, $f9, $50, $02, $02, $fe, $06
+    db $f0, $03, $fb, $01, $f9, $38, $03, $02, $f0, $02, $fe, $09, $fb, $02, $f9, $50
+    db $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $09
+    db $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fe, $09, $f0, $02, $fb, $02, $f9, $50, $02, $02, $f0, $03
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0, $01, $fb, $02, $f9, $50
+    db $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $f0, $02
+    db $fe, $09, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $f0, $01, $fe, $09, $fb, $02, $f9, $50, $02, $02, $fe, $06
+    db $f0, $03, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0, $02, $fb, $02, $f9, $50
+    db $02, $02, $fe, $06, $f0, $03, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $09
+    db $f0, $01, $fb, $02, $f9, $50, $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $f0, $02, $fe, $09, $fb, $02, $f9, $50, $02, $02, $f0, $03
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $09, $f0, $01, $fb, $02, $f9, $50
+    db $02, $02, $f0, $03, $fe, $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $09
+    db $f0, $02, $fb, $02, $f9, $50, $02, $02, $f0, $03, $02, $02, $fe, $0c, $f0, $01
+    db $fb, $01, $f9, $38, $03, $02, $f0, $02, $03, $02, $fe, $09, $f0, $03, $fb, $02
+    db $f9, $50, $02, $02, $fe, $0c, $f0, $01, $fb, $01, $f9, $38, $03, $02, $f0, $02
+    db $03, $02, $fe, $0c, $f0, $03, $fb, $02, $f9, $50, $02, $04, $ff
+
+; Stages 0, 1, and 2 share this definition.
+Stage1Music: ; $01:$6210
+    db $02 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1: pulse 1 (unused)
+    db $03 ; Software channel selector
+
+    dw Stage1MusicStream2 ; Hardware channel 2: pulse 2
+    db $00 ; Software channel selector
+
+    dw Stage1MusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw Stage1MusicStream4 ; Hardware channel 4: noise
+    db $02 ; Software channel selector
+
+Stage1MusicStream2: ; $01:$621E-$6294
     db $f0, $03, $fe, $09, $f4, $80, $f8, $01, $fc, $0e, $fa, $05, $fd, $05, $fd, $00
     db $00, $40, $fd, $05, $39, $04, $40, $04, $44, $04, $47, $24, $46, $06, $47, $06
     db $46, $04, $44, $0c, $40, $10, $37, $24, $39, $04, $40, $04, $44, $04, $47, $24
@@ -5615,10 +3936,9 @@ TitleScreenMusicStream3:
     db $40, $0c, $45, $0c, $39, $04, $40, $04, $45, $04, $39, $04, $40, $08, $45, $04
     db $47, $0c, $42, $0c, $3b, $04, $37, $24, $50, $04, $52, $04, $00, $04, $47, $04
     db $49, $04, $00, $04, $42, $04, $44, $04, $00, $04, $40, $04, $42, $04, $00, $04
-    db $37, $08, $38, $08, $a0, $cd
+    db $37, $08, $38, $08, $a0, $cd, $ff
 
-    rst $38
-
+Stage1MusicStream3: ; $01:$6295-$636B
     db $f0, $03, $f2, $01, $fe, $0f, $f8, $01, $fc, $0d, $fa, $05, $fd, $05, $30, $04
     db $32, $04, $00, $04, $27, $04, $29, $04, $00, $04, $22, $04, $24, $04, $00, $04
     db $20, $04, $22, $04, $00, $04, $17, $08, $18, $08, $19, $04, $19, $04, $19, $04
@@ -5632,10 +3952,9 @@ TitleScreenMusicStream3:
     db $17, $04, $17, $04, $17, $04, $17, $04, $17, $04, $17, $04, $17, $04, $17, $04
     db $17, $08, $18, $08, $30, $04, $32, $04, $00, $04, $27, $04, $29, $04, $00, $04
     db $22, $04, $24, $04, $00, $04, $20, $04, $22, $04, $00, $04, $17, $08, $18, $08
-    db $a0, $02, $a0, $9e, $a0, $ff
+    db $a0, $02, $a0, $9e, $a0, $ff, $ff
 
-    rst $38
-
+Stage1MusicStream4: ; $01:$636C-$651C
     db $f0, $03, $fe, $07, $f8, $01, $fd, $00, $fc, $00, $fb, $02, $f9, $30, $02, $04
     db $02, $04, $fb, $01, $f9, $38, $03, $04, $fb, $02, $f9, $30, $02, $04, $02, $04
     db $fb, $01, $f9, $38, $03, $04, $fb, $02, $f9, $30, $02, $04, $02, $04, $fb, $01
@@ -5663,3283 +3982,501 @@ TitleScreenMusicStream3:
     db $00, $02, $fb, $02, $f9, $30, $02, $04, $02, $04, $fb, $01, $f9, $38, $03, $02
     db $00, $02, $fb, $02, $f9, $30, $02, $04, $02, $04, $fb, $01, $f9, $38, $03, $02
     db $00, $02, $fb, $02, $f9, $30, $02, $04, $00, $04, $02, $04, $00, $04, $a0, $b6
+    db $ff
+
+; Stage 4.
+Stage4Music: ; $01:$651D
+    db $04 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1: pulse 1 (unused)
+    db $03 ; Software channel selector
+
+    dw Stage4MusicStream2 ; Hardware channel 2: pulse 2
+    db $00 ; Software channel selector
+
+    dw Stage4MusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw Stage4MusicStream4 ; Hardware channel 4: noise
+    db $02 ; Software channel selector
+
+Stage4MusicStream2: ; $01:$652B-$65BF
+    db $f0, $03, $fe, $0a, $f4, $80, $f8, $01, $fc, $0e, $fa, $06, $fd, $00, $ed, $02
+    db $00, $40, $00, $40, $00, $20, $00, $0c, $fd, $05, $39, $02, $40, $02, $44, $04
+    db $42, $04, $3b, $06, $37, $02, $34, $0c, $30, $02, $34, $02, $37, $04, $35, $04
+    db $34, $04, $30, $04, $32, $0c, $40, $04, $3b, $0c, $37, $04, $39, $0c, $39, $02
+    db $40, $02, $44, $04, $42, $04, $3b, $06, $37, $02, $34, $0c, $30, $02, $34, $02
+    db $37, $04, $35, $04, $34, $06, $30, $02, $32, $06, $34, $02, $29, $02, $2b, $02
+    db $30, $02, $32, $02, $34, $04, $32, $04, $2b, $04, $27, $04, $44, $0c, $47, $04
+    db $42, $0c, $42, $02, $44, $02, $45, $08, $44, $04, $40, $04, $44, $06, $42, $0a
+    db $44, $0c, $47, $04, $42, $0c, $42, $02, $44, $02, $45, $08, $47, $08, $49, $10
+    db $00, $10, $a0, $b7, $ff
+
+Stage4MusicStream3: ; $01:$65C0-$6702
+    db $f0, $03, $fe, $0f, $f2, $01, $fc, $0d, $fa, $04, $f8, $01, $fd, $01, $ed, $02
+    db $19, $02, $19, $02, $17, $02, $19, $02, $00, $08, $20, $02, $20, $02, $00, $04
+    db $22, $02, $22, $02, $00, $04, $19, $02, $19, $02, $17, $02, $19, $02, $00, $08
+    db $20, $02, $20, $02, $00, $04, $17, $02, $17, $02, $00, $04, $19, $02, $19, $02
+    db $17, $02, $19, $02, $00, $08, $20, $02, $20, $02, $00, $04, $22, $02, $22, $02
+    db $00, $04, $19, $02, $19, $02, $17, $02, $19, $02, $00, $08, $20, $02, $20, $02
+    db $00, $04, $17, $02, $17, $02, $00, $04, $24, $04, $24, $04, $24, $04, $24, $04
+    db $24, $04, $22, $04, $1b, $04, $17, $04, $a0, $02, $a0, $cb, $19, $02, $19, $02
+    db $17, $02, $19, $02, $00, $08, $20, $02, $20, $02, $00, $04, $22, $02, $22, $02
+    db $00, $04, $19, $02, $19, $02, $17, $02, $19, $02, $00, $08, $27, $02, $27, $02
+    db $00, $04, $20, $02, $20, $02, $00, $04, $22, $04, $22, $04, $22, $04, $22, $04
+    db $24, $04, $24, $04, $24, $04, $22, $04, $19, $02, $19, $02, $17, $02, $19, $02
+    db $00, $08, $20, $02, $20, $02, $00, $04, $22, $02, $22, $02, $00, $04, $19, $02
+    db $19, $02, $17, $02, $19, $02, $00, $08, $27, $02, $27, $02, $00, $04, $20, $02
+    db $20, $02, $00, $04, $22, $04, $22, $04, $22, $04, $22, $04, $27, $04, $27, $04
+    db $27, $04, $27, $04, $20, $06, $20, $02, $20, $08, $22, $06, $22, $02, $22, $08
+    db $24, $06, $24, $02, $24, $08, $24, $04, $22, $04, $1b, $04, $17, $04, $20, $06
+    db $20, $02, $20, $08, $22, $06, $22, $02, $22, $08, $25, $04, $00, $01, $20, $01
+    db $22, $01, $25, $01, $27, $04, $00, $01, $1b, $01, $22, $01, $27, $01, $29, $02
+    db $29, $02, $29, $02, $29, $02, $29, $02, $29, $02, $29, $02, $29, $02, $00, $10
+    db $a0, $9d, $ff
+
+Stage4MusicStream4: ; $01:$6703-$6B5F
+    db $fe, $08, $f8, $01, $fd, $00, $fc, $00, $f0, $03, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fb, $01, $f9, $38, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02
+    db $a0, $02, $a0, $ac, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $00, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $00, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $00, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $00, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $00, $02, $fe, $06, $fb, $01, $f9, $38, $03, $04, $03, $04
+    db $03, $04, $03, $04, $fe, $06, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $a0, $02, $a0, $a8, $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $00, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $00, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $00, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $00, $02, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08
+    db $fb, $02, $f9, $30, $02, $02, $00, $02, $a0, $02, $a0, $bc, $fe, $06, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $02, $02, $00, $02, $02, $02
+    db $02, $02, $00, $02, $02, $02, $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02
+    db $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02, $03, $02, $03, $02, $fe, $08
+    db $fb, $02, $f9, $30, $02, $02, $00, $02, $fb, $01, $f9, $38, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $00, $02, $03, $02, $a0, $02, $a0, $b6
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $00, $02
+    db $fe, $06, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02
+    db $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $02, $02
+    db $00, $02, $02, $02, $02, $02, $00, $02, $02, $02, $02, $02, $a0, $02, $a0, $d8
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $05, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02
+    db $fe, $05, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $fe, $05, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $02, $02, $a0, $02, $a0, $d3, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $fe, $05, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $05, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02
+    db $fe, $05, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $fe, $05, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $05, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02, $02, $02, $02, $02, $02, $02
+    db $00, $04, $02, $02, $02, $02, $00, $04, $a0, $02, $a0, $97, $fe, $08, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $02
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $02, $00, $02, $fe, $05, $fb, $01, $f9, $38, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $02, $00, $02, $02, $02, $02, $02, $a0, $d0, $ff
+
+; Stage 3.
+Stage3Music: ; $01:$6B60
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1: pulse 1 (unused)
+    db $03 ; Software channel selector
+
+    dw Stage3MusicStream2 ; Hardware channel 2: pulse 2
+    db $00 ; Software channel selector
+
+    dw Stage3MusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw Stage3MusicStream4 ; Hardware channel 4: noise
+    db $02 ; Software channel selector
+
+Stage3MusicStream2: ; $01:$6B6E-$6BDC
+    db $f0, $03, $f4, $80, $fc, $0e, $fa, $07, $fd, $03, $fe, $0a, $00, $20, $fd, $00
+    db $00, $20, $fd, $05, $39, $1c, $3b, $04, $40, $1c, $44, $04, $42, $18, $3b, $08
+    db $37, $20, $39, $1c, $3b, $04, $40, $1c, $44, $04, $42, $18, $3b, $08, $37, $1c
+    db $3b, $04, $42, $04, $00, $02, $40, $04, $00, $02, $44, $06, $42, $06, $3b, $04
+    db $37, $04, $42, $04, $00, $02, $40, $04, $00, $02, $44, $06, $42, $06, $3b, $04
+    db $40, $02, $42, $02, $42, $04, $00, $02, $40, $04, $00, $02, $44, $06, $42, $06
+    db $3b, $04, $40, $04, $42, $04, $44, $04, $47, $04, $49, $20, $a0, $d1, $ff
+
+Stage3MusicStream3: ; $01:$6BDD-$6CED
+    db $f0, $03, $fe, $0f, $f2, $01, $fc, $0d, $fa, $05, $f8, $01, $fd, $05, $19, $02
+    db $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $19, $02, $93, $f1
+    db $19, $02, $19, $02, $19, $02, $00, $02, $19, $02, $19, $02, $19, $02, $00, $02
+    db $19, $02, $19, $02, $00, $02, $19, $02, $19, $02, $19, $02, $19, $02, $00, $02
+    db $17, $02, $17, $02, $17, $02, $00, $02, $17, $02, $17, $02, $17, $02, $00, $02
+    db $17, $02, $17, $02, $00, $02, $17, $02, $17, $02, $17, $02, $17, $02, $00, $02
+    db $15, $02, $15, $02, $00, $02, $00, $02, $15, $02, $15, $02, $00, $02, $15, $02
+    db $15, $02, $15, $02, $15, $02, $15, $02, $00, $02, $00, $02, $15, $02, $15, $02
+    db $17, $02, $17, $02, $17, $02, $00, $02, $17, $02, $17, $02, $17, $02, $00, $02
+    db $17, $02, $17, $02, $17, $02, $17, $02, $00, $02, $17, $02, $17, $02, $00, $02
+    db $91, $c0, $22, $02, $22, $02, $22, $02, $20, $02, $20, $02, $20, $02, $24, $02
+    db $24, $02, $24, $02, $22, $02, $22, $02, $22, $02, $1b, $02, $1b, $02, $17, $02
+    db $17, $02, $22, $02, $22, $02, $22, $02, $20, $02, $20, $02, $20, $02, $24, $02
+    db $24, $02, $24, $02, $22, $02, $22, $02, $22, $02, $1b, $02, $1b, $02, $20, $02
+    db $22, $02, $22, $02, $22, $02, $00, $02, $20, $02, $20, $02, $00, $02, $24, $02
+    db $24, $02, $00, $02, $22, $02, $22, $02, $00, $02, $1b, $02, $1b, $02, $20, $02
+    db $20, $02, $22, $02, $22, $02, $24, $02, $24, $02, $27, $02, $27, $02, $a0, $80
+    db $ff
+
+Stage3MusicStream4: ; $01:$6CEE-$6FCE
+    db $f0, $03, $f8, $01, $fe, $06, $fd, $00, $fc, $00, $00, $1c, $fb, $02, $f9, $30
+    db $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $04, $00, $04, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $00, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04
+    db $00, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02
+    db $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08
+    db $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $a0, $02, $a0, $b3, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $05
+    db $03, $02, $03, $02, $00, $04, $fe, $05, $03, $02, $03, $02, $03, $02, $00, $02
+    db $fe, $05, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $05, $03, $02
+    db $03, $02, $00, $04, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $fe, $05, $03, $02, $03, $02, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $04, $02, $04, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04
+    db $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02
+    db $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02
+    db $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $04, $a0, $02, $a0, $8c, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $fe, $05, $03, $02, $03, $02, $00, $04, $fe, $05
+    db $03, $02, $03, $02, $03, $02, $00, $02, $fe, $05, $03, $02, $03, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38
+    db $03, $02, $03, $02, $fe, $05, $03, $02, $03, $02, $00, $04, $fe, $08, $fb, $02
+    db $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $05
+    db $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04
+    db $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02
+    db $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02
+    db $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08
+    db $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02
+    db $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $fb, $01
+    db $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02, $03, $02
+    db $03, $02, $fe, $08, $fb, $02, $f9, $30, $02, $04, $a0, $02, $a0, $8c, $fe, $05
+    db $fb, $01, $f9, $38, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02
+    db $f9, $30, $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $05
+    db $03, $02, $03, $02, $00, $04, $fe, $05, $03, $02, $03, $02, $03, $02, $00, $02
+    db $fe, $05, $03, $02, $03, $02, $03, $02, $03, $02, $fe, $08, $fb, $02, $f9, $30
+    db $02, $04, $fe, $05, $fb, $01, $f9, $38, $03, $02, $03, $02, $fe, $05, $03, $02
+    db $03, $02, $00, $04, $fe, $08, $fb, $02, $f9, $30, $02, $04, $fe, $05, $a0, $cf
+    db $ff
+
+; Stage 5.
+Stage5Music: ; $01:$6FCF
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1: pulse 1 (unused)
+    db $03 ; Software channel selector
+
+    dw Stage5MusicStream2 ; Hardware channel 2: pulse 2
+    db $00 ; Software channel selector
+
+    dw Stage5MusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw Stage5MusicStream4 ; Hardware channel 4: noise
+    db $02 ; Software channel selector
+
+Stage5MusicStream2: ; $01:$6FDD-$70B3
+    db $f0, $03, $fe, $08, $f4, $80, $fd, $05, $fc, $0e, $fa, $06, $f8, $01, $ed, $01
+    db $34, $1c, $35, $14, $30, $18, $32, $18, $29, $20, $34, $1c, $35, $14, $30, $18
+    db $32, $18, $29, $20, $32, $1c, $34, $14, $35, $18, $34, $18, $32, $10, $2b, $08
+    db $27, $08, $32, $1c, $34, $14, $35, $18, $34, $18, $32, $10, $27, $08, $2b, $08
+    db $34, $1c, $35, $14, $30, $18, $32, $18, $29, $20, $34, $1c, $35, $14, $30, $18
+    db $32, $18, $29, $20, $32, $1c, $34, $14, $35, $18, $34, $18, $32, $10, $2b, $08
+    db $27, $08, $32, $1c, $34, $14, $35, $18, $34, $18, $32, $10, $27, $08, $2b, $08
+    db $34, $1c, $35, $14, $30, $18, $32, $0c, $34, $04, $29, $28, $34, $1c, $35, $14
+    db $30, $18, $32, $0c, $34, $04, $37, $10, $35, $18, $32, $1c, $37, $14, $32, $0c
+    db $2b, $0c, $34, $0c, $32, $24, $37, $0c, $35, $0c, $34, $0c, $37, $18, $3b, $14
+    db $40, $18, $42, $18, $44, $1c, $45, $14, $40, $18, $42, $18, $39, $20, $44, $1c
+    db $45, $14, $40, $18, $42, $18, $39, $20, $42, $1c, $44, $14, $45, $18, $44, $18
+    db $42, $10, $3b, $08, $37, $08, $42, $1c, $44, $14, $45, $18, $44, $18, $42, $10
+    db $37, $08, $3b, $08, $a0, $9e, $ff
+
+Stage5MusicStream3: ; $01:$70B4-$70E0
+    db $f0, $03, $f2, $01, $fc, $0d, $fa, $07, $f8, $01, $fe, $0f, $ed, $01, $19, $04
+    db $19, $04, $09, $02, $19, $02, $19, $02, $19, $02, $9f, $fa, $17, $04, $17, $04
+    db $07, $02, $17, $02, $17, $02, $17, $02, $9f, $fa, $a0, $f2, $ff
+
+Stage5MusicStream4: ; $01:$70E1-$70F7
+    db $f8, $01, $fe, $06, $fb, $02, $f9, $30, $02, $04, $02, $04, $00, $02, $02, $02
+    db $02, $02, $02, $02, $a0, $f8, $ff
+
+; Stage 6.
+Stage6Music: ; $01:$70F8
+    db $04 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1: pulse 1 (unused)
+    db $03 ; Software channel selector
+
+    dw Stage6MusicStream2 ; Hardware channel 2: pulse 2
+    db $00 ; Software channel selector
+
+    dw Stage6MusicStream3 ; Hardware channel 3: wave
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4: noise (unused)
+
+Stage6MusicStream2: ; $01:$7105-$72BD
+    db $f0, $03, $fe, $0d, $f4, $80, $f8, $00, $fc, $0e, $fa, $05, $ed, $01, $00, $20
+    db $00, $0e, $fd, $03, $39, $08, $00, $0a, $00, $0e, $3b, $08, $00, $08, $32, $04
+    db $00, $04, $34, $02, $00, $02, $35, $14, $00, $20, $00, $0e, $39, $08, $00, $0a
+    db $00, $0e, $40, $08, $00, $08, $32, $02, $00, $02, $34, $02, $00, $02, $35, $02
+    db $37, $02, $00, $02, $32, $08, $00, $1a, $00, $20, $00, $0e, $39, $08, $00, $0a
+    db $00, $0e, $3b, $08, $00, $08, $32, $04, $00, $04, $34, $02, $00, $02, $35, $14
+    db $00, $20, $00, $0e, $39, $08, $00, $0a, $00, $0e, $40, $08, $00, $08, $32, $02
+    db $00, $02, $34, $02, $00, $02, $35, $02, $37, $02, $00, $02, $40, $02, $00, $02
+    db $42, $02, $00, $02, $44, $02, $00, $02, $47, $04, $00, $22, $a0, $02, $a0, $c0
+    db $39, $02, $3b, $02, $40, $02, $39, $02, $00, $02, $42, $02, $00, $02, $44, $02
+    db $00, $02, $47, $02, $00, $02, $49, $08, $00, $04, $39, $02, $3b, $02, $40, $02
+    db $39, $02, $00, $02, $40, $02, $00, $02, $3b, $02, $00, $02, $47, $02, $00, $02
+    db $50, $02, $00, $02, $4b, $04, $00, $04, $39, $02, $3b, $02, $40, $02, $39, $02
+    db $00, $02, $42, $02, $00, $02, $44, $02, $00, $02, $47, $02, $00, $02, $49, $08
+    db $00, $04, $39, $02, $3b, $02, $40, $02, $39, $02, $00, $02, $40, $02, $00, $02
+    db $3b, $02, $00, $02, $47, $02, $00, $02, $50, $02, $00, $02, $4b, $04, $00, $04
+    db $39, $02, $3b, $02, $40, $02, $39, $02, $00, $02, $42, $02, $00, $02, $44, $02
+    db $00, $02, $47, $02, $00, $02, $49, $08, $00, $04, $39, $02, $3b, $02, $40, $02
+    db $39, $02, $00, $02, $40, $02, $00, $02, $3b, $02, $00, $02, $47, $08, $00, $08
+    db $39, $02, $3b, $02, $40, $02, $39, $02, $00, $02, $42, $02, $00, $02, $44, $02
+    db $00, $02, $47, $02, $00, $02, $49, $08, $00, $04, $a0, $02, $a0, $a1, $39, $02
+    db $3b, $02, $40, $02, $39, $02, $00, $02, $40, $02, $00, $02, $3b, $02, $00, $02
+    db $47, $02, $00, $02, $50, $02, $00, $02, $4b, $04, $00, $04, $39, $02, $3b, $02
+    db $40, $02, $39, $02, $00, $02, $42, $02, $00, $02, $44, $02, $00, $02, $47, $02
+    db $00, $02, $49, $08, $00, $04, $39, $02, $3b, $02, $40, $02, $39, $02, $00, $02
+    db $40, $02, $00, $02, $3b, $02, $00, $02, $47, $08, $00, $08, $39, $02, $3b, $02
+    db $40, $02, $39, $02, $00, $02, $42, $02, $00, $02, $44, $02, $00, $02, $47, $02
+    db $00, $02, $49, $08, $00, $04, $a0, $cb, $ff
+
+Stage6MusicStream3: ; $01:$72BE-$72D0
+    db $f0, $03, $f2, $01, $f8, $01, $fc, $0b, $fa, $04, $fe, $0f, $ed, $01, $19, $02
+    db $a0, $ff, $ff
+
+
+PlayerFiringSound: ; $01:$72D1
+    db $01 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw PlayerFiringSoundStream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+PlayerFiringSoundStream1: ; $01:$72DE-$72EE
+    db $f0, $03, $f5, $2e, $f4, $40, $fc, $0d, $fa, $06, $fe, $0a, $fd, $01, $60, $04
+    db $ff
+
+MaxPowerFiringSound: ; $01:$72EF
+    db $02 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw MaxPowerFiringSoundStream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+MaxPowerFiringSoundStream1: ; $01:$72FC-$7310
+    db $f0, $03, $fe, $08, $f5, $2f, $fc, $0f, $fd, $08, $fa, $01, $f4, $80, $f8, $00
+    db $57, $04, $00, $02, $ff
+
+; Played by CheckForNewEnemyDamage when new damage is detected and sound is allowed.
+BossDamageSound: ; $01:$7311
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw BossDamageSoundStream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+BossDamageSoundStream1: ; $01:$731E-$732C
+    db $f0, $03, $f5, $08, $f4, $00, $fb, $02, $fe, $07, $fd, $01, $60, $04, $ff
+
+DefeatSound0: ; $01:$732D; defeat sound index $00
+    db $03 ; Playback tick interval minus one
+    db $00 ; Priority
+
+    dw $0000 ; Hardware channel 1 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw DefeatSound0Stream4 ; Hardware channel 4: noise
+    db $05 ; Software channel selector
+
+DefeatSound0Stream4: ; $01:$733B-$734B
+    db $f0, $03, $fe, $0c, $f1, $77, $fd, $05, $fb, $01, $f9, $04, $10, $02, $00, $02
+    db $ff
+
+; Used for Xenocrypt part destruction and shared boss-destruction smoke effects.
+BossPartDestructionSound: ; $01:$734C
+    db $02 ; Playback tick interval minus one
+    db $02 ; Priority
+
+    dw $0000 ; Hardware channel 1 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw BossPartDestructionSoundStream4 ; Hardware channel 4: noise
+    db $05 ; Software channel selector
+
+BossPartDestructionSoundStream4: ; $01:$735A-$739A
+    db $fe, $0b, $fd, $02, $f0, $03, $10, $02, $fe, $09, $f0, $01, $10, $02, $fe, $06
+    db $f0, $02, $10, $02, $fe, $09, $fd, $04, $f0, $03, $10, $04, $fe, $09, $f0, $01
+    db $10, $06, $fe, $06, $f0, $03, $10, $04, $f0, $01, $10, $01, $f0, $03, $10, $01
+    db $f0, $02, $10, $01, $f0, $03, $fe, $03, $10, $06, $fe, $01, $fd, $00, $10, $04
+    db $ff
+
+PlayerDeathSound: ; $01:$739B
+    db $03 ; Playback tick interval minus one
+    db $03 ; Priority
+
+    dw $0000 ; Hardware channel 1 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw PlayerDeathSoundStream4 ; Hardware channel 4: noise
+    db $05 ; Software channel selector
+
+PlayerDeathSoundStream4: ; $01:$73A9-$73D7
+    db $fe, $0f, $fd, $02, $f0, $03, $fb, $07, $f9, $04, $0f, $0f, $fe, $0d, $f0, $01
+    db $0f, $06, $fe, $08, $f0, $02, $0f, $04, $f0, $01, $0f, $02, $f0, $02, $0f, $01
+    db $f0, $01, $0f, $01, $f0, $01, $0f, $01, $fe, $04, $f0, $03, $0f, $08, $ff
+
+DefeatSound1: ; $01:$73D8; defeat sound index $01
+    db $01 ; Playback tick interval minus one
+    db $01 ; Priority
+
+    dw DefeatSound1Stream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+DefeatSound1Stream1: ; $01:$73E5-$73FF
+    db $fe, $08, $f5, $0d, $fc, $00, $fb, $02, $f8, $00, $f0, $03, $f4, $40, $60, $01
+    db $50, $01, $57, $01, $47, $01, $59, $01, $49, $01, $ff
+
+DefeatSound2: ; $01:$7400; defeat sound index $02
+    db $00 ; Playback tick interval minus one
+    db $01 ; Priority
+
+    dw DefeatSound2Stream1 ; Hardware channel 1: pulse
+    db $04 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw $0000 ; Hardware channel 4 unused
+
+DefeatSound2Stream1: ; $01:$740D-$7449
+    db $fe, $08, $f5, $08, $fc, $00, $fb, $05, $f8, $00, $f0, $03, $f4, $40, $ed, $f4
+    db $60, $01, $70, $01, $5b, $01, $6b, $01, $4a, $01, $5a, $01, $59, $01, $69, $01
+    db $57, $01, $67, $01, $56, $01, $66, $01, $55, $01, $65, $01, $54, $01, $64, $01
+    db $50, $01, $60, $01, $49, $01, $59, $01, $47, $01, $57, $01, $ff
+
+DefeatSound3: ; $01:$744A; defeat sound index $03
+    db $03 ; Playback tick interval minus one
+    db $01 ; Priority
+
+    dw $0000 ; Hardware channel 1 unused
+    db $00 ; Software channel selector
+
+    dw $0000 ; Hardware channel 2 unused
+    db $01 ; Software channel selector
+
+    dw $0000 ; Hardware channel 3 unused
+    db $02 ; Software channel selector
+
+    dw DefeatSound3Stream4 ; Hardware channel 4: noise
+    db $05 ; Software channel selector
+
+DefeatSound3Stream4: ; $01:$7458-$7464
+    db $fe, $07, $fd, $02, $f0, $03, $fb, $05, $f9, $04, $0e, $0d, $ff
 
-    rst $38
-    inc b
-    nop
-    nop
-    nop
-    inc bc
-    dec hl
-    ld h, l
-    nop
-    ret nz
-
-    ld h, l
-    ld bc, $6703
-    ld [bc], a
-    ldh a, [$ff03]
-    cp $0a
-    db $f4
-    add b
-    ld hl, sp+$01
-    db $fc
-    ld c, $fa
-    ld b, $fd
-    nop
-    db $ed
-    ld [bc], a
-    nop
-    ld b, b
-    nop
-    ld b, b
-    nop
-    jr nz, jr_001_6542
-
-jr_001_6542:
-    inc c
-    db $fd
-    dec b
-    add hl, sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    ld b, h
-    inc b
-    ld b, d
-    inc b
-    dec sp
-    ld b, $37
-    ld [bc], a
-    inc [hl]
-    inc c
-    jr nc, jr_001_6557
-
-    inc [hl]
-    ld [bc], a
-
-jr_001_6557:
-    scf
-    inc b
-    dec [hl]
-    inc b
-    inc [hl]
-    inc b
-    jr nc, jr_001_6563
-
-    ld [hl-], a
-    inc c
-    ld b, b
-    inc b
-
-jr_001_6563:
-    dec sp
-    inc c
-    scf
-    inc b
-    add hl, sp
-    inc c
-    add hl, sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    ld b, h
-    inc b
-    ld b, d
-    inc b
-    dec sp
-    ld b, $37
-    ld [bc], a
-    inc [hl]
-    inc c
-    jr nc, jr_001_657b
-
-    inc [hl]
-    ld [bc], a
-
-jr_001_657b:
-    scf
-    inc b
-    dec [hl]
-    inc b
-    inc [hl]
-    ld b, $30
-    ld [bc], a
-    ld [hl-], a
-    ld b, $34
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    dec hl
-    ld [bc], a
-    jr nc, jr_001_658f
-
-    ld [hl-], a
-    ld [bc], a
-
-jr_001_658f:
-    inc [hl]
-    inc b
-    ld [hl-], a
-    inc b
-    dec hl
-    inc b
-    daa
-    inc b
-    ld b, h
-    inc c
-    ld b, a
-    inc b
-    ld b, d
-    inc c
-    ld b, d
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    ld b, l
-    ld [$0444], sp
-    ld b, b
-    inc b
-    ld b, h
-    ld b, $42
-    ld a, [bc]
-    ld b, h
-    inc c
-    ld b, a
-    inc b
-    ld b, d
-    inc c
-    ld b, d
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    ld b, l
-    ld [$0847], sp
-    ld c, c
-    stop
-    db $10
-    and b
-    or a
-    rst $38
-    ldh a, [$ff03]
-    cp $0f
-    ldh a, [c]
-    ld bc, $0dfc
-    ld a, [$f804]
-    ld bc, $01fd
-    db $ed
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_65e0
-
-    nop
-    inc b
-
-jr_001_65e0:
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_65f6
-
-    nop
-    inc b
-
-jr_001_65f6:
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_660c
-
-    nop
-    inc b
-
-jr_001_660c:
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_6622
-
-    nop
-    inc b
-
-jr_001_6622:
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    ld [hl+], a
-    inc b
-    dec de
-    inc b
-    rla
-    inc b
-    and b
-    ld [bc], a
-    and b
-    rr c
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_664c
-
-    nop
-    inc b
-
-jr_001_664c:
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0227], sp
-    daa
-    ld [bc], a
-    nop
-    inc b
-    jr nz, jr_001_6666
-
-    jr nz, jr_001_6668
-
-jr_001_6666:
-    nop
-    inc b
-
-jr_001_6668:
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    inc h
-    inc b
-    ld [hl+], a
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0220], sp
-    jr nz, jr_001_6688
-
-    nop
-    inc b
-
-jr_001_6688:
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    inc b
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    rla
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [$0227], sp
-    daa
-    ld [bc], a
-    nop
-    inc b
-    jr nz, jr_001_66a2
-
-    jr nz, jr_001_66a4
-
-jr_001_66a2:
-    nop
-    inc b
-
-jr_001_66a4:
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    ld [hl+], a
-    inc b
-    daa
-    inc b
-    daa
-    inc b
-    daa
-    inc b
-    daa
-    inc b
-    jr nz, @+$08
-
-    jr nz, jr_001_66ba
-
-    jr nz, jr_001_66c2
-
-jr_001_66ba:
-    ld [hl+], a
-    ld b, $22
-    ld [bc], a
-    ld [hl+], a
-    ld [$0624], sp
-
-jr_001_66c2:
-    inc h
-    ld [bc], a
-    inc h
-    ld [$0424], sp
-    ld [hl+], a
-    inc b
-    dec de
-    inc b
-    rla
-    inc b
-    jr nz, @+$08
-
-    jr nz, jr_001_66d4
-
-    jr nz, jr_001_66dc
-
-jr_001_66d4:
-    ld [hl+], a
-    ld b, $22
-    ld [bc], a
-    ld [hl+], a
-    ld [$0425], sp
-
-jr_001_66dc:
-    nop
-    ld bc, $0120
-    ld [hl+], a
-    ld bc, $0125
-    daa
-    inc b
-    nop
-    ld bc, $011b
-    ld [hl+], a
-    ld bc, $0127
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    add hl, hl
-    ld [bc], a
-    nop
-    db $10
-    and b
-    sbc l
-    rst $38
-    cp $08
-    ld hl, sp+$01
-    db $fd
-    nop
-    db $fc
-    nop
-    ldh a, [$ff03]
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_673c
-
-    ld [bc], a
-    nop
-
-jr_001_673c:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_674e
-
-    ld [bc], a
-    nop
-
-jr_001_674e:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_677e
-
-    ld [bc], a
-    nop
-
-jr_001_677e:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6790
-
-    ld [bc], a
-    nop
-
-jr_001_6790:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    xor h
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_67c4
-
-    ld [bc], a
-    nop
-
-jr_001_67c4:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_67d6
-
-    ld [bc], a
-    nop
-
-jr_001_67d6:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6806
-
-    ld [bc], a
-    nop
-
-jr_001_6806:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6818
-
-    ld [bc], a
-    nop
-
-jr_001_6818:
-    ld [bc], a
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    inc b
-    inc bc
-    inc b
-    inc bc
-    inc b
-    inc bc
-    inc b
-    cp $06
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6864
-
-    ld [bc], a
-    and b
-
-jr_001_6864:
-    ld [bc], a
-    and b
-    xor b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6896
-
-    ld [bc], a
-    nop
-
-jr_001_6896:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_68a8
-
-    ld [bc], a
-    nop
-
-jr_001_68a8:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_68d8
-
-    ld [bc], a
-    nop
-
-jr_001_68d8:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_68ea
-
-    ld [bc], a
-    nop
-
-jr_001_68ea:
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    cp h
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_690e
-
-    ld [bc], a
-    ld [bc], a
-
-jr_001_690e:
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_694a
-
-    ld [bc], a
-    nop
-
-jr_001_694a:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_695c
-
-    ld [bc], a
-    nop
-
-jr_001_695c:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    or [hl]
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6990
-
-    ld [bc], a
-    nop
-
-jr_001_6990:
-    ld [bc], a
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_69a2
-
-    ld [bc], a
-    nop
-
-jr_001_69a2:
-    ld [bc], a
-    cp $06
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_69c2
-
-    ld [bc], a
-    ld [bc], a
-
-jr_001_69c2:
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    ret c
-
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6a28
-
-    ld [bc], a
-    ld [bc], a
-
-jr_001_6a28:
-    ld [bc], a
-    and b
-    ld [bc], a
-    and b
-    db $d3
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-
-Jump_001_6ae7:
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6aee
-
-    ld [bc], a
-    ld [bc], a
-
-jr_001_6aee:
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    nop
-    inc b
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    nop
-    inc b
-    and b
-    ld [bc], a
-    and b
-    sub a
-    cp $08
-    ld [bc], a
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6b46
-
-    ld [bc], a
-    nop
-
-jr_001_6b46:
-    ld [bc], a
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6b58
-
-    ld [bc], a
-    nop
-
-jr_001_6b58:
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    and b
-    ret nc
-
-    rst $38
-    inc bc
-    nop
-    nop
-    nop
-    inc bc
-    ld l, [hl]
-    ld l, e
-    nop
-    db $dd
-    ld l, e
-    ld bc, $6cee
-    ld [bc], a
-    ldh a, [$ff03]
-    db $f4
-    add b
-    db $fc
-    ld c, $fa
-    rlca
-    db $fd
-    inc bc
-    cp $0a
-
-jr_001_6b7a:
-    nop
-
-jr_001_6b7b:
-    jr nz, jr_001_6b7a
-
-    nop
-
-jr_001_6b7e:
-    nop
-    jr nz, jr_001_6b7e
-
-    dec b
-    add hl, sp
-    inc e
-    dec sp
-    inc b
-    ld b, b
-    inc e
-    ld b, h
-    inc b
-    ld b, d
-    jr jr_001_6bc8
-
-    ld [$2037], sp
-    add hl, sp
-    inc e
-    dec sp
-    inc b
-    ld b, b
-    inc e
-    ld b, h
-    inc b
-    ld b, d
-    jr jr_001_6bd6
-
-    ld [$1c37], sp
-    dec sp
-    inc b
-    ld b, d
-    inc b
-    nop
-    ld [bc], a
-    ld b, b
-    inc b
-    nop
-    ld [bc], a
-    ld b, h
-    ld b, $42
-    ld b, $3b
-    inc b
-    scf
-    inc b
-    ld b, d
-    inc b
-    nop
-    ld [bc], a
-    ld b, b
-    inc b
-    nop
-    ld [bc], a
-    ld b, h
-    ld b, $42
-    ld b, $3b
-    inc b
-    ld b, b
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    ld b, d
-    inc b
-    nop
-    ld [bc], a
-    ld b, b
-    inc b
-
-jr_001_6bc8:
-    nop
-    ld [bc], a
-    ld b, h
-    ld b, $42
-    ld b, $3b
-    inc b
-    ld b, b
-    inc b
-    ld b, d
-    inc b
-    ld b, h
-    inc b
-
-jr_001_6bd6:
-    ld b, a
-    inc b
-    ld c, c
-    jr nz, jr_001_6b7b
-
-    pop de
-    rst $38
-    ldh a, [$ff03]
-    cp $0f
-    ldh a, [c]
-    ld bc, $0dfc
-    ld a, [$f805]
-    ld bc, $05fd
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    sub e
-    pop af
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    nop
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    nop
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec d
-    ld [bc], a
-    dec d
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    nop
-    ld [bc], a
-    sub c
-    ret nz
-
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    jr nz, jr_001_6c89
-
-    jr nz, jr_001_6c8b
-
-jr_001_6c89:
-    jr nz, jr_001_6c8d
-
-jr_001_6c8b:
-    inc h
-    ld [bc], a
-
-jr_001_6c8d:
-    inc h
-    ld [bc], a
-    inc h
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    jr nz, jr_001_6ca9
-
-    jr nz, jr_001_6cab
-
-jr_001_6ca9:
-    jr nz, jr_001_6cad
-
-jr_001_6cab:
-    inc h
-    ld [bc], a
-
-jr_001_6cad:
-    inc h
-    ld [bc], a
-    inc h
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    jr nz, jr_001_6cbf
-
-    ld [hl+], a
-    ld [bc], a
-
-jr_001_6cbf:
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    jr nz, jr_001_6cc9
-
-    jr nz, jr_001_6ccb
-
-jr_001_6cc9:
-    nop
-    ld [bc], a
-
-jr_001_6ccb:
-    inc h
-    ld [bc], a
-    inc h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    ld [hl+], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec de
-    ld [bc], a
-    dec de
-    ld [bc], a
-    jr nz, jr_001_6cdf
-
-    jr nz, jr_001_6ce1
-
-jr_001_6cdf:
-    ld [hl+], a
-    ld [bc], a
-
-jr_001_6ce1:
-    ld [hl+], a
-    ld [bc], a
-    inc h
-    ld [bc], a
-    inc h
-    ld [bc], a
-    daa
-    ld [bc], a
-    daa
-    ld [bc], a
-    and b
-    add b
-    rst $38
-    ldh a, [$ff03]
-    ld hl, sp+$01
-    cp $06
-    db $fd
-    nop
-    db $fc
-    nop
-    nop
-    inc e
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6d17
-
-    inc b
-    nop
-
-jr_001_6d17:
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6d2f
-
-    inc b
-    nop
-
-jr_001_6d2f:
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6d99
-
-    inc b
-    and b
-
-jr_001_6d99:
-    ld [bc], a
-    and b
-    or e
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6e17
-
-    inc b
-    ld [bc], a
-
-jr_001_6e17:
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6e81
-
-    inc b
-    and b
-
-jr_001_6e81:
-    ld [bc], a
-    and b
-    adc h
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6eff
-
-    inc b
-    ld [bc], a
-
-jr_001_6eff:
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_6f69
-
-    inc b
-    and b
-
-jr_001_6f69:
-    ld [bc], a
-    and b
-    adc h
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    ei
-    ld bc, $38f9
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    cp $05
-    inc bc
-    ld [bc], a
-    inc bc
-    ld [bc], a
-    nop
-    inc b
-    cp $08
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, @+$04
-
-    inc b
-    cp $05
-    and b
-    rst $08
-    rst $38
-    inc bc
-    nop
-    nop
-    nop
-    inc bc
-    db $dd
-    ld l, a
-    nop
-    or h
-    ld [hl], b
-    ld bc, $70e1
-    ld [bc], a
-    ldh a, [$ff03]
-    cp $08
-    db $f4
-    add b
-    db $fd
-    dec b
-    db $fc
-    ld c, $fa
-    ld b, $f8
-    ld bc, $01ed
-    inc [hl]
-    inc e
-    dec [hl]
-    inc d
-    jr nc, jr_001_700b
-
-    ld [hl-], a
-    jr jr_001_701f
-
-    jr nz, @+$36
-
-    inc e
-    dec [hl]
-    inc d
-    jr nc, @+$1a
-
-    ld [hl-], a
-    jr jr_001_7029
-
-    jr nz, jr_001_7034
-
-    inc e
-    inc [hl]
-    inc d
-    dec [hl]
-    jr jr_001_703c
-
-    jr jr_001_703c
-
-    db $10
-
-jr_001_700b:
-    dec hl
-    ld [$0827], sp
-    ld [hl-], a
-    inc e
-    inc [hl]
-    inc d
-    dec [hl]
-    jr jr_001_704a
-
-    jr jr_001_704a
-
-    db $10
-    daa
-    ld [$082b], sp
-    inc [hl]
-    inc e
-
-jr_001_701f:
-    dec [hl]
-    inc d
-    jr nc, jr_001_703b
-
-    ld [hl-], a
-    jr jr_001_704f
-
-    jr nz, jr_001_705c
-
-    inc e
-
-jr_001_7029:
-    dec [hl]
-    inc d
-    jr nc, @+$1a
-
-    ld [hl-], a
-    jr @+$2b
-
-    jr nz, jr_001_7064
-
-    inc e
-    inc [hl]
-
-jr_001_7034:
-    inc d
-    dec [hl]
-    jr jr_001_706c
-
-    jr jr_001_706c
-
-    db $10
-
-jr_001_703b:
-    dec hl
-
-jr_001_703c:
-    ld [$0827], sp
-    ld [hl-], a
-    inc e
-    inc [hl]
-    inc d
-    dec [hl]
-    jr jr_001_707a
-
-    jr jr_001_707a
-
-    db $10
-    daa
-
-jr_001_704a:
-    ld [$082b], sp
-    inc [hl]
-    inc e
-
-jr_001_704f:
-    dec [hl]
-    inc d
-    jr nc, jr_001_706b
-
-    ld [hl-], a
-    inc c
-    inc [hl]
-    inc b
-    add hl, hl
-    jr z, jr_001_708e
-
-    inc e
-    dec [hl]
-
-jr_001_705c:
-    inc d
-    jr nc, jr_001_7077
-
-    ld [hl-], a
-    inc c
-    inc [hl]
-    inc b
-    scf
-
-jr_001_7064:
-    db $10
-    dec [hl]
-    jr jr_001_709a
-
-    inc e
-    scf
-    inc d
-
-jr_001_706b:
-    ld [hl-], a
-
-jr_001_706c:
-    inc c
-    dec hl
-    inc c
-    inc [hl]
-    inc c
-    ld [hl-], a
-    inc h
-    scf
-    inc c
-    dec [hl]
-    inc c
-
-jr_001_7077:
-    inc [hl]
-    inc c
-    scf
-
-jr_001_707a:
-    jr jr_001_70b7
-
-    inc d
-    ld b, b
-    jr @+$44
-
-    jr jr_001_70c6
-
-    inc e
-    ld b, l
-    inc d
-    ld b, b
-    jr jr_001_70ca
-
-    jr @+$3b
-
-    jr nz, @+$46
-
-    inc e
-    ld b, l
-
-jr_001_708e:
-    inc d
-    ld b, b
-    jr jr_001_70d4
-
-    jr jr_001_70cd
-
-    jr nz, jr_001_70d8
-
-    inc e
-    ld b, h
-    inc d
-    ld b, l
-
-jr_001_709a:
-    jr jr_001_70e0
-
-    jr jr_001_70e0
-
-    db $10
-    dec sp
-    ld [$0837], sp
-    ld b, d
-    inc e
-    ld b, h
-    inc d
-    ld b, l
-    jr jr_001_70ee
-
-    jr jr_001_70ee
-
-    db $10
-    scf
-    ld [$083b], sp
-    and b
-    sbc [hl]
-    rst $38
-    ldh a, [$ff03]
-    ldh a, [c]
-
-jr_001_70b7:
-    ld bc, $0dfc
-    ld a, [$f807]
-    ld bc, $0ffe
-    db $ed
-    ld bc, $0419
-    add hl, de
-    inc b
-
-jr_001_70c6:
-    add hl, bc
-    ld [bc], a
-    add hl, de
-    ld [bc], a
-
-jr_001_70ca:
-    add hl, de
-    ld [bc], a
-    add hl, de
-
-jr_001_70cd:
-    ld [bc], a
-    sbc a
-    ld a, [$0417]
-    rla
-    inc b
-
-jr_001_70d4:
-    rlca
-    ld [bc], a
-    rla
-    ld [bc], a
-
-jr_001_70d8:
-    rla
-    ld [bc], a
-    rla
-    ld [bc], a
-    sbc a
-    ld a, [$f2a0]
-
-jr_001_70e0:
-    rst $38
-    ld hl, sp+$01
-    cp $06
-    ei
-    ld [bc], a
-    ld sp, hl
-    jr nc, jr_001_70ec
-
-    inc b
-    ld [bc], a
-
-jr_001_70ec:
-    inc b
-    nop
-
-jr_001_70ee:
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    ld [bc], a
-    and b
-    ld hl, sp-$01
-    inc b
-    nop
-    nop
-    nop
-    inc bc
-    dec b
-    ld [hl], c
-    nop
-    cp [hl]
-    ld [hl], d
-    ld bc, $0000
-    ldh a, [$ff03]
-    cp $0d
-    db $f4
-    add b
-    ld hl, sp+$00
-    db $fc
-    ld c, $fa
-    dec b
-    db $ed
-    ld bc, $2000
-    nop
-    ld c, $fd
-    inc bc
-    add hl, sp
-    ld [$0a00], sp
-    nop
-    ld c, $3b
-    ld [$0800], sp
-    ld [hl-], a
-    inc b
-    nop
-    inc b
-    inc [hl]
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec [hl]
-    inc d
-    nop
-    jr nz, jr_001_7130
-
-jr_001_7130:
-    ld c, $39
-    ld [$0a00], sp
-    nop
-    ld c, $40
-    ld [$0800], sp
-    ld [hl-], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec [hl]
-    ld [bc], a
-    scf
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld [hl-], a
-    ld [$1a00], sp
-    nop
-    jr nz, jr_001_7150
-
-jr_001_7150:
-    ld c, $39
-    ld [$0a00], sp
-    nop
-    ld c, $3b
-    ld [$0800], sp
-    ld [hl-], a
-    inc b
-    nop
-    inc b
-    inc [hl]
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec [hl]
-    inc d
-    nop
-    jr nz, jr_001_7168
-
-jr_001_7168:
-    ld c, $39
-    ld [$0a00], sp
-    nop
-    ld c, $40
-    ld [$0800], sp
-    ld [hl-], a
-    ld [bc], a
-    nop
-    ld [bc], a
-    inc [hl]
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec [hl]
-    ld [bc], a
-    scf
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    inc b
-    nop
-    ld [hl+], a
-    and b
-    ld [bc], a
-    and b
-    ret nz
-
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld d, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, e
-    inc b
-    nop
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld d, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, e
-    inc b
-    nop
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [$0800], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    and b
-    ld [bc], a
-    and b
-    and c
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld d, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, e
-    inc b
-    nop
-    inc b
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    nop
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [$0800], sp
-    add hl, sp
-    ld [bc], a
-    dec sp
-    ld [bc], a
-    ld b, b
-    ld [bc], a
-    add hl, sp
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, d
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, h
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld b, a
-    ld [bc], a
-    nop
-    ld [bc], a
-    ld c, c
-    ld [$0400], sp
-    and b
-    set 7, a
-    ldh a, [$ff03]
-    ldh a, [c]
-    ld bc, $01f8
-    db $fc
-    dec bc
-    ld a, [$fe04]
-    rrca
-    db $ed
-    ld bc, $0219
-    and b
-    rst $38
-    rst $38
-
-    db $01, $00, $de, $72, $04, $00, $00, $00, $00, $00, $01, $00, $00, $f0, $03, $f5
-    db $2e, $f4, $40, $fc, $0d, $fa, $06, $fe, $0a, $fd, $01, $60, $04, $ff, $02
-
-    nop
-    db $fc
-    ld [hl], d
-    inc b
-    nop
-    nop
-    nop
-    nop
-    nop
-    ld bc, $0000
-    ldh a, [$ff03]
-    cp $08
-    push af
-    cpl
-    db $fc
-    rrca
-    db $fd
-    ld [$01fa], sp
-    db $f4
-    add b
-    ld hl, sp+$00
-    ld d, a
-    inc b
-    nop
-    ld [bc], a
-    rst $38
-
-    db $03, $00, $1e, $73, $04, $00, $00, $00, $00, $00, $01, $00, $00, $f0, $03, $f5
-    db $08, $f4, $00, $fb, $02, $fe, $07, $fd, $01, $60, $04
-
-    rst $38
-
-    db $03, $00, $00, $00, $00, $00, $00, $01, $00, $00, $02, $3b, $73, $05, $f0, $03
-    db $fe, $0c, $f1, $77, $fd, $05, $fb, $01, $f9, $04, $10, $02, $00, $02, $ff, $02
-    db $02, $00, $00, $00, $00, $00, $01, $00, $00, $02, $5a, $73, $05, $fe, $0b, $fd
-    db $02, $f0, $03, $10, $02, $fe, $09, $f0, $01, $10, $02, $fe, $06, $f0, $02, $10
-    db $02, $fe, $09, $fd, $04, $f0, $03, $10, $04, $fe, $09, $f0, $01, $10, $06, $fe
-    db $06, $f0, $03, $10, $04, $f0, $01, $10, $01, $f0, $03, $10, $01, $f0, $02, $10
-    db $01, $f0, $03, $fe, $03, $10, $06
-
-    cp $01
-    db $fd
-    nop
-    db $10
-    inc b
-    rst $38
-
-    db $03, $03, $00, $00, $00, $00, $00, $01, $00, $00, $02, $a9, $73, $05, $fe, $0f
-    db $fd, $02, $f0, $03, $fb, $07, $f9, $04, $0f, $0f, $fe, $0d, $f0, $01, $0f, $06
-    db $fe, $08, $f0, $02, $0f, $04, $f0, $01, $0f, $02, $f0, $02, $0f, $01, $f0, $01
-    db $0f, $01, $f0, $01, $0f, $01, $fe, $04, $f0, $03, $0f, $08, $ff, $01, $01, $e5
-    db $73, $04, $00, $00, $01, $00, $00, $02, $00, $00, $fe, $08, $f5, $0d, $fc, $00
-    db $fb, $02, $f8, $00, $f0, $03, $f4, $40, $60, $01, $50, $01, $57, $01, $47, $01
-    db $59, $01, $49, $01, $ff, $00, $01, $0d, $74, $04, $00, $00, $01, $00, $00, $02
-    db $00, $00, $fe, $08, $f5, $08, $fc, $00, $fb, $05, $f8, $00, $f0, $03, $f4, $40
-    db $ed, $f4, $60, $01, $70, $01, $5b, $01, $6b, $01, $4a, $01, $5a, $01, $59, $01
-    db $69, $01, $57, $01, $67, $01, $56, $01, $66, $01, $55, $01, $65, $01, $54, $01
-    db $64, $01, $50, $01, $60, $01, $49, $01, $59, $01, $47, $01, $57, $01, $ff, $03
-
-    ld bc, $0000
-    nop
-    nop
-    nop
-    ld bc, $0000
-    ld [bc], a
-    ld e, b
-    ld [hl], h
-    dec b
-    cp $07
-    db $fd
-    ld [bc], a
-    ldh a, [$ff03]
-    ei
-    dec b
-    ld sp, hl
-    inc b
-    ld c, $0d
-    rst $38
     rst $10
     jp $d665
 
@@ -9088,7 +4625,7 @@ jr_001_7168:
     rst $20
     ld [hl], h
     sbc [hl]
-    jp Jump_001_57df
+    jp Stage8MusicStream2 + $2d
 
 
     db $fd
@@ -9495,7 +5032,7 @@ jr_001_7168:
     dec h
     push hl
     dec c
-    jp Jump_001_6ae7
+    jp Stage4MusicStream4 + $3e4
 
 
     ld d, e

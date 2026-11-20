@@ -641,7 +641,7 @@ SetupPauseScreen:
     ld a, [$cf9a]
     call StopAudioPlayback
     ld a, $01
-    ld hl, $5d8a
+    ld hl, PauseScreenSound
     call SetupAudioPlayback
     ld [$cf9a], a
     xor a
@@ -731,12 +731,12 @@ PauseScreenLoop:
     or a
     jr z, .selectStageMusic
 
-    ld hl, $5eb0
+    ld hl, BossMusic
     ld a, [$cfa1]
     dec a
     jr z, .startMusicAndResume
 
-    ld hl, $5f23
+    ld hl, AlternateBossMusic
     jr .startMusicAndResume
 
 .selectStageMusic
@@ -1312,7 +1312,7 @@ SetupGameOverScreen:
     xor a
     ld [wGameOverExitTimer], a
     ld [wVBlankOccurred], a
-    ld hl, $5541
+    ld hl, GameOverMusic
     call SetupAudioPlayback
     ld [$cf9a], a
     ld a, $07
@@ -1327,20 +1327,21 @@ SetupGameOverScreen:
 
 StageMusicPointerTable: ; $07F8-$0809
     ; Audio definition pointers in ROM bank 1, indexed by stage.
-    dw $6210 ; Stage 0
-    dw $6210 ; Stage 1
-    dw $6210 ; Stage 2
-    dw $6B60 ; Stage 3
-    dw $651D ; Stage 4
-    dw $6FCF ; Stage 5
-    dw $70F8 ; Stage 6
-    dw $5603 ; Stage 7 (skipped by StartStageMusic)
-    dw $5603 ; Stage 8
+    dw Stage1Music ; Stage 0
+    dw Stage1Music ; Stage 1
+    dw Stage1Music ; Stage 2
+    dw Stage3Music ; Stage 3
+    dw Stage4Music ; Stage 4
+    dw Stage5Music ; Stage 5
+    dw Stage6Music ; Stage 6
+    dw Stage8Music ; Stage 7 (skipped by StartStageMusic)
+    dw Stage8Music ; Stage 8
 
-    ld b, c
-    ld d, l
-    or b
-    ld e, [hl]
+; Existing ROM bank 1 music definitions; no direct references to these entries found.
+; StageMusicPointerTable indices $09/$0A would reach these adjacent words.
+AdditionalMusicPointers: ; $080A-$080D
+    dw GameOverMusic ; $080A -> $01:$5541
+    dw BossMusic ; $080C -> $01:$5EB0
 
 PauseLabelTiles: ; $080E: "PAUSE "; pause copies only "PAUS", retaining the existing "E ".
     db $d2, $b4, $dc, $d8, $bc, $bf
@@ -1787,7 +1788,7 @@ CheckForNewEnemyDamage:
     or a
     ret nz
 
-    ld hl, $7311
+    ld hl, BossDamageSound
     ld a, $01
     call SetupAudioPlayback
     ld a, $01
@@ -2241,7 +2242,7 @@ GetCurrentPlaybackStatus:
     ret
 
 DefeatSoundPointers:
-    dw $732d, $73d8, $7400, $744a
+    dw DefeatSound0, DefeatSound1, DefeatSound2, DefeatSound3
 
 UpdatePlayerStatus:
     call UpdatePlayerLivesHUD
@@ -2371,7 +2372,7 @@ TryAwardExtraLife:
     xor a
     ld [wScoreExtraLifeReady], a
     inc a
-    ld hl, $5d41
+    ld hl, ExtraLifeSound
     call SetupAudioPlayback
     ld [wSoundSuppressionTimer], a
     ret
@@ -2601,7 +2602,7 @@ SetStageReady:
 StartAlternateBossAudio:
     ld hl, $cfa1
     inc [hl]
-    ld hl, $5f23
+    ld hl, AlternateBossMusic
     xor a
     call SetupAudioPlayback
     ld [$cf9a], a
@@ -2609,7 +2610,7 @@ StartAlternateBossAudio:
 
 
 StartBossAudio:
-    ld hl, $5eb0
+    ld hl, BossMusic
     xor a
     call SetupAudioPlayback
     ld [$cf9a], a
@@ -4002,7 +4003,7 @@ FinishMovementClamp:
     ret
 
 StartPlayerDeathSequence:
-    ld hl, $739b
+    ld hl, PlayerDeathSound
     ld a, $01
     call SetupAudioPlayback
     xor a
@@ -4267,7 +4268,7 @@ PlayStageTransitionAudio:
     cp $06
     jr z, .startMoveToExit
 
-    ld hl, $600e
+    ld hl, StageTransitionMusic
     ld a, $01
     call SetupAudioPlayback
     ld [$cf9a], a
@@ -4579,12 +4580,12 @@ ScheduleShotRequestHandler:
 
 
 ChoosePlayerFiringSound:
-    ld hl, $72d1
+    ld hl, PlayerFiringSound
     ld a, [wWeaponPowerLevel]
     cp MAX_WEAPON_POWER_LEVEL
     jr nz, PlayPlayerFiringSound
 
-    ld hl, $72ef ; max power sound
+    ld hl, MaxPowerFiringSound
 
 PlayPlayerFiringSound:
     ld a, $01
@@ -5430,7 +5431,7 @@ HandlePowerUpContainerHit:
     call StoreAddressInFreeWramSlot
     ld a, $22
     call AddPlayerScore
-    ld hl, $732d
+    ld hl, DefeatSound0
     ld a, $01
     call SetupAudioPlayback
     ld de, PowerUpContainerHiddenGraphics
@@ -5545,7 +5546,7 @@ SchedulePowerUpCollection:
 AwardPowerUp:
     ld a, $22
     call AddPlayerScore
-    ld hl, $5e5b
+    ld hl, PowerUpAwardSound
     ld a, $01
     call SetupAudioPlayback
     ld [wSoundSuppressionTimer], a

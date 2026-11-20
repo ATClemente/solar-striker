@@ -1097,213 +1097,124 @@ AudioWaveformTable:
     db $ff, $aa, $88, $88, $88, $88, $88, $88, $ff, $aa, $88, $88, $88, $88, $88, $88
 
 
-    ; $4803–$480A
-    ; last three bytes are below
+; $4803-$487A: 15 volume sequences, 8 bytes (16 packed 4-bit steps) each.
+; Indices $01-$0F select sequences; index $00 disables volume sequencing.
+; Steps read the high nibble first, then the low nibble; step 15 is held.
 AudioVolumeSequenceTable:
-    db $ff, $cc, $aa, $aa, $aa,
+AudioVolumeSequence01: ; $01:$4803-$480A
+    db $ff, $cc, $aa, $aa, $aa, $88, $88, $77
 
-Jump_001_4808:
-    db $88
-    db $88
-    db $77
-    rst $38
-    ld d, l
-    ld [hl], a
-    sbc c
-    xor d
-    cp e
-    db $dd
-    rst $38
-    cp $dc
-    cp d
-    sbc b
-    adc c
-    xor e
-    call $89ef
-    xor e
-    call $feef
-    call c, $98ba
-    db $fd
-    cp c
-    ld [hl], l
-    ld sp, $a8ec
-    ld h, h
+AudioVolumeSequence02: ; $01:$480B-$4812
+    db $ff, $55, $77, $99, $aa, $bb, $dd, $ff
 
-jr_001_482a:
-    jr nz, jr_001_482a
+AudioVolumeSequence03: ; $01:$4813-$481A
+    db $fe, $dc, $ba, $98, $89, $ab, $cd, $ef
 
-    call c, $edcd
-    jp z, $4286
+AudioVolumeSequence04: ; $01:$481B-$4822
+    db $89, $ab, $cd, $ef, $fe, $dc, $ba, $98
 
-    db $10
-    db $fd
-    cp c
-    xor e
-    sub a
-    ld h, l
-    ld b, e
-    ld hl, $4410
-    ld b, h
-    ld b, h
-    ld b, [hl]
-    ld h, a
-    adc d
-    rst $08
-    cp b
-    rst $38
-    xor b
-    rst $38
-    xor b
-    ld [hl], a
-    ld h, [hl]
-    ld d, l
-    ld b, d
-    rst $38
-    ld de, $1111
-    ld de, $1111
-    db $11
+AudioVolumeSequence05: ; $01:$4823-$482A
+    db $fd, $b9, $75, $31, $ec, $a8, $64, $20
 
-    db $ff, $cc, $88
+AudioVolumeSequence06: ; $01:$482B-$4832
+    db $fe, $dc, $cd, $ed, $ca, $86, $42, $10
 
-    adc b
-    ld h, [hl]
-    ld b, h
-    ld [hl+], a
-    db $11
+AudioVolumeSequence07: ; $01:$4833-$483A
+    db $fd, $b9, $ab, $97, $65, $43, $21, $10
 
-    db $ff, $aa, $88, $88
+AudioVolumeSequence08: ; $01:$483B-$4842
+    db $44, $44, $44, $46, $67, $8a, $cf, $b8
 
-    adc b
-    ld [hl], a
-    ld h, [hl]
-    ld h, [hl]
+AudioVolumeSequence09: ; $01:$4843-$484A
+    db $ff, $a8, $ff, $a8, $77, $66, $55, $42
 
-    db $bb, $aa, $66, $66, $44, $44, $22, $22, $ff, $ff, $88, $aa, $88, $77, $66, $55
+AudioVolumeSequence0A: ; $01:$484B-$4852
+    db $ff, $11, $11, $11, $11, $11, $11, $11
+
+AudioVolumeSequence0B: ; $01:$4853-$485A
+    db $ff, $cc, $88, $88, $66, $44, $22, $11
+
+AudioVolumeSequence0C: ; $01:$485B-$4862
+    db $ff, $aa, $88, $88, $88, $77, $66, $66
+
+AudioVolumeSequence0D: ; $01:$4863-$486A
+    db $bb, $aa, $66, $66, $44, $44, $22, $22
+
+AudioVolumeSequence0E: ; $01:$486B-$4872
+    db $ff, $ff, $88, $aa, $88, $77, $66, $55
+
+AudioVolumeSequence0F: ; $01:$4873-$487A
     db $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
 
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    ld bc, $8000
-    ld bc, $01ff
-    rst $38
-    ld bc, $01ff
-    rst $38
-    ld bc, $80ff
-    ld bc, $01ff
-    rst $38
-    ld bc, $01ff
-    rst $38
-    ld bc, $0080
-    rst $38
-    nop
-    ld bc, $8000
-    nop
-    rst $38
-    nop
-    ld bc, $ff00
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
-    nop
-    add b
-    nop
-    rst $38
-    nop
-    nop
-    ld bc, $0000
-    rst $38
+; Signed frequency deltas applied by Call_001_5212: $00 holds pitch,
+; $01 adds 1, $FF subtracts 1, and $80 restarts the selected sequence.
+; Index $00 disables pitch sequencing; its $8000 entry is not a ROM pointer.
+
+AudioPitchSequence01: ; $01:$487B
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $01, $00, $80
+
+AudioPitchSequence02: ; $01:$4887
+    db $01, $ff, $01, $ff, $01, $ff, $01, $ff, $01, $ff, $80
+
+AudioPitchSequence03: ; $01:$4892
+    db $01, $ff, $01, $ff, $01, $ff, $01, $ff, $01, $80
+
+AudioPitchSequence04: ; $01:$489C
+    db $00, $ff, $00, $01, $00, $80
+
+AudioPitchSequence05: ; $01:$48A2
+    db $00, $ff, $00, $01, $00, $ff, $80
+
+AudioPitchSequence06: ; $01:$48A9
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence07: ; $01:$48B3
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence08: ; $01:$48BD
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence09: ; $01:$48C7
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0A: ; $01:$48D1
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0B: ; $01:$48DB
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0C: ; $01:$48E5
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0D: ; $01:$48EF
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0E: ; $01:$48F9
+    db $00, $ff, $00, $00, $01, $00, $00, $ff, $00, $80
+
+AudioPitchSequence0F: ; $01:$4903
+    ; Continues into the first table entry below ($00, $80).
+    db $00, $ff, $00, $00, $01, $00, $00, $ff
 
 ; $490B-$492A: 16 little-endian lookup entries.
+; The first word also supplies the final hold/restart bytes of sequence $0F.
 AudioPitchSequenceTable:
-    dw $8000 ; index $00
-    dw $487b ; index $01
-    dw $4887 ; index $02
-    dw $4892 ; index $03
-    dw $489c ; index $04
-    dw $48a2 ; index $05
-    dw $48a9 ; index $06
-    dw $48b3 ; index $07
-    dw $48bd ; index $08
-    dw $48c7 ; index $09
-    dw $48d1 ; index $0a
-    dw $48db ; index $0b
-    dw $48e5 ; index $0c
-    dw $48ef ; index $0d
-    dw $48f9 ; index $0e
-    dw $4903 ; index $0f
+    dw $8000 ; index $00: disabled; shared sequence $0F tail ($00, $80)
+    dw AudioPitchSequence01 ; index $01
+    dw AudioPitchSequence02 ; index $02
+    dw AudioPitchSequence03 ; index $03
+    dw AudioPitchSequence04 ; index $04
+    dw AudioPitchSequence05 ; index $05
+    dw AudioPitchSequence06 ; index $06
+    dw AudioPitchSequence07 ; index $07
+    dw AudioPitchSequence08 ; index $08
+    dw AudioPitchSequence09 ; index $09
+    dw AudioPitchSequence0A ; index $0a
+    dw AudioPitchSequence0B ; index $0b
+    dw AudioPitchSequence0C ; index $0c
+    dw AudioPitchSequence0D ; index $0d
+    dw AudioPitchSequence0E ; index $0e
+    dw AudioPitchSequence0F ; index $0f
 
 ; $492B-$495B: raw lookup data preceding InitAudio.
 ; Lookup uses a 1-based index with base $492A; valid index range is unconfirmed.
@@ -10532,7 +10443,7 @@ jr_001_7a80:
 jr_001_7a89:
     ld b, b
     nop
-    jp nz, Jump_001_4808
+    jp nz, AudioVolumeSequence01 + 5
 
     ld a, [bc]
     sbc c

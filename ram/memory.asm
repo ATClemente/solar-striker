@@ -207,6 +207,8 @@ DEF wBossAlternateFiringPositionCounter   EQU $CFA4 ; Low two bits select a posi
 
 ; High score and hard-mode unlock
 DEF wHighScore                            EQU $CFF1
+DEF wStartAlreadyHeld                     EQU $CFFA
+DEF wSelectAlreadyHeld                    EQU $CFFB
 DEF wHardModeUnlocked                     EQU $CFFC
 
 ; High RAM ($FF80)

@@ -1,15 +1,19 @@
-DEF GAME_MODE_NORMAL EQU 0
-DEF GAME_MODE_HARD   EQU 1
+; Game modes, stage IDs, and timing constants.
 
-DEF GAME_STAGE_0     EQU $00 ; Unused
-DEF GAME_STAGE_1     EQU $01
-DEF GAME_STAGE_2     EQU $02
-DEF GAME_STAGE_3     EQU $03
-DEF GAME_STAGE_4     EQU $04
-DEF GAME_STAGE_5     EQU $05
-DEF GAME_STAGE_6     EQU $06
-DEF GAME_STAGE_7     EQU $07 ; Ending cutscene boss
-DEF GAME_STAGE_8     EQU $08 ; Ending cutscene mothership
+; Game modes
+DEF GAME_MODE_NORMAL        EQU 0
+DEF GAME_MODE_HARD          EQU 1
 
-; Frames between vertical background-scroll updates.
+; Stage IDs
+DEF GAME_STAGE_0            EQU $00 ; Unused
+DEF GAME_STAGE_1            EQU $01
+DEF GAME_STAGE_2            EQU $02
+DEF GAME_STAGE_3            EQU $03
+DEF GAME_STAGE_4            EQU $04
+DEF GAME_STAGE_5            EQU $05
+DEF GAME_STAGE_6            EQU $06
+DEF GAME_STAGE_7            EQU $07 ; Ending cutscene boss
+DEF GAME_STAGE_8            EQU $08 ; Ending cutscene mothership
+
+; Frames between vertical background-scroll updates
 DEF BACKGROUND_SCROLL_DELAY EQU $06

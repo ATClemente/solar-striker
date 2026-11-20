@@ -1,12 +1,13 @@
+; Joypad bit masks.
+
+; Action buttons
 DEF BUTTON_A      EQU $01
 DEF BUTTON_B      EQU $02
 DEF BUTTON_SELECT EQU $04
 DEF BUTTON_START  EQU $08
 
+; Directional buttons
+DEF D_PAD_RIGHT   EQU $10
+DEF D_PAD_LEFT    EQU $20
 DEF D_PAD_UP      EQU $40
 DEF D_PAD_DOWN    EQU $80
-DEF D_PAD_LEFT    EQU $20
-DEF D_PAD_RIGHT   EQU $10
-
-DEF wStartAlreadyHeld  EQU $CFFA
-DEF wSelectAlreadyHeld EQU $CFFB

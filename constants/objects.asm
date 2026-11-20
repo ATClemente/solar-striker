@@ -1,7 +1,4 @@
-DEF wObjectTable           EQU $C780
-DEF wSelectedObjectPointer EQU $CA14 ; 2 bytes
-
-; Offsets
+; Field offsets within an object record; RAM addresses are in ram/game.asm.
 
 DEF OBJECT_SPRITE_GRID_OFFSET        EQU $00
 DEF OBJECT_Y_OFFSET                  EQU $01

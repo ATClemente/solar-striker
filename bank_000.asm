@@ -3350,7 +3350,7 @@ ScrollBackground:
     ld hl, wBackgroundScrollTimer
     inc [hl]
     ld a, [hl]
-    cp wBackgroundScrollDelay
+    cp BACKGROUND_SCROLL_DELAY
     ret nz
 
     xor a

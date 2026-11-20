@@ -5,13 +5,10 @@
 
 INCLUDE "hardware.inc"
 INCLUDE "constants/buttons.asm"
-INCLUDE "ram/joypad.asm"
 INCLUDE "constants/player.asm"
-INCLUDE "ram/player.asm"
-INCLUDE "ram/game.asm"
+INCLUDE "ram/memory.asm"
 INCLUDE "constants/game.asm"
-INCLUDE "ram/objects.asm"
-INCLUDE "ram/sprites.asm"
+INCLUDE "constants/objects.asm"
 INCLUDE "constants/handlers.asm"
 INCLUDE "constants/audio.asm"
 

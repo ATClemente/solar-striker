@@ -10,3 +10,6 @@ DEF GAME_STAGE_5     EQU $05
 DEF GAME_STAGE_6     EQU $06
 DEF GAME_STAGE_7     EQU $07 ; Ending cutscene boss
 DEF GAME_STAGE_8     EQU $08 ; Ending cutscene mothership
+
+; Frames between vertical background-scroll updates.
+DEF BACKGROUND_SCROLL_DELAY EQU $06

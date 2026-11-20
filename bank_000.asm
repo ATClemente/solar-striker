@@ -576,7 +576,7 @@ PauseScreenLoop:
 ; Only copy P A U S, E from SCORE remains on screen
 CopyPauseTilesToBuffer:
     ld de, PauseLabelTiles
-    ld hl, $cae0
+    ld hl, wHUDLabelTileBuffer
     ld b, $04
 
 TileBufferLoop:
@@ -589,7 +589,7 @@ TileBufferLoop:
     ret
 
 CopyScoreTilesToBuffer:
-    ld hl, $cae0
+    ld hl, wHUDLabelTileBuffer
     ld de, ScoreLabelTiles
     ld b, $06
     ld a, [de]
@@ -666,7 +666,7 @@ CopyHUDScoreDigitsAndLabels:
 
     ld c, $06
     ld hl, $9c00
-    ld de, $cae0
+    ld de, wHUDLabelTileBuffer
 
 .copyBuffer:
     ld a, [de]
@@ -802,7 +802,7 @@ InitializeNewGame:
     call DrawInitialBackground
     ld de, InitialHUDTilePackets
     call DrawBackgroundTilePackets
-    ld de, $cae0
+    ld de, wHUDLabelTileBuffer
     ld hl, ScoreLabelTiles
     ld b, $05
 
@@ -895,7 +895,7 @@ SetupNextStage:
     xor a
     ld [hl+], a
     ld [hl], a
-    ld hl, $ca28
+    ld hl, wPendingHorizontalScrollOffset
     ld [hl+], a
     ld [hl], a
     ld [wGameOverRequested], a
@@ -3540,7 +3540,7 @@ StoreMapRowPosition:
 
 
 ApplyScrollOffsetToNonPlayerObjects:
-    ld a, [$ca28]
+    ld a, [wPendingHorizontalScrollOffset]
     or a
     ret z ; no opposite shift
 
@@ -3583,7 +3583,7 @@ MoveToNextObject:
     jr nz, ApplyScrollOffsetLoop
 
     ld a, b
-    ld [$ca28], a
+    ld [wPendingHorizontalScrollOffset], a
     ret
 
 BuildShadowOAM:
@@ -3756,7 +3756,7 @@ ScrollBackgroundHorizontal:
     xor a
     sub b ; Negate the scroll amount
     ld b, a
-    inc hl ; HL becomes $CA28
+    inc hl ; HL becomes wPendingHorizontalScrollOffset
     jr ApplyHorizontalScroll
 
 AccumulateRightwardScroll:
@@ -3982,7 +3982,7 @@ PlayerMovementHandler:
     ld de, PlayerDirectionLookupTable
     add hl, de
     ld a, [hl]
-    ld [$ca25], a ; store the movement input calculated
+    ld [wPlayerDirectionIndex], a ; store the movement input calculated
     pop bc
     cp $ff ; check if movement input cancels out
     jr z, SchedulePlayerStateUpdate
@@ -3998,7 +3998,7 @@ PlayerMovementHandler:
     pop hl
     ld a, [hl] ; load the x movement amount in a 
     call CalculateXMovement
-    ld hl, $ca25
+    ld hl, wPlayerDirectionIndex
     call ScrollBackgroundHorizontal
     ld hl, wCalculatedYMovement
     ld a, [hl+]
@@ -6651,7 +6651,7 @@ WaitForBossAlternateFiringStart:
     add hl, bc
     xor a
     ld [hl], a
-    ld [$cfa4], a
+    ld [wBossAlternateFiringPositionCounter], a
     ld de, UpdateBossAlternateFiringTimer
     jp SetCurrentHandlerAddress
 
@@ -6679,7 +6679,7 @@ TryFireBossAlternateShot:
     or a
     jr nz, .setFiringActiveHandler
 
-    ld hl, $cfa4
+    ld hl, wBossAlternateFiringPositionCounter
     ld a, [hl]
     and $03
     inc [hl]

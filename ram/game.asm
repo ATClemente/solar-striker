@@ -16,6 +16,7 @@ DEF wEnableAltProjectileMovement EQU $CA2F
 
 DEF wPlayerDeathRequested EQU $CA20
 
+DEF wPendingHorizontalScrollOffset EQU $CA28 ; Signed object shift awaiting application
 DEF wHorizontalScrollOffset EQU $CA29
 
 DEF wCreditsEnded EQU $CA1B
@@ -95,6 +96,8 @@ DEF wCreditsWindowSlideCounter EQU $CAD1
 DEF wNextCreditsEntryIndex EQU $CAD8
 DEF wCreditsGroupHoldTimer EQU $CAD9
 
+DEF wHUDLabelTileBuffer EQU $CAE0 ; 6 tile IDs: score/pause label
+
 DEF wFinalScoreTextBuffer EQU $CAF0
 
 DEF wVBlankOccurred EQU $CF86 ; Set by VBlank; cleared by the main loop
@@ -107,6 +110,7 @@ DEF wPlayerScore EQU $CF88
 DEF wHighScore   EQU $CFF1
 
 DEF wSoundSuppressionTimer EQU $CFA0
+DEF wBossAlternateFiringPositionCounter EQU $CFA4 ; Low two bits select a position
 
 DEF wHardModeUnlocked EQU $CFFC
 

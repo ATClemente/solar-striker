@@ -1,5 +1,6 @@
 DEF wWeaponPowerLevel EQU $CA21
 DEF wPlayerShotCooldown EQU $CA24
+DEF wPlayerDirectionIndex EQU $CA25 ; 0-7; $FF for no valid direction
 DEF wWeaponShotSlots  EQU $CA51
 DEF wPlayerShotAllocationIndex EQU $CA54
 DEF wPlayerInvincibilityTimer EQU $CA68

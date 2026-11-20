@@ -1165,7 +1165,36 @@ PauseLabelTiles: ; $080E: "PAUSE "; pause copies only "PAUS", retaining the exis
 ScoreLabelTiles: ; $0814: "SCORE ".
     db $d8, $b8, $d0, $d6, $bc, $bf
 
-INCLUDE "engine/joypad.asm"
+ReadJoypad:
+    ld a, $20
+    ldh [rP1], a
+    ldh a, [rP1]
+    ldh a, [rP1]
+    cpl
+    and $0f
+    swap a
+    ld b, a
+    ld a, $10
+    ldh [rP1], a
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    cpl
+    and $0f
+    or b
+    ld c, a
+    ld a, [wJoypadHeld]
+    xor c
+    and c
+    ld [wJoypadPressed], a
+    ld a, c
+    ld [wJoypadHeld], a
+    ld a, $30
+    ldh [rP1], a
+    ret
 
 
 CopyDMARoutineToHRAMLoopSetup:

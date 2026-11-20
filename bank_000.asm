@@ -5,254 +5,72 @@
 
 SECTION "ROM Bank $000", ROM0[$0]
 
+; Keep the identified reset/interrupt code; retain other vector-area bytes as data.
 RST_00::
     jp Start
 
+; $0003-$0007: unidentified bytes following the reset jump.
+    db $fb, $fb, $ee, $ab, $ef
 
-    ei
-    ei
-    xor $ab
-    rst $28
+RST_08:: ; $0008-$000F: no identified restart handler.
+    db $be, $ff, $bd, $ff, $ba, $ff, $aa, $ff
 
-RST_08::
-    cp [hl]
-    rst $38
-    cp l
-    rst $38
-    cp d
-    rst $38
-    xor d
-    rst $38
+RST_10:: ; $0010-$0017: no identified restart handler.
+    db $af, $ff, $be, $bf, $ab, $ff, $ab, $ff
 
-RST_10::
-    xor a
-    rst $38
+RST_18:: ; $0018-$001F: no identified restart handler.
+    db $eb, $f7, $ab, $ff, $ea, $ff, $ae, $ff
 
-    cp [hl]
-    cp a
-    xor e
-    rst $38
-    xor e
-    rst $38
+RST_20:: ; $0020-$0027: no identified restart handler.
+    db $fe, $ff, $be, $ff, $fe, $bf, $aa, $ff
 
-RST_18::
-    db $eb
-    rst $30
-    xor e
-    rst $38
-    ld [$aeff], a
-    rst $38
+RST_28:: ; $0028-$002F: no identified restart handler.
+    db $ab, $ff, $a3, $ff, $ae, $df, $ea, $ff
 
-RST_20::
-    cp $ff
-    cp [hl]
-    rst $38
-    cp $bf
-    xor d
-    rst $38
+RST_30:: ; $0030-$0037: no identified restart handler.
+    db $ea, $7f, $aa, $ff, $ff, $ff, $ab, $ff
 
-RST_28::
-    xor e
-    rst $38
-    and e
-    rst $38
-    xor [hl]
-    rst $18
-    db $ea
-    rst $38
-
-RST_30::
-    ld [$aa7f], a
-    rst $38
-    rst $38
-    rst $38
-    xor e
-    rst $38
-
-RST_38::
-    ei
-    rst $38
-    cp [hl]
-    rst $38
-    xor d
-    rst $38
-    ei
-    rst $38
+RST_38:: ; $0038-$003F: no identified restart handler.
+    db $fb, $ff, $be, $ff, $aa, $ff, $fb, $ff
 
 VBlankInterrupt::
     jp HandleVBlank
 
-
-    cp a
-    xor $ff
-    cp d
-    rst $38
+; Unidentified bytes after the interrupt jump.
+    db $bf, $ee, $ff, $ba, $ff
 
 LCDCInterrupt::
     jp HandleLCDInterrupt
 
-
-    cp $ff
-    ei
-    rst $28
-    rst $38
+; Unidentified bytes after the interrupt jump.
+    db $fe, $ff, $fb, $ef, $ff
 
 TimerOverflowInterrupt::
     jp HandleTimerOverflow
 
-
-    cp a
-    xor $ff
-    db $ea
-    ld a, a
+; Unidentified bytes after the interrupt jump.
+    db $bf, $ee, $ff, $ea, $7f
 
 SerialTransferCompleteInterrupt::
     reti
 
-
-    rst $38
-    xor a
-    or $fb
-    rst $38
-    cp e
-    rst $38
+; $0059-$005F: unidentified bytes after the serial interrupt stub.
+    db $ff, $af, $f6, $fb, $ff, $bb, $ff
 
 JoypadTransitionInterrupt::
     reti
 
-
-    rst $38
-    xor e
-    rst $38
-    xor e
-    rst $38
-    or $fb
-
-    cp [hl]
-    rst $38
-    cp e
-    rst $30
-    xor d
-    rst $38
-    cp d
-    rst $38
-    ei
-    rst $38
-    ei
-    rst $38
-    ld a, [$eafe]
-    rst $38
-    db $eb
-    rst $38
-    xor d
-    rst $38
-    xor d
-    rst $38
-    ld [$feff], a
-    rst $38
-    ld a, [bc]
-    rst $38
-    cp a
-    rst $38
-    ld [$baff], a
-    rst $38
-    ld l, [hl]
-    rst $38
-    ld a, $ff
-    rst $38
-    rst $38
-    db $eb
-    ld sp, hl
-    xor d
-    cp a
-    ld [$aafb], a
-    rst $38
-    and e
-    rst $38
-    ld [$3afb], a
-    rst $38
-    ld [$aeff], a
-    rst $38
-    xor e
-    rst $38
-    rst $18
-    rst $38
-    ld a, [$afbf]
-    rst $38
-    db $eb
-    rst $38
-    cp e
-    rst $38
-    xor $ff
-    xor $ff
-    ld [$aaff], a
-    rst $38
-    xor [hl]
-    rst $38
-    db $eb
-    rst $28
-    db $eb
-    rst $38
-    ei
-    rst $38
-    sbc a
-    rst $38
-    xor $ff
-    xor a
-    rst $38
-    ld a, [hl-]
-    rst $18
-    ld [$feff], a
-    rst $38
-    xor d
-    rst $38
-    cp d
-    rst $38
-    db $eb
-    rst $38
-    db $eb
-    db $fd
-    xor [hl]
-    rst $38
-    cp d
-    rst $38
-    xor e
-    rst $38
-    jp hl
-
-
-    rst $38
-    rst $28
-    rst $38
-
-    xor e
-    rst $38
-    xor a
-    db $fd
-    cp e
-    rst $38
-    rst $28
-    db $fd
-    xor $ff
-    xor a
-    rst $38
-    ld a, [$aaf7]
-    db $fd
-    ld a, [$bbff]
-    rst $38
-
-    db $eb
-    ld a, a
-    ld a, [$aaff]
-    rst $38
-    cp [hl]
-    ei
-    cp [hl]
-    rst $38
-    rst $28
-    ei
-    xor $f5
-    xor $ff
+; $0061-$00FF: unidentified vector-area data; no functional use established.
+    db $ff, $ab, $ff, $ab, $ff, $f6, $fb, $be, $ff, $bb, $f7, $aa, $ff, $ba, $ff, $fb
+    db $ff, $fb, $ff, $fa, $fe, $ea, $ff, $eb, $ff, $aa, $ff, $aa, $ff, $ea, $ff, $fe
+    db $ff, $0a, $ff, $bf, $ff, $ea, $ff, $ba, $ff, $6e, $ff, $3e, $ff, $ff, $ff, $eb
+    db $f9, $aa, $bf, $ea, $fb, $aa, $ff, $a3, $ff, $ea, $fb, $3a, $ff, $ea, $ff, $ae
+    db $ff, $ab, $ff, $df, $ff, $fa, $bf, $af, $ff, $eb, $ff, $bb, $ff, $ee, $ff, $ee
+    db $ff, $ea, $ff, $aa, $ff, $ae, $ff, $eb, $ef, $eb, $ff, $fb, $ff, $9f, $ff, $ee
+    db $ff, $af, $ff, $3a, $df, $ea, $ff, $fe, $ff, $aa, $ff, $ba, $ff, $eb, $ff, $eb
+    db $fd, $ae, $ff, $ba, $ff, $ab, $ff, $e9, $ff, $ef, $ff, $ab, $ff, $af, $fd, $bb
+    db $ff, $ef, $fd, $ee, $ff, $af, $ff, $fa, $f7, $aa, $fd, $fa, $ff, $bb, $ff, $eb
+    db $7f, $fa, $ff, $aa, $ff, $be, $fb, $be, $ff, $ef, $fb, $ee, $f5, $ee, $ff
 
 Boot::
     nop
@@ -935,7 +753,7 @@ CheckStartButtonHeld:
     ld a, $01
     ld [wCurrentStage], a
     ld a, $0f
-    ld [$ca22], a
+    ld [wSecondStageEventParamMask], a
     jp RemoveCurrentHandler
 
 CheckSelectButtonHeld:
@@ -961,7 +779,7 @@ HandleSelectButtonHeld:
     ld a, $01
     ld [wCurrentStage], a
     ld a, $0f
-    ld [$ca22], a
+    ld [wSecondStageEventParamMask], a
     ld a, $01
     ld [wGameMode], a
     jp RemoveCurrentHandler
@@ -1625,7 +1443,7 @@ TryInitializeObjectInFreeSlot:
     ld hl, EnemySpawnXCoords
     call GetStartingXCoord
     xor a
-    ld [$caa4], a
+    ld [wInitialObjCollisionFlag], a
     call FindFreeObjectSlot
     jp c, ObjectInitializationFailed ; couldn't find an open slot
 
@@ -1667,7 +1485,7 @@ UpdateScriptedEnemyMovement:
     ld a, $04
     call CalculateYMovement
     call ReadMovementScriptCommand
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     add d
     ld d, a
     call MoveObject
@@ -1887,7 +1705,7 @@ ZeroMemory:
 ; A = object slot index in object table
 ; BC = Pointer to init template
 ; DE = Starting coordinate pair
-; [$CAA4] = initial value for object field $05
+; [wInitialObjCollisionFlag] = initial value for object field $05
 ; return: C set = init failed
 ; C clear and A = 0, init succeeded
 ; wAllocatedObjectIndex contains requested object index
@@ -1979,7 +1797,7 @@ InitializeObjectHeader:
     ld [hl+], a
     inc hl
     inc hl
-    ld a, [$caa4]
+    ld a, [wInitialObjCollisionFlag]
     ld [hl+], a
 
 InitializeObjectAttributes:
@@ -2093,7 +1911,7 @@ SetObjectPointer:
 
 
 ; A = signed movement in 1/16 pixels; BC = handler data.
-; Returns whole-pixel displacement in A and $CA16, retaining fractional movement.
+; Returns whole-pixel displacement in A and wCalculatedYMovement, retaining fractional movement.
 CalculateYMovement:
     bit 7, a
     jr z, .positiveSign ; jump if bit 7 (top bit) in a is zero
@@ -2114,7 +1932,7 @@ CalculateYMovement:
     call AccumulateFractionalMovement
 
 .return
-    ld [$ca16], a
+    ld [wCalculatedYMovement], a
     ret
 
 
@@ -2137,7 +1955,7 @@ CalculateXMovement:
     call AccumulateFractionalMovement
 
 .return
-    ld [$ca17], a
+    ld [wCalculatedXMovement], a
     ret
 
 
@@ -2223,7 +2041,7 @@ MoveObjectWithFractionalVelocity:
     call CalculateYMovement
     ld a, e
     call CalculateXMovement
-    ld hl, $ca16
+    ld hl, wCalculatedYMovement
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -2552,7 +2370,7 @@ UnpackStageEventParameters:
     ld [hl], b
     ld hl, wStageEventParams + 1
     ld b, [hl]
-    ld a, [$ca22]
+    ld a, [wSecondStageEventParamMask]
     and b
     ld [hl], a
     jp AdvanceToNextHandler
@@ -2974,7 +2792,7 @@ InitializeSmokeObject:
     ld e, [hl]
     ld d, a
     ld a, $01
-    ld [$caa4], a
+    ld [wInitialObjCollisionFlag], a
     call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
@@ -3159,7 +2977,7 @@ UpdateProjectilePosition:
     call CalculateYMovement
     ld a, e
     call CalculateXMovement
-    ld hl, $ca16
+    ld hl, wCalculatedYMovement
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -3927,7 +3745,7 @@ ScrollBackgroundHorizontal:
     jr c, AccumulateRightwardScroll ; jump if less than 4
 
     ; greater than 4
-    ld a, [$ca17] ; get the whole pixel x movement
+    ld a, [wCalculatedXMovement] ; get the whole pixel x movement
     cpl
     inc a ; turn it positive again
     add [hl] ; Add saved remainder at $CA26
@@ -3944,7 +3762,7 @@ ScrollBackgroundHorizontal:
 
 AccumulateRightwardScroll:
     inc hl
-    ld a, [$ca17]
+    ld a, [wCalculatedXMovement]
     add [hl]
     ld b, a
     and $03
@@ -4185,7 +4003,7 @@ PlayerMovementHandler:
     call CalculateXMovement
     ld hl, $ca25
     call ScrollBackgroundHorizontal
-    ld hl, $ca16
+    ld hl, wCalculatedYMovement
     ld a, [hl+]
     ld e, [hl]
     ld d, a
@@ -5093,7 +4911,7 @@ UpdateArrowheadMovement:
 .applyArrowheadMovement
     ld a, [hl]
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     ld d, a
     ld e, $00
     call MoveObject
@@ -5248,7 +5066,7 @@ UpdateHarrierVerticalMovement:
 
     ld a, $28
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     ld d, a
     ld e, $00
     call MoveObject
@@ -5306,7 +5124,7 @@ UpdateHarrierHorizontalMovement:
 .applyHorizontalMovement
     ld a, d
     call CalculateXMovement
-    ld a, [$ca17]
+    ld a, [wCalculatedXMovement]
     ld e, a
     ld d, $00
     call MoveObject
@@ -5515,7 +5333,7 @@ UpdatePowerUpMovementAndAnimation:
     call SetObjectPointer
     ld a, $08
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     ld d, a
     ld e, $00
     call MoveObject
@@ -5577,7 +5395,7 @@ AwardMaxPowerBonus:
     call SetObjectPointer
     ld a, $06
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     ld d, a
     ld e, $00
     call MoveObject
@@ -5718,7 +5536,7 @@ UpdateTerraCannonPosition:
 
     ld a, $08
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     jr .applyMovement
 
 .stopMovement
@@ -6046,7 +5864,7 @@ InitializeAnthropMissile:
     ld e, [hl]
     ld d, a
     xor a
-    ld [$caa4], a
+    ld [wInitialObjCollisionFlag], a
     call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
@@ -6618,7 +6436,7 @@ InitializeDestructorOrb:
     xor a
     ld d, a
     ld e, a
-    ld [$caa4], a
+    ld [wInitialObjCollisionFlag], a
     call FindFreeObjectSlot
     jp c, RemoveCurrentHandler
 
@@ -7030,7 +6848,7 @@ UpdatePlayerStageExitMovement:
 .movePlayer
     ld a, [hl]
     call CalculateYMovement
-    ld hl, $ca16
+    ld hl, wCalculatedYMovement
     ld d, [hl]
     ld e, $00
     call MoveObject
@@ -7057,7 +6875,7 @@ UpdatePlayerStageExitMovement:
 
 
 .stageSevenNext
-    ld a, [$ca22]
+    ld a, [wSecondStageEventParamMask]
     cp $0f
     jr nz, .setWaitForStageReady
 
@@ -7151,7 +6969,7 @@ MovePlayerShipsStage8Left:
     call SetObjectPointer
     ld a, $f8
     call CalculateXMovement
-    ld a, [$ca17]
+    ld a, [wCalculatedXMovement]
     ld e, a
     ld d, $00
     call MoveObject
@@ -7738,7 +7556,7 @@ UpdateCutscenePlayerShipMovement:
 
 .startTextDisplay
     call ClearSelectedObject
-    ld a, [$ca22]
+    ld a, [wSecondStageEventParamMask]
     cp $0f
     jr nz, .alternatePath
 
@@ -7958,7 +7776,7 @@ UpdateCreditsEndObjectMovement:
     ld e, c
     ld a, $fc
     call CalculateYMovement
-    ld a, [$ca16]
+    ld a, [wCalculatedYMovement]
     ld d, a
     ld e, $00
     call MoveObject
@@ -8188,7 +8006,7 @@ UpdateMotherAtenaPartDeparture:
 .moveAtena
     ld a, [hl]
     call CalculateXMovement
-    ld a, [$ca17]
+    ld a, [wCalculatedXMovement]
     ld e, a
     ld d, $00
     call MoveObject
@@ -8313,7 +8131,7 @@ UpdateMotherAtenaThrusterDeparture:
 .moveAtena
     ld a, [hl]
     call CalculateXMovement
-    ld a, [$ca17]
+    ld a, [wCalculatedXMovement]
     ld e, a
     ld d, $00
     call MoveObject
@@ -9172,56 +8990,17 @@ MovementDownToDownLeftCommands: ; $3DA9: Blend downward movement into down-left 
 MovementDownLeftToLeftCommands: ; $3DB4: Blend down-left movement into leftward movement.
     db $60, $60, $60, $20, $60, $20, $20, $60, $20, $20, $28
 
-    jr nz, jr_000_3de1
+MovementLeftToUpLeftCommands: ; $3DBF: Blend leftward movement into up-left movement.
+    db $20, $20, $20, $a0, $20, $20, $a0, $20, $a0, $a0, $a8
 
-    jr nz, @-$5e
+MovementUpLeftToUpCommands: ; $3DCA: Blend up-left movement into upward movement.
+    db $a0, $a0, $a0, $20, $a0, $80, $80, $a0, $80, $80, $88
 
-    jr nz, jr_000_3de5
+MovementUpToUpRightCommands: ; $3DD5: Blend upward movement into up-right movement.
+    db $80, $80, $80, $90, $80, $80, $90, $80, $90, $90, $98
 
-    and b
-    jr nz, @-$5e
-
-    and b
-    xor b
-    and b
-    and b
-    and b
-    jr nz, MovementUpRight8Commands + 2
-
-    add b
-    add b
-    and b
-    add b
-    add b
-    adc b
-    add b
-    add b
-    add b
-    sub b
-    add b
-    add b
-    sub b
-    add b
-
-jr_000_3ddd:
-    sub b
-    sub b
-    sbc b
-    sub b
-
-jr_000_3de1:
-    sub b
-    sub b
-    db $10
-    sub b
-
-jr_000_3de5:
-    db $10
-    db $10
-    sub b
-    db $10
-    db $10
-    db $18 ; $3DEA: final command of the preceding sequence.
+MovementUpRightToRightCommands: ; $3DE0: Blend up-right movement into rightward movement.
+    db $90, $90, $90, $10, $90, $10, $10, $90, $10, $10, $18
 
 MovementLeftToDownLeftCommands: ; $3DEB: Blend leftward movement into down-left movement.
     db $20, $20, $20, $60, $20, $20, $60, $20, $60, $60, $68
@@ -9235,51 +9014,17 @@ MovementDownToDownRightCommands: ; $3E01: Blend downward movement into down-righ
 MovementDownRightToRightCommands: ; $3E0C: Blend down-right movement into rightward movement.
     db $50, $50, $50, $10, $50, $10, $10, $50, $10, $10, $18
 
-    db $10
-    db $10
-    db $10
-    sub b
-    db $10
-    db $10
-    sub b
-    db $10
-    sub b
-    sub b
-    sbc b
-    sub b
-    sub b
-    sub b
-    add b
-    sub b
-    add b
-    add b
-    sub b
-    add b
-    add b
-    adc b
-    add b
-    add b
-    add b
-    and b
-    add b
-    add b
-    and b
-    add b
-    and b
-    and b
-    xor b
-    and b
-    and b
-    and b
-    jr nz, jr_000_3ddd
+MovementRightToUpRightCommands: ; $3E17: Blend rightward movement into up-right movement.
+    db $10, $10, $10, $90, $10, $10, $90, $10, $90, $90, $98
 
-    jr nz, MovementLeftToUpCommands + 6
+MovementUpRightToUpCommands: ; $3E22: Blend up-right movement into upward movement.
+    db $90, $90, $90, $80, $90, $80, $80, $90, $80, $80, $88
 
-    and b
-    jr nz, MovementLeftToUpCommands + 9
+MovementUpToUpLeftCommands: ; $3E2D: Blend upward movement into up-left movement.
+    db $80, $80, $80, $a0, $80, $80, $a0, $80, $a0, $a0, $a8
 
-    db $28
-
+MovementUpLeftToLeftCommands: ; $3E38: Blend up-left movement into leftward movement.
+    db $a0, $a0, $a0, $20, $a0, $20, $20, $a0, $20, $20, $28
 
 MovementRightToDownCommands: ; $3E43: Blend rightward movement into downward movement.
     db $10, $10, $50, $10, $50, $50, $50, $40, $50, $40, $48
@@ -9334,226 +9079,27 @@ TitleScreenStartSelectPromptTilePackets:
 
     ; 3EF4
 InitialHUDTilePackets:
-    db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00, 
-    db $f0, $f0, $f0, $f0, $f0, $f0, $f0, $f0,
-    db $00, $00, $fa, $f0, $f3, 
-    db $00
+    db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00
+    db $f0, $f0, $f0, $f0, $f0, $f0, $f0, $f0
+    db $00, $00, $fa, $f0, $f3
+    db $00 ; $3F0A: end of packet sequence.
 
-    ldh a, [$fff0]
-    ldh a, [$fff0]
-    ldh a, [$fff0]
-    ldh a, [rP1]
-    nop
-    ld a, [$f3f0]
-    nop
-    nop
-    nop
-    ld d, h
-    ld bc, $0000
-    nop
-    db $10
-    stop
-    db $10
-    inc b
-    nop
-    nop
-    jr nz, jr_000_3f28
 
-jr_000_3f28:
-    nop
-    nop
-    ld b, d
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    add d
-    ld b, b
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    inc b
-    db $10
-    ld bc, $0000
-    nop
-    ld [$0010], sp
-    nop
-    nop
-    nop
-    ld c, b
-    nop
-    ld [bc], a
-    nop
-    nop
-    nop
-    nop
-    db $10
-    ld b, b
-    nop
-    nop
-    nop
-    nop
-    nop
-    jr nz, jr_000_3f58
-
-jr_000_3f58:
-    nop
-    ld b, b
-    nop
-    ld bc, $0000
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    add b
-    nop
-    ld bc, $4200
-    nop
-    stop
-    jr z, jr_000_3f6e
-
-jr_000_3f6e:
-    nop
-    nop
-    ld b, c
-    nop
-    nop
-    nop
-    jr nc, jr_000_3f87
-
-    db $10
-    stop
-    inc b
-    nop
-    inc b
-    ld b, c
-    nop
-    nop
-    nop
-    add d
-    nop
-    nop
-    nop
-    ld [bc], a
-    nop
-    nop
-
-jr_000_3f87:
-    nop
-    nop
-    nop
-    stop
-    jr nz, jr_000_3f8e
-
-jr_000_3f8e:
-    ld bc, $4000
-    nop
-    inc b
-    inc b
-    inc hl
-    nop
-    nop
-    nop
-    nop
-    inc b
-    nop
-    nop
-    db $10
-    inc d
-    ld [hl+], a
-    nop
-    nop
-    nop
-    ld [bc], a
-    nop
-    nop
-    nop
-    nop
-    nop
-    ld b, h
-    nop
-    inc b
-    nop
-    inc b
-    nop
-    nop
-    nop
-    nop
-    inc b
-    ld [bc], a
-    nop
-    add hl, bc
-    ld bc, $0008
-    nop
-    nop
-    ld hl, $4401
-    nop
-    nop
-    stop
-    nop
-    nop
-    nop
-    nop
-    inc b
-    ld b, $00
-    nop
-    nop
-    nop
-    inc b
-    nop
-    ld bc, $0004
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    add b
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    ld bc, $8001
-    nop
-    stop
-    nop
-    nop
-    nop
-    stop
-    nop
-    jr nz, jr_000_3fee
-
-jr_000_3fee:
-    stop
-    ld b, b
-    nop
-    nop
-    nop
-    db $10
-    dec b
-    and b
-    nop
-    nop
-    nop
-    ld b, h
-    inc b
-    jr nz, jr_000_3ffe
-
-jr_000_3ffe:
-    nop
-    nop
+; $3F0B-$3FFF: not consumed by InitialHUDTilePackets; no references identified.
+UnidentifiedBank0TailData:
+    db $f0, $f0, $f0, $f0, $f0, $f0, $f0, $00, $00, $fa, $f0, $f3, $00, $00, $00, $54
+    db $01, $00, $00, $00, $10, $10, $00, $10, $04, $00, $00, $20, $00, $00, $00, $42
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $82, $40, $00, $00, $00, $00, $00
+    db $00, $04, $10, $01, $00, $00, $00, $08, $10, $00, $00, $00, $00, $48, $00, $02
+    db $00, $00, $00, $00, $10, $40, $00, $00, $00, $00, $00, $20, $00, $00, $40, $00
+    db $01, $00, $00, $00, $00, $00, $00, $00, $00, $80, $00, $01, $00, $42, $00, $10
+    db $00, $28, $00, $00, $00, $41, $00, $00, $00, $30, $11, $10, $10, $00, $04, $00
+    db $04, $41, $00, $00, $00, $82, $00, $00, $00, $02, $00, $00, $00, $00, $00, $10
+    db $00, $20, $00, $01, $00, $40, $00, $04, $04, $23, $00, $00, $00, $00, $04, $00
+    db $00, $10, $14, $22, $00, $00, $00, $02, $00, $00, $00, $00, $00, $44, $00, $04
+    db $00, $04, $00, $00, $00, $00, $04, $02, $00, $09, $01, $08, $00, $00, $00, $21
+    db $01, $44, $00, $00, $10, $00, $00, $00, $00, $00, $04, $06, $00, $00, $00, $00
+    db $04, $00, $01, $04, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80, $00, $00
+    db $00, $00, $00, $00, $00, $01, $01, $80, $00, $10, $00, $00, $00, $00, $10, $00
+    db $00, $20, $00, $10, $00, $40, $00, $00, $00, $10, $05, $a0, $00, $00, $00, $44
+    db $04, $20, $00, $00, $00

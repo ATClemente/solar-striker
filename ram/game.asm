@@ -3,6 +3,9 @@ DEF wCurrentHandlerIndex EQU $CA10
 DEF wAllocatedObjectIndex EQU $CA11
 DEF wCurrentHandlerDataPointer EQU $CA12
 
+DEF wCalculatedYMovement EQU $CA16
+DEF wCalculatedXMovement EQU $CA17
+
 DEF wCurrentStage EQU $CA19
 DEF wGameStartRequested EQU $CA1A
 DEF wScreenShakeRequested EQU $CA1D
@@ -17,6 +20,8 @@ DEF wHorizontalScrollOffset EQU $CA29
 
 DEF wCreditsEnded EQU $CA1B
 DEF wMotherAtenaDeparture EQU $CA1C
+
+DEF wSecondStageEventParamMask EQU $CA22
 
 DEF wEnemyShotSpeedLevel EQU $CA2C
 
@@ -56,6 +61,8 @@ DEF wBackgroundDrawRowPosition   EQU $CA8A
 DEF wMapBlockPointer             EQU $CA8C
 DEF wMapReadPointer              EQU $CA8E
 DEF wBlockDrawDestination        EQU $CA90
+
+DEF wInitialObjCollisionFlag EQU $CAA4
 
 DEF wStageEventPointer EQU $CAB2
 DEF wStageEventParams EQU $CAB5

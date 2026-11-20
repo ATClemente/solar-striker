@@ -131,6 +131,7 @@ DEF wCurrentPlaybackRecord EQU $CC38 ; 3 bytes: repeat count, tick interval, cur
 DEF wCurrentAudioStreamStartPointer EQU $CC47 ; 2 bytes within working channel record
 DEF wCurrentAudioChannelRecord EQU $CC47 ; $2B bytes
 
+DEF wSoftwareChannelBeingProcessed EQU $CD74
 DEF wHardwareChannelBeingSearched EQU $CD75
 
 DEF wRequestedAudioPriority EQU $CD80

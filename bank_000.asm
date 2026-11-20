@@ -241,7 +241,6 @@ JoypadTransitionInterrupt::
     ld a, [$bbff]
     rst $38
 
-Call_000_00f0:
     db $eb
     ld a, a
     ld a, [$aaff]

@@ -1146,7 +1146,7 @@ AudioVolumeSequence0E: ; $01:$486B-$4872
 AudioVolumeSequence0F: ; $01:$4873-$487A
     db $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
 
-; Signed frequency deltas applied by Call_001_5212: $00 holds pitch,
+; Signed frequency deltas applied by UpdateChannelPitchSequence: $00 holds pitch,
 ; $01 adds 1, $FF subtracts 1, and $80 restarts the selected sequence.
 ; Index $00 disables pitch sequencing; its $8000 entry is not a ROM pointer.
 
@@ -1836,12 +1836,12 @@ SilenceHardwareChannelIfRemovingHead:
     push hl
     ld a, c
     cp $03
-    jr nz, jr_001_4c93
+    jr nz, .return
 
     ld a, [wHardwareChannelBeingSearched]
     call SilenceHardwareChannel
 
-jr_001_4c93:
+.return
     pop hl
     pop de
     pop bc
@@ -2796,7 +2796,7 @@ UpdateChannelVolumeSequences:
     ld [hl], a ; store the byte from offset + 1 in offset + 2
     push bc
     ld a, c
-    ld [$cd74], a ; store the current software channel in cd74 (0-5)
+    ld [wSoftwareChannelBeingProcessed], a
     call UpdateChannelVolumeSequence
     pop bc
 
@@ -2894,7 +2894,7 @@ UpdateChannelVolumeSequence:
     inc hl
     inc hl
     set 7, [hl] ; offset $2a
-    ld a, [$cd74]
+    ld a, [wSoftwareChannelBeingProcessed]
     ld c, a
     ld b, $00
     ld hl, wSoftwareChannelRegisterUpdatePending
@@ -2908,43 +2908,44 @@ UpdateChannelVolumeSequence:
     rst $30
 
     ; unused code block below
+UpdateChannelPitchSequences:
     ld c, $00
-    ld hl, $cc86
-    ld de, $cc15
+    ld hl, $cc72 + CHANNEL_PITCH_SEQUENCE_INDEX_OFFSET
+    ld de, wSoftwareChannelActivity
 
-jr_001_51e3:
+.checkChannel
     push de
     push hl
     ld a, [de]
     or a
-    jr z, jr_001_5204
+    jr z, .nextChannel
 
     ld a, [hl+]
     or a
-    jr z, jr_001_5204
+    jr z, .nextChannel
 
     inc hl
     ld a, [hl]
     or a
-    jr z, jr_001_51f5
+    jr z, .tickStepCountdown
 
     dec [hl]
-    jr jr_001_5204
+    jr .nextChannel
 
-jr_001_51f5:
+.tickStepCountdown
     inc hl
     ld a, [hl+]
     dec [hl]
-    jr nz, jr_001_5204
+    jr nz, .nextChannel
 
     ld [hl], a
     push bc
     ld a, c
-    ld [$cd74], a
-    call Call_001_5212
+    ld [wSoftwareChannelBeingProcessed], a
+    call UpdateChannelPitchSequence
     pop bc
 
-jr_001_5204:
+.nextChannel
     pop hl
     ld de, $002b
     add hl, de
@@ -2953,12 +2954,12 @@ jr_001_5204:
     inc c
     ld a, c
     cp $06
-    jr c, jr_001_51e3
+    jr c, .checkChannel
 
     ret
 
 
-Call_001_5212:
+UpdateChannelPitchSequence:
     inc hl
     ld e, l
     ld d, h
@@ -2968,14 +2969,14 @@ Call_001_5212:
     inc hl
     ld b, [hl]
 
-jr_001_521a:
+.readDelta
     ld a, [bc]
     inc bc
     ld [hl], b
     dec hl
     ld [hl], c
     cp $80
-    jr nz, jr_001_523a
+    jr nz, .applyDelta
 
     push hl
     ld hl, $fffb
@@ -2993,9 +2994,9 @@ jr_001_521a:
     ld b, [hl]
     pop hl
     inc hl
-    jr jr_001_521a
+    jr .readDelta
 
-jr_001_523a:
+.applyDelta
     or a
     ret z
 
@@ -3003,11 +3004,11 @@ jr_001_523a:
     add hl, de
     ld b, $00
     cp $80
-    jr c, jr_001_5247
+    jr c, .addDelta
 
     dec b
 
-jr_001_5247:
+.addDelta
     add [hl]
     ld [hl], a
     inc hl
@@ -3021,9 +3022,9 @@ jr_001_5247:
     ld [hl], a
     dec hl
     push hl
-    ld a, [$cd74]
+    ld a, [wSoftwareChannelBeingProcessed]
     add a
-    ld hl, $526e
+    ld hl, AudioPitchRegisterTable
     add l
     ld l, a
     ld a, $00
@@ -3042,14 +3043,11 @@ jr_001_5247:
     ret
 
 
-    inc de
-    rst $38
-    jr @+$01
-
-    dec e
-    rst $38
-    ld [hl+], a
-    rst $38
+AudioPitchRegisterTable:
+    dw rNR13 ; $FF13: pulse 1 frequency
+    dw rNR23 ; $FF18: pulse 2 frequency
+    dw rNR33 ; $FF1D: wave frequency
+    dw rNR43 ; $FF22: noise control
 
 WritePendingAudioRegisters:
     ld a, $80 ; useless, the next xor immediately clears
@@ -3369,12 +3367,12 @@ StoreAudioPanningMask:
     ld d, a ; D = unshifted routing mask ($00, $01, $10, or $11)
     ld a, e ; a = wCurrentPlaybackHardwareChannel
 
-jr_001_541c:
+.loop
     dec a
-    jr z, jr_001_5423 ; if a is 0 (was 1) move on
+    jr z, .storeMask ; if a is 0 (was 1) move on
 
     rlc d ; rotate routing mask left once per hardware channel
-    jr jr_001_541c
+    jr .loop
 
 ; Hardware Channel -> Final D
 ; this applies when input A = $03
@@ -3393,7 +3391,7 @@ jr_001_541c:
 ; 4 - > $CC1E
 ; 5 - > $CC1F
 ; 6 - > $CC20
-jr_001_5423:
+.storeMask:
     ld a, [wCurrentSoftwareChannelId]
     ld hl, wAudioPanningTable - 1
     add l
@@ -3462,7 +3460,6 @@ AudioFrequencyTableEnd:
     ld d, h
     add c
 
-jr_001_551e:
     ld d, h
     sbc c
     ld d, h

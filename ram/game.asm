@@ -151,6 +151,11 @@ DEF wHardwareChannel4List EQU $CC33
 
 
 DEF wAudioUpdateRunning EQU $CC00
+DEF wCurrentPlaybackSlot EQU $CC01
+
+DEF wAudioPanningAccumulator EQU $CC37
+
+DEF wAudioLoopRepeatCountTemp EQU $CD76
 
 DEF wCurrentSoftwareChannelId EQU $CC0C
 
@@ -158,3 +163,7 @@ DEF wAudioPanningTable EQU $CC1B
 
 DEF wAudioVolumeTemp EQU $CD77
 DEF wAudioStreamArgument EQU $CD85
+
+DEF wCurrentMusicPlaybackSlot EQU $CF9A
+
+DEF wBossMusicMode EQU $CFA1

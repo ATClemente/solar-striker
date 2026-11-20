@@ -1887,7 +1887,7 @@ ProcessPlaybackSlots:
 
     ld a, $05
     sub b
-    ld [$cc01], a ; store the playback slot currently being processed
+    ld [wCurrentPlaybackSlot], a ; store the playback slot currently being processed
     push bc
     push hl
     call LoadPlaybackRecord
@@ -1912,7 +1912,7 @@ UpdatePlaybackSlot:
     call CheckPlaybackCompletion
     ret c
 
-    ld a, [$cc01]
+    ld a, [wCurrentPlaybackSlot]
     ld c, a
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
@@ -2329,7 +2329,7 @@ HandleAudioLoop:
     and $0f
     jp z, .checkArgument ; low nibble was 0
 
-    ld [$cd76], a ; store the byte in cd76
+    ld [wAudioLoopRepeatCountTemp], a ; store the byte in cd76
     ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, bc
     ld e, [hl]
@@ -2391,7 +2391,7 @@ HandleAudioLoop:
     ld hl, CHANNEL_LOOP_COUNTERS_OFFSET
     add hl, de ; offset $23
     add hl, bc ; adjust for how many iterations we went through before
-    ld a, [$cd76] ; saved low nibble of the loop command
+    ld a, [wAudioLoopRepeatCountTemp] ; saved low nibble of the loop command
     ld [hl], a ; put the byte in the newly calculated address
     jr .checkArgument
 
@@ -3052,7 +3052,7 @@ AudioPitchRegisterTable:
 WritePendingAudioRegisters:
     ld a, $80 ; useless, the next xor immediately clears
     xor a
-    ld [$cc37], a ; zero out cc37
+    ld [wAudioPanningAccumulator], a ; zero out cc37
     ld c, $00 ; set a counter
     ld hl, wHardwareChannel1List
 
@@ -3069,9 +3069,9 @@ WritePendingAudioRegisters:
     ld a, $00
     adc h
     ld h, a ; HL = $CC1A + software channel ID: address of its panning mask
-    ld a, [$cc37]
+    ld a, [wAudioPanningAccumulator]
     or [hl] ; combine this channel's panning mask with masks already collected
-    ld [$cc37], a ; put back in cc37, saving combined mask
+    ld [wAudioPanningAccumulator], a ; put back in cc37, saving combined mask
     ld a, b ; put that first byte back in a
     ld hl, wSoftwareChannelRegisterUpdatePending - 1
     add l
@@ -3109,7 +3109,7 @@ WritePendingAudioRegisters:
     cp $04 ; 4 hardware channels to check
     jr c, .checkChannel
 
-    ld a, [$cc37]
+    ld a, [wAudioPanningAccumulator]
     ldh [rNR51], a ; store accumulated panning mask in NR51
     ret
 
@@ -3202,7 +3202,7 @@ HardwareChannelRegisterCopyTable:
 
 ; Sets playback to repeat or end
 CheckPlaybackCompletion:
-    ld a, [$cc01]
+    ld a, [wCurrentPlaybackSlot]
     ld c, a ; current playback slot being processed
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
@@ -3240,14 +3240,14 @@ CheckPlaybackCompletion:
 
 
 .endPlayback
-    ld a, [$cc01]
+    ld a, [wCurrentPlaybackSlot]
     call ReleasePlaybackSlot
     scf
     ret
 
 
 RestartPlaybackSlotChannels:
-    ld a, [$cc01]
+    ld a, [wCurrentPlaybackSlot]
     ld c, a
     ld b, $06
     ld hl, wChannelPlaybackSlotOwnerTable
@@ -3277,27 +3277,27 @@ RestartSoftwareChannelPlayback:
     ld [wCurrentSoftwareChannelId], a
     call LoadAudioChannelRecord ; load the channel into the working record
     ld a, [wCurrentAudioStreamStartPointer]
-    ld [$cc49], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_AUDIO_STREAM_POINTER_OFFSET], a
     ld a, [wCurrentAudioStreamStartPointer + 1]
-    ld [$cc4a], a ; save a copy of the pointer in cc49-cc4a
-    ld hl, $cc4c
-    ld de, $cc4d
+    ld [wCurrentAudioChannelRecord + CHANNEL_AUDIO_STREAM_POINTER_OFFSET + 1], a
+    ld hl, wCurrentAudioChannelRecord + CHANNEL_AUDIO_FREQ_INDEX_ADJUSTMENT_OFFSET
+    ld de, wCurrentAudioChannelRecord + CHANNEL_AUDIO_FREQ_INDEX_ADJUSTMENT_OFFSET + 1
     ld bc, $0025
     ld [hl], $00
-    call AudioCopyMemorySetup ; clear 38 bytes of memory starting at cc4c
+    call AudioCopyMemorySetup
     ld a, $00
-    ld [$cc50], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_VOLUME_SEQUENCE_DURATION_SHORTENING_OFFSET], a
     ld a, $02
-    ld [$cc54], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_VOLUME_SEQUENCE_INTERVAL_OFFSET], a
     ld a, $02
-    ld [$cc5e], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_PITCH_SEQUENCE_STEP_INTERVAL_OFFSET], a
     ld a, $28
-    ld [$cc5c], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_PITCH_SEQUENCE_START_DELAY_OFFSET], a
     ld a, $0f
-    ld [$cc4e], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_BASE_VOLUME_OFFSET], a
     ld a, $01
-    ld [$cc52], a
-    ld [$cc55], a ; set some flags?
+    ld [wCurrentAudioChannelRecord + CHANNEL_STREAM_TIMER_OFFSET], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_VOLUME_SEQUENCE_COUNTDOWN_OFFSET], a
     ld a, [wCurrentPlaybackHardwareChannel]
     ld e, a
     ld a, $03
@@ -3308,14 +3308,14 @@ RestartSoftwareChannelPlayback:
     xor a
     call StoreVolumeSequencePointer
     ld a, $08
-    ld [$cc6d], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_SWEEP_DAC_OFFSET], a
     ld a, [wCurrentPlaybackHardwareChannel]
     cp $03
     jr nz, .setVolume ; skip if not channel 3
 
     ; runs for channel 3
     ld a, $80
-    ld [$cc6d], a
+    ld [wCurrentAudioChannelRecord + CHANNEL_SWEEP_DAC_OFFSET], a
     xor a
     call StoreWaveformIndexThenLoad
 
@@ -3348,7 +3348,7 @@ RestartSoftwareChannelPlayback:
     ret
 
 AudioChannelVolumeRegisterTable:
-    dw $FF12, $FF17, $FF1C, $FF21
+    dw rNR12, rNR22, rNR32, rNR42
 
 ; E = wCurrentPlaybackHardwareChannel
 ; A = routing selection; restart passes $03, stream commands supply their argument

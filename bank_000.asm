@@ -405,7 +405,7 @@ FinishTitleScreenSetup:
     ld hl, TitleScreenMusic
     xor a
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     ld a, $07
     ldh [rTAC], a
     ld a, $07
@@ -502,7 +502,7 @@ GameOverScreenLoop:
     cp $04
     jr c, GameOverScreenLoop
 
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
 
 ReturnToTitleScreen:
@@ -584,7 +584,7 @@ CheckForSoftReset:
     ret
 
 StopAudioForSoftReset:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
 
 WaitForSRButtonsRelease:
@@ -614,7 +614,7 @@ CheckQuickSoftReset:
     ret
 
 StopAudioForQuickSoftReset:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
 
 WaitForStartButtonRelease:
@@ -637,12 +637,12 @@ WaitForStartButtonRelease:
 
 
 SetupPauseScreen:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     ld a, $01
     ld hl, PauseScreenSound
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     xor a
     ld [wPauseRequested], a
     call CopyPauseTilesToBuffer
@@ -726,12 +726,12 @@ PauseScreenLoop:
     ld [wVBlankOccurred], a
     ld [$cfa2], a
     call CopyScoreTilesToBuffer
-    ld a, [$cfa1]
+    ld a, [wBossMusicMode]
     or a
     jr z, .selectStageMusic
 
     ld hl, BossMusic
-    ld a, [$cfa1]
+    ld a, [wBossMusicMode]
     dec a
     jr z, .startMusicAndResume
 
@@ -752,7 +752,7 @@ PauseScreenLoop:
 .startMusicAndResume
     xor a
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     jp GameLoop
 
 
@@ -1040,7 +1040,7 @@ RegisterPlayerShotInitHandlers:
 
 ; seems to be called when moving to the next stage
 RunStageTransition:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     di
     xor a
@@ -1087,7 +1087,7 @@ SetupNextStage:
     ld [wVBlankOccurred], a
     ld [wStageTransitionActive], a
     ld [wBackgroundScrollTimer], a
-    ld [$cfa1], a
+    ld [wBossMusicMode], a
     ld [wNextCreditsEntryIndex], a
     ld [wTextCopyPending], a
     ld [wScreenShakeRequested], a
@@ -1189,7 +1189,7 @@ GetMusicIndexAndSetupAudio:
     ld l, a
     ld a, b
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     ei
     jp GameLoop
 
@@ -1238,7 +1238,7 @@ UpdateGameOverFadeOut:
     jp RemoveCurrentHandler
 
 SetupGameOverScreen:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     di
     xor a
@@ -1313,7 +1313,7 @@ SetupGameOverScreen:
     ld [wVBlankOccurred], a
     ld hl, GameOverMusic
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     ld a, $07
     ldh [rTAC], a
     ld a, $05
@@ -2231,7 +2231,7 @@ MoveObjectWithFractionalVelocity:
 
 
 GetCurrentPlaybackStatus:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     dec a
     ld l, a
     ld h, $00
@@ -2599,12 +2599,12 @@ SetStageReady:
 
 
 StartAlternateBossAudio:
-    ld hl, $cfa1
+    ld hl, wBossMusicMode
     inc [hl]
     ld hl, AlternateBossMusic
     xor a
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     jp RemoveCurrentHandler
 
 
@@ -2612,13 +2612,13 @@ StartBossAudio:
     ld hl, BossMusic
     xor a
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
     ld a, $01
-    ld [$cfa1], a
+    ld [wBossMusicMode], a
     jp RemoveCurrentHandler
 
 StopStageAudio:
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     jp RemoveCurrentHandler
 
@@ -4270,7 +4270,7 @@ PlayStageTransitionAudio:
     ld hl, StageTransitionMusic
     ld a, $01
     call SetupAudioPlayback
-    ld [$cf9a], a
+    ld [wCurrentMusicPlaybackSlot], a
 
 .startMoveToExit
     ld de, MoveToExitPosition
@@ -7268,7 +7268,7 @@ SetupStageTransition:
     or a
     jp z, RemoveCurrentHandler
 
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     ld a, [wWeaponPowerLevel]
     ld [wEnemyShotSpeedLevel], a
@@ -7601,7 +7601,7 @@ SetupStageSixTransition:
 
     ld a, $01
     ld [wStageTransitionActive], a
-    ld a, [$cf9a]
+    ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
     call UpdateHighScore
     ld de, WaitForStageSixTransition

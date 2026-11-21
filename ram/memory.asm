@@ -7,6 +7,11 @@
 
 DEF wShadowOAM                            EQU $C000
 
+; Handler Data Table ($C100–$C4FF)
+; -------------------------------
+
+DEF wHandlerDataTable                     EQU $C100
+
 ; Handler and object tables ($C700-$C78D)
 ; -------------------------------------
 

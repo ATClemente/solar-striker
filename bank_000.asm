@@ -621,7 +621,7 @@ DispatchCurrentHandler:
     ld a, b
     and $f0
     ld l, a
-    ld bc, $c100
+    ld bc, wHandlerDataTable
     add hl, bc
     ld c, l
     ld b, h

@@ -36,6 +36,8 @@ Constants have been defined and placed in their respective files in the [constan
 
 Some graphics that the original tool was able to turn into viewable images live in [gfx](/gfx/).
 
+A standard file called hardware.inc is also included. This file is a collection of Game Boy hardware definitions that has been in use since the 1990s.
+
 
 # Game Startup
 

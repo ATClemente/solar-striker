@@ -855,7 +855,7 @@ RegisterPlayerShotInitHandlers:
     ei
     jp StartStageMusic
 
-; seems to be called when moving to the next stage
+
 RunStageTransition:
     ld a, [wCurrentMusicPlaybackSlot]
     call StopAudioPlayback
@@ -1295,7 +1295,7 @@ DrawBackgroundTilePackets:
 WriteTilePacket:
     push af
     and $3f ; mask off control bits (top two)
-    ld b, a ; store number of bytes to copy
+    ld b, a ; Number of tile-map entries to write
     pop af
     rlca
     rlca
@@ -1914,7 +1914,7 @@ ResetObjectAttributes:
     ld [hl+], a ; set x coordinate
     inc hl
     inc hl
-    inc hl ; move HL to object attributes (past the empty three bytes)
+    inc hl ; Skip graphics pointer and shot-collision flag; HL points to collision center
     inc bc ; move bc to next address
     jp InitializeObjectAttributes
 
@@ -1987,15 +1987,15 @@ CalculateXMovement:
     ret
 
 
-; Calulates fractional movement and saves remainder in [hl]
+; Calculates fractional movement and saves remainder in [hl]
 ; returns with A = whole pixel amount for that turn
 AccumulateFractionalMovement:
-    add [hl] ; add whatever is at that object byte to A
-    ld d, a ; put a in d
-    and $0f ; mask off top 4 bits of a 
-    ld [hl], a ; load back into that object slot
+    add [hl] ; Add saved fractional remainder
+    ld d, a
+    and $0f
+    ld [hl], a ; Retain fractional part for the next update
     swap d
-    ld a, d ; put back into a and mask off top bits again,
+    ld a, d
     and $0f
     ret
 
@@ -2334,7 +2334,7 @@ ScheduleStageEvents:
     ld hl, wStageEventPointer
     ld a, [hl+]
     ld b, [hl]
-    ld c, a ; Load event reader pointer into BC
+    ld c, a
     ld hl, wStageTickCounter
     ld a, [bc]
     cp [hl]
@@ -2903,7 +2903,7 @@ SmokePuffInitTemplate: ; $1072
 ; Each frame contains two (tile, attributes) pairs, left sprite then right sprite.
 SmokePuffGraphicsFrame0: ; $1077
     db $22, $00 ; Also template hitbox maximum Y/X offsets
-    db $24      ; Also the template's final object attribute
+    db $24      ; Also the template's damage threshold
     db $00
 
 SmokePuffGraphicsFrame1: ; $107B
@@ -3196,7 +3196,7 @@ EnemyProjectileObjectTemplate: ; $1244
     db $06, $02 ; Hitbox minimum Y/X offsets
     db $0a, $06 ; Hitbox maximum Y/X offsets
 EnemyProjectileGraphics: ; $124B
-    db $0a      ; Final object attribute and sprite tile number
+    db $0a      ; Damage threshold and sprite tile number
     db $00      ; Sprite attributes
 
 AlternateEnemyProjectileObjectTemplate: ; $124D
@@ -3205,7 +3205,7 @@ AlternateEnemyProjectileObjectTemplate: ; $124D
     db $00, $00 ; Hitbox minimum Y/X offsets
     db $10, $08 ; Hitbox maximum Y/X offsets
 AlternateEnemyProjectileGraphics: ; $1254
-    db $10      ; Final object attribute and sprite tile number
+    db $10      ; Damage threshold and sprite tile number
     db $00      ; Sprite attributes
 
 EnemyShotMovementIndexByPowerLevel:
@@ -3354,69 +3354,69 @@ ScrollBackground:
     ret nz
 
     xor a
-    ld [hl], a ; reset counter to 0
+    ld [hl], a
     ld hl, wStageTickCounter
     inc [hl]
-    ld a, [hl+] ; store in a and move hl to ca83
+    ld a, [hl+]
     or a
-    jr nz, .updateScroll ; if a not zero
+    jr nz, .updateScroll
 
-    inc [hl] ; inc ca83 byte by 1
+    inc [hl]
 
 .updateScroll
     ld a, $01
     ld [wBlockDrawIdle], a
     ld a, [wDisableBackgroundScroll]
     or a
-    ret nz ; return if not zero
+    ret nz
 
     ld hl, rSCY
-    dec [hl] ; move rSCY down (Y scroll)
+    dec [hl]
     ld de, wCurrentBlockId
     ld a, [de]
     cp $ff
-    ret z ; return if wCurrentBlockId is equal to FF
+    ret z
 
     inc de 
-    inc de ; move de to wBackgroundRowComplete
+    inc de
     ld a, [hl] 
     and $0f 
     jr nz, .nextMapBlock ; jump if bottom 4 bits are not zero, or when scy is not a multiple of 16
 
     ; scy was a multiple of 16
-    ld [de], a ; store 0 in wBackgroundRowComplete
+    ld [de], a
     ld hl, wBackgroundDrawRowPosition
     ld bc, wBlockDrawDestination
-    ld a, [hl+] ; store wBackgroundDrawRowPosition byte in a, move hl to wBackgroundDrawRowPosition + 1
+    ld a, [hl+]
     and $f0 
-    or $02 ; keep top four bits and set second bit
-    ld [bc], a ; store at wBlockDrawDestination
-    inc bc ; move bc to ca91
-    ld a, [hl+] ; store wBackgroundDrawRowPosition + 1 byte in a
-    ld [bc], a ; put that byte at ca91
+    or $02
+    ld [bc], a
+    inc bc
+    ld a, [hl+]
+    ld [bc], a
     ret
 
 ; scy was not a multiple of 16
 .nextMapBlock
     ld a, [de]
     or a
-    ret nz ; check if wBackgroundRowComplete is 0, return if NOT zero
+    ret nz
 
     ld a, [wBlockDrawIdle]
     or a
-    ret z ; return if wBlockDrawIdle is 0
+    ret z
 
     call ReadNextMapBlock
     ld hl, wCurrentRowBlockCounter
     inc [hl]
     ld a, [hl+]
     cp $0e
-    ret nz ; increment the value at wCurrentRowBlockCounter and compare to 14, return if NOT 14
+    ret nz ; 14 blocks per row
 
     inc a
-    ld [hl-], a ; inc a and store in wBackgroundRowComplete
+    ld [hl-], a
     xor a
-    ld [hl], a ; zero out wCurrentRowBlockCounter
+    ld [hl], a
     jp MoveMapPositionUpOneBlockRow
 
 
@@ -3522,10 +3522,10 @@ DrawMapBlock:
     ld l, a ; store the address of where the next block goes to HL
     ld a, [de] ; get the tile byte into a
     ld [hl+], a ; write to tile to the address and move to next tile (same row)
-    inc de ; move pointer to next byte
+    inc de
     ld a, [de]
     ld [hl+], a ; load the next tile and increment HL
-    inc de ; move pointer to next byte
+    inc de
     ld bc, $001e
     add hl, bc ; Add $001e to skip the remaining row and end up at the right spot on the next row
     ld a, [de]
@@ -3548,7 +3548,7 @@ MoveMapPositionUpOneBlockRow:
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld bc, $ffc0 ; twos compliment of $0040 (2 rows worth of 32 tiles)
+    ld bc, $ffc0 ; two's compliment of $0040 (2 rows worth of 32 tiles)
     add hl, bc
     ld a, l
     ld b, a ; low part of the result in B
@@ -3843,7 +3843,7 @@ FinishMovementClamp:
     ld hl, wPlayerInput
     ld a, [hl]
     and $0f
-    or b ; clear any bad inputs
+    or b ; Combine clamped directions with action-button input
     ld [hl], a
     ret
 
@@ -6517,7 +6517,7 @@ ConfigureDestructorOrb:
     ld de, UpdateDestructorOrbMovement
     jp SetCurrentHandlerAddress
 
-    ; 26b1
+
 UpdateDestructorOrbMovement:
     ld a, [bc]
     call SetObjectPointer
@@ -6920,7 +6920,7 @@ WaitForStageReady:
 
 
 ConfigurePlayerForNextStage:
-    ld a, [bc] ; bc is pointing to C100 which is 0
+    ld a, [bc] ; Load player object index from current handler data
     call SetObjectPointer
     ld de, $000f
     add hl, de 
@@ -7093,8 +7093,8 @@ Stage6AnnouncementGraphics: ; $2AD4
 Stage8PlayerGraphics:
     db $02, $00, $04, $00
 
-    ; 2AF4
-    ; stage 1 - 5
+    ; Normal transition after stages 1–5
+    ; stage 6 uses SetupStageSixTransition
 SetupStageTransition:
     ld hl, wCurrentHandlerDataPointer
     ld a, [hl+]
@@ -7527,7 +7527,7 @@ WaitThenEndStageSevenCutscene:
     ld de, RequestNextStage
     jp SetCurrentHandlerAddress
 
-    ; 2E5B
+
 QueueFinalMissionTextAlternate:
     ld hl, $0018
     add hl, bc
@@ -7551,7 +7551,7 @@ QueueFinalMissionTextAlternate:
     ld de, QueueIsOverTextAlternate
     jp SetCurrentHandlerAddress
 
-    ; 2E86
+
 QueueIsOverTextAlternate:
     ld a, [wTextCopyPending]
     or a
@@ -7575,7 +7575,7 @@ QueueIsOverTextAlternate:
     ld de, WaitThenEndStageSevenCutsceneAlternate
     jp SetCurrentHandlerAddress
 
-    ; 2EB2
+
 WaitThenEndStageSevenCutsceneAlternate:
     ld a, [wTextCopyPending]
     or a
@@ -7712,7 +7712,7 @@ CreditsEndObjectInitTemplate: ; $2F8D
     db $08, $08        ; Collision center offset (Y, X).
     db $00, $00        ; Hitbox minimum offset (Y, X).
     db $10, $10        ; Hitbox maximum offset (Y, X).
-    db $01             ; Final object attribute.
+    db $01             ; Damage threshold
 
 CreditsEndObjectGraphics: ; $2F95: (tile, attributes).
     db $bc, $00, $ce, $00, $ba, $00
@@ -8086,7 +8086,7 @@ MotherAtenaThrusterDepartureGraphics0: ; $31FF
 MotherAtenaThrusterDepartureGraphics1: ; $3203
     db $36, $00, $38, $00
 
-; 3207
+
 WaitAndClearCreditIndex:
     ld hl, $0004
     add hl, bc
@@ -8948,7 +8948,7 @@ TitleScreenStartSelectPromptTilePackets:
     db $9a, $88, $0c, $fc, $a2, $b2, $b0, $b2, $ff, $ea, $eb, $ec, $ed, $ee, $ef
     db $00 ; ROM $3EF3: end of sequence.
 
-    ; 3EF4
+
 InitialHUDTilePackets:
     db $9c, $00, $13, $d8, $b8, $d0, $d6, $bc, $00
     db $f0, $f0, $f0, $f0, $f0, $f0, $f0, $f0

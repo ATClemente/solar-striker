@@ -3,7 +3,7 @@
 ; mgbdis v3.0 - Game Boy ROM disassembler by Matt Currie and contributors.
 ; https://github.com/mattcurrie/mgbdis
 
-; Stage data loaded by LoadStageDataToWram (formerly Call_000_0e16).
+; Stage data loaded by LoadStageDataToWram.
 ; Background sources come from StageBackgroundDataTable ($0E5D); event sources from $0EA5.
 ; Sizes below are fixed copy lengths, not boundaries of the individual data sets.
 ; Some copied ranges overlap neighboring data; copy lengths are not dataset boundaries.

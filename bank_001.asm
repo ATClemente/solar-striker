@@ -300,9 +300,9 @@ ConfigureEpikhan:
     jp SetCurrentHandlerAddress
 
 
-    ; Apply scripted movement.
+    ; Apply scripted movement without drift
 UpdateEpikhanMovement:
-    ; Returns object byte $0C in A, with HL pointing to byte $0D.
+    ; return damage threshold in A and accumulated-damage pointer in HL.
     call UpdateScriptedEnemyMovementNoDrift
     cp [hl]
     jp c, HandleEpikhanDefeat ; object[$0C] < object[$0D]
@@ -1075,7 +1075,7 @@ FinishBossExitAndStartStageTransition:
     jp FreeObjectAndRemoveHandler
 
 
-    ; 4703
+
 AudioWaveformTable:
     ; $4703-$4802: 16 waveforms, 16 bytes each (32 packed 4-bit samples).
     ; Waveforms $0A-$0F contain identical data.
@@ -1237,7 +1237,7 @@ InitAudio:
     ldh [rNR51], a ; AUDTERM all L/R output channels on
     ; Clear $CC00–$CD86
     ; Sets the first byte to 0 and then because dest is one in
-    ; front this propogates the 0 through the whole region
+    ; front this propagates the 0 through the whole region
     ld hl, $cc00
     ld de, $cc01
     ld bc, $0186
@@ -1283,9 +1283,9 @@ GetPlaybackSlotStatus:
 
 SetupAudioPlayback:
     or a
-    jr nz, SaveAndCheckAudioInputs ; A is not zero
+    jr nz, SaveAndCheckAudioInputs
 
-    dec a ; a is zero, set to $FF
+    dec a
 
 SaveAndCheckAudioInputs:
     ld [wRequestedPlaybackRepeatCount], a ; original value or $FF
@@ -1572,8 +1572,7 @@ GetAudioSlotRecord:
     ret
 
 
-    ; Actual table starts at $4B2F
-    ; only first 4 slots appear used
+; Runtime playback IDs 1–4 select the first four entries.
 AudioSlotRecordAddressTable:
     dw $CC3B, $CC3E, $CC41, $CC44
     dw $CC47, $CC4A, $CC4D, $CC50
@@ -1592,8 +1591,7 @@ GetAudioChannelRecord:
     ret
 
 
-    ; Actual table starts at $4B4D
-    ; only first 6 appear used
+; Runtime software-channel IDs 1–6 select the first six entries.
 AudioChannelRecordAddressTable:
     dw $CC72, $CC9D, $CCC8, $CCF3
     dw $CD1E, $CD49, $CD74, $CD9F
@@ -1748,8 +1746,8 @@ ReleasePlaybackSlotChannelsNext:
     ret
 
 ; A = software channel ID (1–6).
-; Remove it from whichever hardware-channel list contains it.
-; Perform hardware cleanup and restore the remaining wave stream's waveform.
+; Silence hardware when removing the list head
+; for channel 3, reload the remaining head's waveform if present.
 RemoveSoftwareChannelFromHardwareLists:
     ld hl, wHardwareChannelBeingSearched
     ld [hl], $01
@@ -1993,6 +1991,7 @@ TickAudioChannelStream:
     add hl, de
     ld [hl], $ff ; set a table entry starting at cc21 to FF, index is software channel - 1
 
+; Read an opcode/note and its argument, then advance the stream pointer by two bytes.
 ReadNextAudioStreamEntry:
     ld a, [wCurrentAudioChannelRecordPointer]
     ld c, a
@@ -2000,23 +1999,22 @@ ReadNextAudioStreamEntry:
     ld b, a
     ld hl, CHANNEL_AUDIO_STREAM_POINTER_OFFSET
     add hl, bc
-    ld a, [hl] ; store the byte from record offset $02 in a
-    inc hl ; move hl to offset $03
-    push hl ; store address of offset $03
+    ld a, [hl]
+    inc hl
+    push hl
     ld h, [hl]
-    ld l, a ; store pointer from $02-$03 into HL
-    ld a, [hl+] ; get the byte that the pointer points to into a
-    ld d, a ; put in d
-    ld a, [hl+] ; get the next byte into a
+    ld l, a
+    ld a, [hl+]
+    ld d, a
+    ld a, [hl+]
     ld [wAudioStreamArgument], a
-    ld a, h ; put high byte of address in a
-    ld e, l ; put low byte into e
-    pop hl ; HL now equals address of offset $03 again
+    ld a, h
+    ld e, l
+    pop hl
     ld [hl-], a
-    ld [hl], e ; change pointer stored at $02-$03
-    ld a, d ; get the byte that the pointer pointed to this round
-    ; preceeding code reads two bytes at pointer in $02-$03, advances two bytes
-    ; and stores that new address back at $02-$03
+    ld [hl], e
+    ld a, d
+
     cp $b0
     jp nc, DispatchAudioCommand
 
@@ -2032,22 +2030,22 @@ ReadNextAudioStreamEntry:
     add hl, bc
     ld a, [hl]
     or a
-    jr z, .setPeriodHigh ; jump if byte there is zero
+    jr z, .setPeriodHigh
 
     ld e, $c0
 
 ; e is $c0 or $80 depending on offset $1b
 .setPeriodHigh
     ld hl, CHANNEL_PERIOD_HIGH_CONTROL_OFFSET
-    add hl, bc ; record offset $002a
+    add hl, bc
     ld a, [hl]
     and $07
-    or e ; keep low 3 bits; set bit 7, and bit 6 when E = $C0
-    ld [hl], a ; store back at the offset
+    or e
+    ld [hl], a
     ld hl, CHANNEL_HARDWARE_CHANNEL_OFFSET
     add hl, bc
     ld a, [hl]
-    cp $04 ; compare the byte at record offset $04 with $04
+    cp $04
     jr z, SetNoiseNote ; channel 4 takes the noise lookup path
 
     ld a, d
@@ -2059,18 +2057,18 @@ ReadNextAudioStreamEntry:
     push hl
     ld hl, CHANNEL_PERIOD_LOW_NOISE_OFFSET
     add hl, bc
-    ld [hl+], a ; store first byte in offset $29
+    ld [hl+], a
     ld a, [hl]
-    and $f8 ; and the byte at $2a with $f8
+    and $f8
     pop hl
-    or [hl] ; then or it with the second byte hl was pointing to from before
+    or [hl]
     ld hl, CHANNEL_PERIOD_HIGH_CONTROL_OFFSET
     add hl, bc
-    ld [hl], a ; store combined control and pitch bits at offset $2A
+    ld [hl], a
     ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
     ld a, [hl]
-    ld [wAudioVolumeTemp], a ; store byte at offset $07 in wAudioVolumeTemp
+    ld [wAudioVolumeTemp], a
     call WriteWaveChannelPitch
     jr InitializeNoteSequences
 
@@ -2302,7 +2300,7 @@ HandleCountedAudioJump:
     ld l, a
     ld h, $00 ; HL = zero-extended second stream byte
     cp $80
-    jr c, .reposition ; if the second byte is < $80 than jump
+    jr c, .reposition ; if the second byte is < $80 then jump
 
     dec h ; set h to $FF
 
@@ -2440,7 +2438,7 @@ HandleAudioLoop:
     ld e, l
     pop hl
     ld [hl-], a
-    ld [hl], e ; new pointer = old pointer − 2 + (incoming HL × 2)
+    ld [hl], e ; Jump relative to the loop command: signed argument × 2 bytes.
     jp ReadNextAudioStreamEntry
 
 
@@ -2491,7 +2489,7 @@ DispatchAudioCommand:
     ld h, [hl]
     ld l, a ; hl is now the address of the command. Ex: $FE -> AudioCmd_SetBaseVolume
     or h
-    ret z ; if handler address is zero, return to the pushed $4D49 address
+    ret z ; if handler address is zero, return to the pushed ReadNextAudioStreamEntry address
 
     ld a, [wAudioStreamArgument]
     ld d, a
@@ -2615,7 +2613,7 @@ AudioCmd_SetBaseVolume:
     ld hl, CHANNEL_BASE_VOLUME_OFFSET
     add hl, bc
     ld [hl], a ; store low nibble of the second byte in offset CHANNEL_BASE_VOLUME_OFFSET
-    ret ; goes back to 4d49
+    ret ; goes back to ReadNextAudioStreamEntry
 
 AudioCmd_SetAlternateVolume:
     and $0f
@@ -2911,7 +2909,7 @@ UpdateChannelVolumeSequence:
 UnidentifiedData_51D7:
     db $fe, $fd, $fb, $f7
 
-    ; unused code block below
+; No callers identified for UpdateChannelPitchSequences.
 UpdateChannelPitchSequences:
     ld c, $00
     ld hl, $cc72 + CHANNEL_PITCH_SEQUENCE_INDEX_OFFSET
@@ -3057,7 +3055,7 @@ WritePendingAudioRegisters:
     ld a, $80 ; useless, the next xor immediately clears
     xor a
     ld [wAudioPanningAccumulator], a ; zero out cc37
-    ld c, $00 ; set a counter
+    ld c, $00
     ld hl, wHardwareChannel1List
 
 .checkChannel
@@ -3354,7 +3352,7 @@ RestartSoftwareChannelPlayback:
 AudioChannelVolumeRegisterTable:
     dw rNR12, rNR22, rNR32, rNR42
 
-; E = wCurrentPlaybackHardwareChannel
+; E = hardware channel ID (1–4).
 ; A = routing selection; restart passes $03, stream commands supply their argument
 ; A restricts the output routing:
 ; 0 -> $00 -> Neither side
@@ -3471,11 +3469,11 @@ AudioOctaveFrequencyPointerTable:
     dw AudioFrequencyTable + $78 ; frequency index $3C
     dw AudioFrequencyTable + $90 ; frequency index $48
     dw AudioFrequencyTable + $a8 ; frequency index $54
-
+; preserve AF. Overlapping ranges can propagate a fill byte.
 AudioCopyMemorySetup:
     push af
 
-; This routine appears to be often used to clear/zero memory
+; Copy BC bytes from HL to DE
 AudioCopyMemory: 
     ld a, [hl+]
     ld [de], a
